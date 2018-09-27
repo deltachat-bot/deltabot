@@ -1,4 +1,3 @@
-
 Delta.Chat example bot
 ======================
 
@@ -17,8 +16,9 @@ install
 -------
 
 To install make sure you have
-`python deltachat-bindings <https://py.delta.chat>`_
-installed.  Then install the bot::
+`the python deltachat-bindings <https://py.delta.chat>`_
+installed, at best in a ``virtualenv`` environment .
+Then install the bot::
 
     pip install deltabot
 
@@ -33,9 +33,9 @@ address::
     deltabot init email@example.org password123
 
 This command will try to contact the imap/smtp servers
-for ``example.org`` and logging in with the given password.
-Once this successfully completes, initialization is
-done and tested.
+for ``example.org`` and logging in with the given e-mail
+address and password.  Once this successfully completes,
+initialization is done and tested.
 
 You can then let the bot listen continously::
 
@@ -47,7 +47,12 @@ To see some action install https://delta.chat and add
 your bot-email address as a contact and start chatting
 with it! You can also add the bot as a member to a group chat.
 
-github repository, issue tracker etc.
--------------------------------------
+Looking at the code
+-------------------
 
-https://github.com/deltachat/deltabot
+Checkout this file which contains the definition of
+a command line client used above, and its interaction
+with the bindings (``src/deltabot/cmdline.py``):
+
+https://github.com/deltachat/deltabot/blob/master/src/deltabot/cmdline.py
+
