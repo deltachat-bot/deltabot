@@ -91,7 +91,7 @@ class Runner:
     def serve(self):
         print("start serve")
         while 1:
-            self.dump_chats()
+            # self.dump_chats()
             # wait for incoming messages
             # DC_EVENT_MSGS_CHANGED for unknown contacts
             # DC_EVENT_INCOMING_MSG for known contacts
