@@ -35,7 +35,7 @@ def main():
             [console_scripts]
             deltabot=deltabot.cmdline:bot_main
         ''',
-        install_requires = ["click>=6.0", "deltachat"],
+        install_requires = ["click>=6.0", "deltachat>=0.7.1"],
         zip_safe=False,
     )
 
