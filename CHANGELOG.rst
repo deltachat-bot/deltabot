@@ -1,4 +1,11 @@
 
+0.7.1
+-----
+
+- return with a rendered hop trace for every incoming message
+
+- deltabot is now compatible to py35 or higher only
+
 0.7.0
 -----
 
