@@ -1,4 +1,10 @@
 
+xxx
+-----
+
+- send hop trace for all incoming media types
+
+
 0.7.1
 -----
 

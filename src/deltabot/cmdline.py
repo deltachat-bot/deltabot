@@ -85,14 +85,11 @@ class Runner:
             print ("** creating/getting chat with incoming msg", msg)
             chat = self.acc.create_chat_by_message(msg)
             from_addr = sender_contact.addr
-            if msg.view_type.is_text():
-                mime_msg = msg.get_mime_headers()
-                perf_lines = render_hop_trace(mime_msg, msg.time_sent, msg.time_received)
-                rtext = "\n".join(("---> " + x) for x in msg.text.splitlines())
-                chat.send_text(u"saw from {}: \n{}\nhop-trace:\n{}".format(from_addr, rtext, "\n".join(perf_lines)))
-            else:
-                chat.send_text(u"saw from {} viewtype: {!r}, fn={}".format(
-                    from_addr, msg.view_type.name, msg.basename))
+            mime_msg = msg.get_mime_headers()
+            perf_lines = render_hop_trace(mime_msg, msg.time_sent, msg.time_received)
+            rtext = "\n".join(("---> " + x) for x in msg.text.splitlines())
+            chat.send_text(u"saw from {} viewtype {!r} fn={}: \n{}\nhop-trace:\n{}".format(
+                           from_addr, msg.view_type.name, msg.basename, rtext, "\n".join(perf_lines)))
         self.acc.mark_seen_messages([msg])
 
     def dump_chats(self):
