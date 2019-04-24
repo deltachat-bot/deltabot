@@ -1,4 +1,4 @@
-Delta.Chat simple bot
+Delta Chat simple bot
 =====================
 
 A simple "deltabot" that depends on plugins to add functionality.
