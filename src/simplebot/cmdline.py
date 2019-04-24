@@ -77,7 +77,10 @@ def serve(ctx):
 class Runner:
     def __init__(self, acc):
         self.acc = acc
-        self.plugins = []
+        self.plugins = [
+            ep.load()(acc)
+            for ep in pkg_resources.iter_entry_points('simplebot.plugins')
+        ]
 
     def process_message(self, msgid):
         msg = self.acc.get_message_by_id(int(msgid))
