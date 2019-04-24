@@ -39,7 +39,7 @@ You can then let the bot listen continously::
 
 It will listen for incoming messages and handle them with plugins.
 
-To see some action, add some plugins to the bot, install
+To see some action, add [some plugins](https://pypi.org/search/?q=simplebot_) to the bot, install
 https://delta.chat and add your bot-email address as a contact and
 start chatting with it! You can also add the bot as a member to a
 group chat.
