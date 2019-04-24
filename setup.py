@@ -29,7 +29,6 @@ def main():
                      'Operating System :: POSIX',
                      'Operating System :: MacOS :: MacOS X',
                      'Topic :: Utilities',
-                     'Intended Audience :: Developers',
                      'Programming Language :: Python'],
         entry_points='''
             [console_scripts]
