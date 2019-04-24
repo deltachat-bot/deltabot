@@ -1,9 +1,9 @@
-from __future__ import print_function
 import os
 import time
+
 import click
 import deltachat
-from .parse import render_hop_trace
+import pkg_resources
 
 
 @click.command(cls=click.Group, context_settings=dict(help_option_names=["-h", "--help"]))
