@@ -27,10 +27,26 @@ class Runner(BotBase):
     def prepare_reply(self, msg, chat):
         args = self.cmd_handler.args 
         city = args[1]
-        print("> Getting weather for", city)
         owm = pyowm.OWM(OPENWEATHER_API)
-        observation = owm.weather_at_place(city)
-        w = observation.get_weather()
-        status = w.get_detailed_status()
-        temp = w.get_temperature('celsius')['temp']
-        chat.set_reply_text(u"{} will have {}. Temp: {} C".format(city, status, temp))
+
+        try:
+            observation = owm.weather_at_place(city)
+            w = observation.get_weather()
+            simple = w.get_status().lower()
+            status = w.get_detailed_status()
+            temp = w.get_temperature('celsius')['temp']
+            if simple == 'clear':
+                icon = '☀️ '
+            elif simple == 'haze':
+                icon = '🌤️ '
+            elif simple == 'clouds':
+                icon = '☁️'
+            elif simple == 'drizzle':
+                icon = '🌧   '
+            else:
+                icon = ''
+            chat.set_reply_text(u"{}{} will have {}\n🌡️  {} C".format(
+                icon, city, status, temp))
+
+        except pyowm.exceptions.api_response_error.NotFoundError:
+            chat.set_reply_text(u"Cannot find that place 🤔 ")
