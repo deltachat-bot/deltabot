@@ -1,3 +1,6 @@
+from .chat import create_chat_by_message
+from .message import get_message_by_id 
+
 class BotBase:
 
     in_events = ()
@@ -6,29 +9,38 @@ class BotBase:
         self.acc = acc
         self.debug = debug
 
-    def filter_events(self):
-        ev = self.acc._evlogger.get_matching(self.in_events)
-        return ev
+    def prepare_reply(self, message, chat):
+        """Every bot should implement this method"""
+        pass
 
     def run(self):
         print("start run")
         while 1:
             if self.debug:
-                self.dump_chats()
+                self._dump_chats()
 
             # wait for incoming messages
-            ev = self.filter_events()
+            ev = self._filter_events()
             if ev[2] == 0:
                 print(ev)
                 continue
-            self.maybe_reply_to_message(msgid=ev[2])
+            self._maybe_reply_to_message(msgid=ev[2])
 
-    def maybe_reply_to_message(self, msgid):
-        pass
+    def _filter_events(self):
+        return self.acc._evlogger.get_matching(self.in_events)
+
+    def _maybe_reply_to_message(self, msgid):
+        msg = get_message_by_id(self.acc, int(msgid))
+        if msg.sender_contact != self.acc.get_self_contact():
+            print ("** creating/getting chat with incoming msg", msg)
+            chat = create_chat_by_message(self.acc, msg)
+            self.prepare_reply(msg, chat)
+            chat.send_reply()
+        self.acc.mark_seen_messages([msg.msg])
 
     # debug
 
-    def dump_chats(self):
+    def _dump_chats(self):
         print("*" * 80)
         chatlist = self.acc.get_chats()
         for chat in chatlist:
@@ -40,4 +52,3 @@ class BotBase:
                       msg.id,
                       msg.get_sender_contact().addr,
                       msg.text))
-
