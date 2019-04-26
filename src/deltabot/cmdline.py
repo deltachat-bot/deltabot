@@ -5,7 +5,6 @@ import time
 
 import click
 import deltachat
-from .parse import render_hop_trace
 
 
 @click.command(cls=click.Group, context_settings=dict(help_option_names=["-h", "--help"]))
@@ -61,9 +60,11 @@ def info(ctx):
 
 @click.command()
 @click.argument("botname", type=str, required=True)
+@click.option("--debug", "-d", default=False, is_flag=True,
+              help="add debug information in standard output")
 @click.pass_context
-def serve(ctx, botname):
-    """serve and react to incoming messages"""
+def run(ctx, botname, debug=False):
+    """run and react to incoming messages"""
     acc = get_account(ctx.parent.basedir)
 
     if not acc.is_configured():
@@ -71,22 +72,22 @@ def serve(ctx, botname):
     acc.set_config("save_mime_headers", "1")
     acc.start_threads()
 
-    runner = get_runner(botname, acc)
+    runner = get_runner(botname, acc, debug=debug)
 
     try:
-        runner.serve()
+        runner.run()
     finally:
         acc.stop_threads()
 
 
-def get_runner(botname, acc):
+def get_runner(botname, acc, debug):
     runner = None
     runner_class = 'Runner'
 
     py_mod = importlib.import_module('.' + botname, package='deltabot')
 
     if hasattr(py_mod, runner_class):
-        runner = getattr(py_mod, runner_class)(acc)
+        runner = getattr(py_mod, runner_class)(acc, debug)
     return runner
 
 
@@ -116,7 +117,7 @@ def get_account(basedir, remove=False):
 
 bot_main.add_command(init)
 bot_main.add_command(info)
-bot_main.add_command(serve)
+bot_main.add_command(run)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,11 @@
-class Runner:
+from .parse import render_hop_trace
+from .botbase import BotBase
 
-    def __init__(self, acc):
-        self.acc = acc
+class Runner(BotBase):
+
+    # DC_EVENT_MSGS_CHANGED for unknown contacts
+    # DC_EVENT_INCOMING_MSG for known contacts
+    in_events = "DC_EVENT_MSGS_CHANGED|DC_EVENT_INCOMING_MSG"
 
     def maybe_reply_to_message(self, msgid):
         msg = self.acc.get_message_by_id(int(msgid))
@@ -17,29 +21,3 @@ class Runner:
                            from_addr, msg.view_type.name, msg.basename, rtext, "\n".join(perf_lines)))
         self.acc.mark_seen_messages([msg])
 
-    def dump_chats(self):
-        print("*" * 80)
-        chatlist = self.acc.get_chats()
-        for chat in chatlist:
-            print ("chat id={}, name={}".format(chat.id, chat.get_name()))
-            for sub in chat.get_contacts():
-                print("  member:", sub.addr)
-            for msg in chat.get_messages()[-10:]:
-                print(u"  msg {}, from {}: {!r}".format(
-                      msg.id,
-                      msg.get_sender_contact().addr,
-                      msg.text))
-
-    def serve(self):
-        print("start serve")
-        while 1:
-            # self.dump_chats()
-            # wait for incoming messages
-            # DC_EVENT_MSGS_CHANGED for unknown contacts
-            # DC_EVENT_INCOMING_MSG for known contacts
-            in_events = "DC_EVENT_MSGS_CHANGED|DC_EVENT_INCOMING_MSG"
-            ev = self.acc._evlogger.get_matching(in_events)
-            if ev[2] == 0:
-                print (ev)
-                continue
-            self.maybe_reply_to_message(msgid=ev[2])
