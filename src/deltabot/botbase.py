@@ -4,6 +4,7 @@ from .message import get_message_by_id
 class BotBase:
 
     in_events = ()
+    cmd_handler = None
 
     def __init__(self, acc, debug=False):
         self.acc = acc
@@ -32,11 +33,18 @@ class BotBase:
     def _maybe_reply_to_message(self, msgid):
         msg = get_message_by_id(self.acc, int(msgid))
         if msg.sender_contact != self.acc.get_self_contact():
-            print ("** creating/getting chat with incoming msg", msg)
-            chat = create_chat_by_message(self.acc, msg)
-            self.prepare_reply(msg, chat)
-            chat.send_reply()
+            if self.cmd_handler is not None:
+                if self.cmd_handler.is_valid_cmd(msg):
+                    self._process_reply(msg)
+            else:
+                self._process_reply(msg)
         self.acc.mark_seen_messages([msg.msg])
+
+    def _process_reply(self, msg):
+        print ("** creating/getting chat with incoming msg", msg)
+        chat = create_chat_by_message(self.acc, msg)
+        self.prepare_reply(msg, chat)
+        chat.send_reply()
 
     # debug
 

@@ -13,4 +13,5 @@ class Chat:
         self.reply_text = text
 
     def send_reply(self):
-        self.chat.send_text(self.reply_text)
+        if len(self.reply_text) > 0:
+            self.chat.send_text(self.reply_text)
