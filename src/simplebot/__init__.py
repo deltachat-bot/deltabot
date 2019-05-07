@@ -16,7 +16,8 @@ class Plugin(ABC):
       self.acc = dc_account
 
     @staticmethod
-    def parse(cmd, text):
+    def get_args(cmd, text):
+        """Get the args of the given command, if the text doesn't execute the command return None"""
         if text.startswith(cmd):
             return text[len(cmd):].strip()
         return None
