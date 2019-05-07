@@ -15,6 +15,12 @@ class Plugin(ABC):
     def __init__(self, dc_account):
       self.acc = dc_account
 
+    @staticmethod
+    def parse(cmd, text):
+        if text.startswith(cmd):
+            return text[len(cmd):].strip()
+        return None
+            
     @abstractmethod
     def process(self, msg):
         """Return True if the message was processed with the plugin, False otherwise."""
