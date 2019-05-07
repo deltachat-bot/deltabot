@@ -94,7 +94,7 @@ class Runner:
                         break
                 except Exception as ex:
                     print('UNEXPECTED ERROR:', ex)
-        self.acc.delete_messages([msg])
+        self.acc.mark_seen_messages([msg])
 
     def dump_chats(self):
         print("*" * 80)
