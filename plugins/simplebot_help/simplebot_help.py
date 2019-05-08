@@ -8,6 +8,7 @@ class Helper(Plugin):
     description = 'Provides the !help command'
     version = '0.1.0'
     author = 'adbenitez'
+    author_email = 'adbenitez@nauta.cu'
     
     def get_help(self):
         text = 'SimpleBot for Delta Chat.\nInstalled plugins:\n\n'
