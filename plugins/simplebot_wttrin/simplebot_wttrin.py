@@ -9,6 +9,7 @@ class Wttrin(Plugin):
     description = 'Provides the !wttr <place> command to get weather info'
     version = '0.1.0'
     author = 'adbenitez'
+    author_email = 'adbenitez@nauta.cu'
     
     def process(self, msg):
         arg = self.get_args('!wttr', msg.text)
