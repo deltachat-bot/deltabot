@@ -8,3 +8,4 @@ doc/_build
 .tox
 build
 dist
+*.egg-info
