@@ -6,7 +6,7 @@ from simplebot import Plugin
 class Wttrin(Plugin):
 
     name = 'Wttr.in'
-    description = 'Provides the !wttr <place> command to get weather info'
+    description = 'Provides the !wttr <place> command to get weather info.'
     version = '0.1.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'

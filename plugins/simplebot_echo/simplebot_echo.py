@@ -4,7 +4,7 @@ from simplebot import Plugin
 class Echo(Plugin):
 
     name = 'Echo'
-    description = 'Provides the !echo <text> command to reply back <text>'
+    description = 'Provides the !echo <text> command to reply back <text>.'
     version = '0.1.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
