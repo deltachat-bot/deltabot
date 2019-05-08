@@ -9,7 +9,7 @@ import wikipedia
 class Wikipedia(Plugin):
 
     name = 'Wikipedia'
-    description = 'Provides the !w <text> command to search <text> in Wikipedia'
+    description = 'Provides the !w <text> command to search <text> in Wikipedia.'
     version = '0.1.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
