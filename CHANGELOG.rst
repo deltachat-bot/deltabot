@@ -7,7 +7,6 @@ SimpleBot Changelog
 - initial release as SimpleBot
 - removed functionality from deltabot, it was too complex for a simplebot ;)
 - added a basic capability for plugin
-- now messages are removed instead of marking them as read
 
 
 Legacy changelog from deltabot:
