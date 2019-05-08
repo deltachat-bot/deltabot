@@ -12,7 +12,7 @@ VERSION = re.search(r'version = \'(.*?)\'', source, re.M).group(1)
 AUTHOR = re.search(r'author = \'(.*?)\'', source, re.M).group(1)
 AUTHOR_EMAIL = re.search(r'author_email = \'(.*?)\'', source, re.M).group(1)
 with open("README.rst", "r") as fh:
-LONG_DESCRIPTION = fh.read()
+    LONG_DESCRIPTION = fh.read()
 
 setup(
     name=MODULE_NAME,
