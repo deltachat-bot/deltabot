@@ -11,14 +11,14 @@ PLUGIN_NAME = re.search(r'name = \'(.*?)\'', source, re.M).group(1)
 DESCRIPTION = re.search(r'description = \'(.*?)\'', source, re.M).group(1)
 VERSION = re.search(r'version = \'(.*?)\'', source, re.M).group(1)
 AUTHOR = re.search(r'author = \'(.*?)\'', source, re.M).group(1)
+AUTHOR_EMAIL = re.search(r'author_email = \'(.*?)\'', source, re.M).group(1)
 
 
 setup(
     name=MODULE_NAME,
     version=VERSION,
-    license='GPL3+',
     author=AUTHOR,
-    author_email='adbenitez@nauta.cu',
+    author_email=AUTHOR_EMAIL,
     description=DESCRIPTION,
     long_description=DESCRIPTION,
     long_description_content_type='text/x-rst',
