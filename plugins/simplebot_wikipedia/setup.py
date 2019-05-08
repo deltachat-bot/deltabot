@@ -27,7 +27,7 @@ setup(
         'Development Status :: 3 - Alpha',
         'Environment :: Plugins',
         'Programming Language :: Python :: 3',
-        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+        'License :: OSI Approved :: GNU Affero General Public License v3',
         'Operating System :: OS Independent',
         'Topic :: Utilities'
     ),
