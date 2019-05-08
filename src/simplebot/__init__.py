@@ -11,13 +11,14 @@ class Plugin(ABC):
     description = None   # type: str
     version = None       # type: str
     author = None        # type: str
+    author_email = None  # type: str
 
     def __init__(self, dc_account):
       self.acc = dc_account
 
     @staticmethod
     def get_args(cmd, text):
-        """Get the args of the given command, if the text doesn't execute the command return None"""
+        """Return the args for the given command or None if the command does not match."""
         if text.startswith(cmd):
             return text[len(cmd):].strip()
         return None
