@@ -1,7 +1,7 @@
 Delta Chat simple bot
 =====================
 
-A simple "deltabot" that depends on `plugins <https://github.com/adbenitez/simplebot_plugins>`_ to add functionality.
+A simple "deltabot" that depends on plugins to add functionality.
 It works as part of a group or in 1:1 chats in https://delta.chat
 applications. SimpleBot supports Autocrypt end-to-end encryption
 but note that the operator of the "bot" service can look into
