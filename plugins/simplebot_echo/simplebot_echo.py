@@ -7,6 +7,7 @@ class Echo(Plugin):
     description = 'Provides the !echo <text> command to reply back <text>'
     version = '0.1.0'
     author = 'adbenitez'
+    author_email = 'adbenitez@nauta.cu'
     
     def process(self, msg):
         arg = self.get_args('!echo', msg.text)
