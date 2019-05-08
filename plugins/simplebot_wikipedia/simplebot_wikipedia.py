@@ -3,13 +3,16 @@ from simplebot import Plugin
 import wikipedia
 
 
+#wikipedia.set_lang('es')
+
+
 class Wikipedia(Plugin):
 
     name = 'Wikipedia'
     description = 'Provides the !w <text> command to search <text> in Wikipedia'
     version = '0.1.0'
     author = 'adbenitez'
-    #wikipedia.set_lang('es')
+    author_email = 'adbenitez@nauta.cu'
     
     def process(self, msg):
         arg = self.get_args('!w', msg.text)
