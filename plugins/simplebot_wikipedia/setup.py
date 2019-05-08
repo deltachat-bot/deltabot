@@ -18,7 +18,7 @@ setup(
     version=VERSION,
     license='GPL3+',
     author=AUTHOR,
-    author_email='abraham.perez.hernandez.es@gmail.com',
+    author_email='adbenitez@nauta.cu',
     description=DESCRIPTION,
     long_description=DESCRIPTION,
     long_description_content_type='text/x-rst',
@@ -34,7 +34,7 @@ setup(
     keywords='deltachat simplebot plugin',
     #project_urls={},
     py_modules=[MODULE_NAME],
-    install_requires=['simplebot'],
+    install_requires=['simplebot', 'wikipedia'],
     python_requires='>=3.5',
     entry_points={
         'simplebot.plugins': '{} = {}:{}'.format(PLUGIN_NAME, MODULE_NAME, CLASS_NAME)
