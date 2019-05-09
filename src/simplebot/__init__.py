@@ -34,6 +34,6 @@ class Plugin(ABC):
 
     @staticmethod
     def deactivate(ctx):
-        """Deactivate the plugin, this method is called to disable/stop the plugin."""
+        """Deactivate the plugin, this method is called before the plugin is disabled/removed, do clean up here."""
         pass
 
