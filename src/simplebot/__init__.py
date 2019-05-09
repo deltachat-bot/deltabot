@@ -22,18 +22,18 @@ class Plugin(ABC):
             return ''
         return None
             
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def process(msg):
+    def process(cls, msg):
         """Return True if the message was processed with the plugin, False otherwise."""
-        
-    @staticmethod
-    def activate(ctx):
-        """Activate the plugin, this method is called at the start of the bot."""
-        pass
 
-    @staticmethod
-    def deactivate(ctx):
+    @classmethod
+    def activate(cls, ctx):
+        """Activate the plugin, this method is called at the start of the bot."""
+        cls.ctx = ctx
+
+    @classmethod
+    def deactivate(cls, ctx):
         """Deactivate the plugin, this method is called before the plugin is disabled/removed, do clean up here."""
         pass
 
