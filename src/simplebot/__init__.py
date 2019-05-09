@@ -13,9 +13,6 @@ class Plugin(ABC):
     author = None        # type: str
     author_email = None  # type: str
 
-    def __init__(self, dc_account):
-      self.acc = dc_account
-
     @staticmethod
     def get_args(cmd, text):
         """Return the args for the given command or None if the command does not match."""
@@ -25,6 +22,18 @@ class Plugin(ABC):
             return ''
         return None
             
+    @staticmethod
     @abstractmethod
-    def process(self, msg):
+    def process(msg):
         """Return True if the message was processed with the plugin, False otherwise."""
+        
+    @staticmethod
+    def activate(ctx):
+        """Activate the plugin, this method is called at the start of the bot."""
+        pass
+
+    @staticmethod
+    def deactivate(ctx):
+        """Deactivate the plugin, this method is called to disable/stop the plugin."""
+        pass
+
