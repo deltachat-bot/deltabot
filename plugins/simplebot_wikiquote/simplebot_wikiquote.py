@@ -6,13 +6,14 @@ import wikiquote as wq
 class Wikiquote(Plugin):
 
     name = 'Wikiquote'
-    description = 'Provides the !quote [text] command to get the quote of the day or a random quote matching the given text.'
+    description = 'Provides the !quote [text] command to get the quote of the day or a random quote from the given text. Ex. !quote Richard Stallman'
     version = '0.1.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
-    
-    def process(self, msg):
-        arg = self.get_args('!quote', msg.text)
+
+    @classmethod
+    def process(cls, msg):
+        arg = cls.get_args('!quote', msg.text)
         if arg is not None:
             if arg:
                 pages = wq.search(arg)
@@ -24,7 +25,7 @@ class Wikiquote(Plugin):
             else:
                 quote, author = wq.quote_of_the_day()
                 quote = '"%s"\n\n-- %s' % (quote, author)
-            chat = self.acc.create_chat_by_message(msg)
+            chat = cls.ctx.acc.create_chat_by_message(msg)
             chat.send_text(quote)
             return True
         return False
