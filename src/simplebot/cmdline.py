@@ -71,10 +71,15 @@ def info(ctx):
 
 
 @click.command()
+@click.option("--locale",
+              default='en',
+              envvar="SIMPLEBOT_LOCALE",
+              help="locale for simplebot")
 @click.pass_context
-def serve(ctx):
+def serve(ctx, locale):
     """serve and react to incoming messages"""
     context = simplebot.Context
+    context.locale = locale
     context.logger = get_logger()
     
     acc = get_account(ctx.parent.basedir)
