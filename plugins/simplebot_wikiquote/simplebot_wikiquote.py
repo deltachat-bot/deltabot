@@ -20,7 +20,7 @@ class Wikiquote(Plugin):
             cls.QUOTE_NOT_FOUND = 'No se encontó ninguna frase para: "%s"'
         else:
             cls.QUOTE_NOT_FOUND = 'No quote found for: "%s"'
-        if ctx.locale in wikiquote.supported_languages():
+        if ctx.locale in wq.supported_languages():
             cls.LANG = ctx.locale
         else:
             cls.LANG = None
