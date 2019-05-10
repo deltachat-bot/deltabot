@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 import os
 import time
@@ -7,6 +8,17 @@ import deltachat
 import pkg_resources
 import simplebot
 
+
+def get_logger():
+    logger = logging.Logger('SimpleBot')
+    logger.parent = None
+    chandler = logging.StreamHandler()
+    chandler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    chandler.setFormatter(formatter)
+    logger.addHandler(chandler)
+    return logger
+    
 @click.command(cls=click.Group, context_settings=dict(help_option_names=["-h", "--help"]))
 @click.option("--basedir", type=click.Path(),
               default=click.get_app_dir("simplebot"),
@@ -63,7 +75,7 @@ def info(ctx):
 def serve(ctx):
     """serve and react to incoming messages"""
     context = simplebot.Context
-    context.logger = logging
+    context.logger = get_logger()
     
     acc = get_account(ctx.parent.basedir)
     if not acc.is_configured():
@@ -75,14 +87,15 @@ def serve(ctx):
     for ep in pkg_resources.iter_entry_points('simplebot.plugins'):
         try:
             plugins.append(ep.load())
-        except:
-            pass  # TODO: logging
+        except Exception as ex:
+            context.logger.exception(ex)
     context.plugins = plugins
     
     for plugin in context.plugins:
         try:
             plugin.activate(context)
-        except:
+        except Exception as ex:
+            context.logger.exception(ex)
             context.plugins.remove(plugin)
             
     context.acc.start_threads()
@@ -92,8 +105,8 @@ def serve(ctx):
         for plugin in context.plugins:
             try:
                 plugin.deactivate(context)
-            except:
-                pass  # TODO: logging
+            except Exception as ex:
+                context.logger.exception(ex)
         context.acc.stop_threads()
 
 
@@ -105,14 +118,14 @@ class Runner:
         msg = self.ctx.acc.get_message_by_id(int(msgid))
         sender_contact = msg.get_sender_contact()
         if sender_contact != self.ctx.acc.get_self_contact():
-            #print ("** creating/getting chat with incoming msg", msg)
-            #chat = self.acc.create_chat_by_message(msg)
+            self.ctx.logger.debug('Received message from %s: %s' % (sender_contact.addr, msg.text))
             for plugin in self.ctx.plugins:
                 try:
                     if plugin.process(msg):
+                        self.ctx.logger.debug('Message processed by '+plugin.name)
                         break
                 except Exception as ex:
-                    print(plugin.name+': UNEXPECTED ERROR:', ex)
+                    self.ctx.logger.exception(ex)
         self.ctx.acc.mark_seen_messages([msg])
 
     def dump_chats(self):
@@ -137,7 +150,7 @@ class Runner:
             # DC_EVENT_INCOMING_MSG for known contacts
             in_events = "DC_EVENT_MSGS_CHANGED|DC_EVENT_INCOMING_MSG"
             ev = self.ctx.acc._evlogger.get_matching(in_events)
-            if ev[2] == 0:
+            if ev[2] == 0:                
                 print (ev)
                 continue
             self.process_message(msgid=ev[2])
