@@ -37,3 +37,9 @@ class Plugin(ABC):
         """Deactivate the plugin, this method is called before the plugin is disabled/removed, do clean up here."""
         pass
 
+
+class Context:
+    """Context for plugins"""
+    acc = None
+    plugins = None
+    logger = None
