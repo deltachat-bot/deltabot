@@ -9,10 +9,17 @@ class Echo(Plugin):
     version = '0.1.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
-    
+    cmd = '!echo'
+
+    @classmethod
+    def activate(cls, ctx):
+        super().activate(ctx)
+        if ctx.locale == 'es':
+            cls.description = 'Provee el comando `!echo <texto>` el cual hace que el bot responda el texto que le pases. Ej. !echo hola mundo.'
+
     @classmethod
     def process(cls, msg):
-        arg = cls.get_args('!echo', msg.text)
+        arg = cls.get_args(cls.cmd, msg.text)
         if arg is not None:
             chat = cls.ctx.acc.create_chat_by_message(msg)
             chat.send_text(arg)

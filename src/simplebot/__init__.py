@@ -44,3 +44,4 @@ class Context:
     acc = None
     plugins = None
     logger = None
+    locale = None
