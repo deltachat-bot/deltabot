@@ -5,7 +5,7 @@ import time
 import click
 import deltachat
 import pkg_resources
-
+import simplebot
 
 @click.command(cls=click.Group, context_settings=dict(help_option_names=["-h", "--help"]))
 @click.option("--basedir", type=click.Path(),
@@ -62,11 +62,14 @@ def info(ctx):
 @click.pass_context
 def serve(ctx):
     """serve and react to incoming messages"""
+    context = simplebot.Context
+    context.logger = logging
+    
     acc = get_account(ctx.parent.basedir)
-
     if not acc.is_configured():
         fail(ctx, "account not configured: {}".format(acc.db_path))
     acc.set_config("save_mime_headers", "1")
+    context.acc = acc
     
     plugins = []
     for ep in pkg_resources.iter_entry_points('simplebot.plugins'):
@@ -74,14 +77,13 @@ def serve(ctx):
             plugins.append(ep.load())
         except:
             pass  # TODO: logging
+    context.plugins = plugins
     
-    context = simplebot.Context(acc, plugins, logging)
-    
-    for plugin in plugins:
+    for plugin in context.plugins:
         try:
             plugin.activate(context)
         except:
-            plugins.remove(plugin)
+            context.plugins.remove(plugin)
             
     context.acc.start_threads()
     try:
