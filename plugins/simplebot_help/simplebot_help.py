@@ -17,7 +17,7 @@ class Helper(Plugin):
             chat = cls.ctx.acc.create_chat_by_message(msg)
             text = 'SimpleBot for Delta Chat.\nInstalled plugins:\n\n'
             for p in cls.ctx.plugins:
-                text += '📀 {}[{}]:\n{}\n\n'.format(p.name, p.version, p.description)
+                text += '📀 {}:\n{}\n\n'.format(p.name, p.description)
             chat.send_text(text)
             return True
         return False
