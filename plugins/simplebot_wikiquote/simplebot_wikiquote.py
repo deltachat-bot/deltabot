@@ -37,7 +37,7 @@ class Wikiquote(Plugin):
                 else:
                     quote = cls.QUOTE_NOT_FOUND % arg
             else:
-                quote, author = wq.quote_of_the_day()
+                quote, author = wq.quote_of_the_day(lang=cls.LANG)
                 quote = '"%s"\n\n-- %s' % (quote, author)
             chat = cls.ctx.acc.create_chat_by_message(msg)
             chat.send_text(quote)
