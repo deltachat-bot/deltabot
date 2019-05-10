@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from simplebot import Plugin
 import pkg_resources
 
