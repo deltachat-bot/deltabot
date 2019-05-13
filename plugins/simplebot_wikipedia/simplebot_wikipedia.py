@@ -27,11 +27,15 @@ class Wikipedia(Plugin):
     def process(cls, msg):
         arg = cls.get_args('!w', msg.text)
         if arg is not None:
+            if not arg:
+                arg = wikipedia.random()
             try:
-                summary = wikipedia.summary(arg)
+                text = wikipedia.summary(arg)
+            except wikipedia.exceptions.DisambiguationError as ex:
+                text = '\n'.join(ex.options)
             except wikipedia.PageError:
-                summary = cls.PAGE_NOT_FOUND
+                text = cls.PAGE_NOT_FOUND
             chat = cls.ctx.acc.create_chat_by_message(msg)
-            chat.send_text(arg+':\n\n'+summary)
+            chat.send_text(arg+':\n\n'+text)
             return True
         return False
