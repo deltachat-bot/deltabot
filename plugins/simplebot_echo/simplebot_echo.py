@@ -20,8 +20,10 @@ class Echo(Plugin):
     @classmethod
     def process(cls, msg):
         arg = cls.get_args(cls.cmd, msg.text)
-        if arg is not None:
-            chat = cls.ctx.acc.create_chat_by_message(msg)
-            chat.send_text(arg)
-            return True
-        return False
+        if arg is None:
+            return False
+        if not arg:
+            arg = '🤖'
+        chat = cls.ctx.acc.create_chat_by_message(msg)
+        chat.send_text(arg)
+        return True

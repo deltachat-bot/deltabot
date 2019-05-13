@@ -22,14 +22,17 @@ class Wttrin(Plugin):
     @classmethod
     def process(cls, msg):
         arg = cls.get_args('!wttr', msg.text)
-        if arg is not None:
+        if arg is None:
+            return False
+        if arg:
             try:
                 resp = urlopen('http://wttr.in/%s?format=4' % quote_plus(arg))
                 text = resp.read().decode()
             except Exception as ex:
                 cls.ctx.logger.exception(ex)
                 text = str(ex)
-            chat = cls.ctx.acc.create_chat_by_message(msg)
-            chat.send_text(text)
-            return True
-        return False
+        else:
+            text = cls.description
+        chat = cls.ctx.acc.create_chat_by_message(msg)
+        chat.send_text(text)
+        return True
