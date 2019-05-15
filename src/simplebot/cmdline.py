@@ -18,7 +18,34 @@ def get_logger():
     chandler.setFormatter(formatter)
     logger.addHandler(chandler)
     return logger
-    
+
+
+def load_plugins(ctx):
+    ctx.plugins = []
+    for ep in pkg_resources.iter_entry_points('simplebot.plugins'):
+        try:
+            ctx.plugins.append(ep.load())
+        except Exception as ex:
+            ctx.logger.exception(ex)
+
+
+def activate_plugins(ctx):
+    for plugin in ctx.plugins:
+        try:
+            plugin.activate(ctx)
+        except Exception as ex:
+            ctx.logger.exception(ex)
+            ctx.plugins.remove(plugin)
+
+
+def deactivate_plugins(ctx):
+    for plugin in ctx.plugins:
+        try:
+            plugin.deactivate(ctx)
+        except Exception as ex:
+            ctx.logger.exception(ex)
+
+                
 @click.command(cls=click.Group, context_settings=dict(help_option_names=["-h", "--help"]))
 @click.option("--basedir", type=click.Path(),
               default=click.get_app_dir("simplebot"),
@@ -26,12 +53,12 @@ def get_logger():
               help="directory where simplebot state is stored")
 @click.version_option()
 @click.pass_context
-def bot_main(context, basedir):
+def bot_main(ctx, basedir):
     """delta.chat bot management command line interface."""
     basedir = os.path.abspath(os.path.expanduser(basedir))
     if not os.path.exists(basedir):
         os.makedirs(basedir)
-    context.basedir = basedir
+    ctx.basedir = basedir
 
 
 @click.command()
@@ -88,30 +115,14 @@ def serve(ctx, locale):
     acc.set_config("save_mime_headers", "1")
     context.acc = acc
     
-    plugins = []
-    for ep in pkg_resources.iter_entry_points('simplebot.plugins'):
-        try:
-            plugins.append(ep.load())
-        except Exception as ex:
-            context.logger.exception(ex)
-    context.plugins = plugins
-    
-    for plugin in context.plugins:
-        try:
-            plugin.activate(context)
-        except Exception as ex:
-            context.logger.exception(ex)
-            context.plugins.remove(plugin)
-            
+    load_plugins(context)
+    activate_plugins(context)
+
     context.acc.start_threads()
     try:
         Runner(context).serve()
     finally:
-        for plugin in context.plugins:
-            try:
-                plugin.deactivate(context)
-            except Exception as ex:
-                context.logger.exception(ex)
+        deactivate_plugins(context)
         context.acc.stop_threads()
 
 
@@ -123,7 +134,7 @@ class Runner:
         msg = self.ctx.acc.get_message_by_id(int(msgid))
         sender_contact = msg.get_sender_contact()
         if sender_contact != self.ctx.acc.get_self_contact():
-            self.ctx.logger.debug('Received message from %s: %s' % (sender_contact.addr, msg.text))
+            self.ctx.logger.debug('Received message from %s' % (sender_contact.addr,))
             for plugin in self.ctx.plugins:
                 try:
                     if plugin.process(msg):
@@ -133,23 +144,9 @@ class Runner:
                     self.ctx.logger.exception(ex)
         self.ctx.acc.mark_seen_messages([msg])
 
-    def dump_chats(self):
-        print("*" * 80)
-        chatlist = self.ctx.acc.get_chats()
-        for chat in chatlist:
-            print ("chat id={}, name={}".format(chat.id, chat.get_name()))
-            for sub in chat.get_contacts():
-                print("  member:", sub.addr)
-            for msg in chat.get_messages()[-10:]:
-                print(u"  msg {}, from {}: {!r}".format(
-                      msg.id,
-                      msg.get_sender_contact().addr,
-                      msg.text))
-
     def serve(self):
         print("start serve")
         while 1:
-            # self.dump_chats()
             # wait for incoming messages
             # DC_EVENT_MSGS_CHANGED for unknown contacts
             # DC_EVENT_INCOMING_MSG for known contacts
