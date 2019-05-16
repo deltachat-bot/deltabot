@@ -28,6 +28,7 @@ class DeltaFriends(Plugin):
     USER_ADDED = 'You are now in the DeltaFriends list'
     USER_REMOVED = 'You was removed from the DeltaFriends list'
     USER_NOT_FOUND = 'You are NOT in the DeltaFriends list'
+    NO_DESC = '(No description)'
     hcmd_list = '!friends command will return the list of users wanting to make new friends'
     hcmd_join = '!friends !join <bio> will add you to the list, "bio" is up to 50 characters of words describing yourself. Ex. !friends !join male, Cuban, tech, free software, music'
     hcmd_leave = '!friends !leave command will remove you from the DeltaFriends list'
@@ -36,10 +37,11 @@ class DeltaFriends(Plugin):
     def activate(cls, ctx):
         super().activate(ctx)
         if ctx.locale == 'es':
-            cls.description = 'Provee el comando !friends para más información utilice !friends !help. Ej. !friends !join intereses: tecnología, software libre.'
+            cls.description = 'Provee el comando !friends, para más información utilice !friends !help. Ej. !friends !join intereses: tecnología, software libre.'
             cls.USER_ADDED = 'Ahora estás en la lista de DeltaFriends'
             cls.USER_REMOVED = 'Fuiste eliminado de la lista de DeltaFriends'
             cls.USER_NOT_FOUND = 'No estás en la lista de DeltaFriends'
+            cls.NO_DESC = '(Sin descripción)'
             cls.hcmd_list = '!friends este comando te mostrará la lista de personas que buscan nuevos amigos'
             cls.hcmd_join = '!friends !join <bio> usa este comando para unirte a la lista, "<bio>" son palabras que te identifique o tus gustos (hasta 50 caracteres). Ej. !friends !join programador, software libre, música, anime, CAV'
             cls.hcmd_leave = '!friends !leave usa este comando para quitarte de la lista de DeltaFriends'
@@ -52,6 +54,7 @@ class DeltaFriends(Plugin):
             return False
         if not arg:
             text = cls.dump_friends()
+            chat = cls.ctx.acc.create_chat_by_message(msg)
         else:
             req = arg
             addr = msg.get_sender_contact().addr
@@ -59,19 +62,21 @@ class DeltaFriends(Plugin):
                 arg = cls.get_args(cmd, req)
                 if arg is not None:
                     text = action(addr, arg)
+                    chat = cls.ctx.acc.create_chat_by_contact(msg.get_sender_contact)
                     break
             else:
                 text = cls.get_help()
-        chat = cls.ctx.acc.create_chat_by_message(msg)
+                chat = cls.ctx.acc.create_chat_by_message(msg)
         chat.send_text(text)
         return True
 
     @classmethod
     def dump_friends(cls):
+        get_desc = lambda d: d if d else cls.NO_DESC
         text = 'DeltaFriends(%s):\n\n' % len(cls.friends)
-        text += '\n\n'.join(['%s: %s' % user for user in cls.friends.items()])
-        return text
-        
+        text += '\n\n'.join(['%s: %s' % (addr,get_desc(desc))
+                             for addr,desc in sorted(cls.friends.items(), key=lambda u: u[0])])
+        return text        
 
     @classmethod
     def join(cls, addr, text):
