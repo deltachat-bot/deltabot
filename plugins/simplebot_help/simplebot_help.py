@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from simplebot import Plugin
-import pkg_resources
 
 
 class Helper(Plugin):
@@ -10,6 +9,7 @@ class Helper(Plugin):
     version = '0.1.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
+    BANNER = 'SimpleBot for Delta Chat.\nInstalled plugins:\n\n'
 
     @classmethod
     def activate(cls, ctx):
@@ -17,8 +17,6 @@ class Helper(Plugin):
         if ctx.locale == 'es':
             cls.description = 'Provee el comando !help que muestra este mensaje. Ej. !help.'
             cls.BANNER = 'SimpleBot para Delta Chat.\nPlugins instalados:\n\n'
-        else:
-            cls.BANNER = 'SimpleBot for Delta Chat.\nInstalled plugins:\n\n'
 
     @classmethod
     def process(cls, msg):

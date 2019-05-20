@@ -9,7 +9,6 @@ class Echo(Plugin):
     version = '0.1.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
-    cmd = '!echo'
 
     @classmethod
     def activate(cls, ctx):
@@ -19,7 +18,7 @@ class Echo(Plugin):
 
     @classmethod
     def process(cls, msg):
-        arg = cls.get_args(cls.cmd, msg.text)
+        arg = cls.get_args('!echo', msg.text)
         if arg is None:
             return False
         if not arg:
