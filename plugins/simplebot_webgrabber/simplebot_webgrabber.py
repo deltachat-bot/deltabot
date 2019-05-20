@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-from simplebot import Plugin
+from urllib.request import quote
 
+from simplebot import Plugin
+import bs4
 import requests
 
 
@@ -32,12 +34,18 @@ class WebGrabber(Plugin):
                 r = requests.get(arg, headers=headers, stream=True)
                 TEMP_FILE = 'page.html'
                 if 'text/html' in r.headers['content-type']:
-                    with open(TEMP_FILE, 'wb') as fd:
-                        for chunk in r.iter_content(chunk_size=128):
-                            fd.write(chunk)
+                    soup = bs4.BeautifulSoup(r.text)
+                    [t.extract() for t in soup(['script', 'meta', 'iframe', 'noscript'])]
+                    comments = soup.find_all(text=lambda text:isinstance(text, bs4.Comment))
+                    [comment.extract() for comment in comments]
+                    for a in soup.find_all('a', attrs={'href':True}):
+                        a['href'] = 'mailto:{}?subject={}&body={}'.format(cls.ctx.acc.get_self_contact().addr, quote('!web '), quote(a['href'], safe=''))
+                    with open(TEMP_FILE, 'w') as fd:
+                        fd.write(str(soup))
                     chat.send_file(TEMP_FILE, mime_type='text/html')
                 else:
                     chat.send_text('Only html pages are allowed, but requested: %s' % r.headers['content-type'])
-            except:
+            except Exception as ex:
+                cls.ctx.logger.exception(ex)
                 chat.send_text('Falied to get the url: %s' % arg)
         return True
