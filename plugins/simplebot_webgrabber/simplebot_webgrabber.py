@@ -31,6 +31,8 @@ class WebGrabber(Plugin):
         else:
             try:
                 headers = {'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
+                if not arg.startswith('http'):
+                    arg = 'http://'+arg
                 r = requests.get(arg, headers=headers, stream=True)
                 TEMP_FILE = 'page.html'
                 if 'text/html' in r.headers['content-type']:
@@ -39,6 +41,12 @@ class WebGrabber(Plugin):
                     comments = soup.find_all(text=lambda text:isinstance(text, bs4.Comment))
                     [comment.extract() for comment in comments]
                     for a in soup.find_all('a', attrs={'href':True}):
+                        if a['href'].startswith('/'):
+                            index = r.url.find('/', 8)
+                            if index >= 0:                                
+                                a['href'] = r.url[:index]+a['href']
+                            else:
+                                a['href'] = r.url+a['href']
                         a['href'] = 'mailto:{}?subject={}&body={}'.format(cls.ctx.acc.get_self_contact().addr, quote('!web '), quote(a['href'], safe=''))
                     with open(TEMP_FILE, 'w') as fd:
                         fd.write(str(soup))
