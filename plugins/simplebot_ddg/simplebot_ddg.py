@@ -12,14 +12,14 @@ class DuckDuckGo(Plugin):
     version = '0.1.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
-    NOT_FOUND = 'Nothing found.'
+    NOT_FOUND = 'No results found for: "{}"'
 
     @classmethod
     def activate(cls, ctx):
         super().activate(ctx)
         if ctx.locale == 'es':
             cls.description = 'Provee el comando `!ddg <texto>` para buscar en DuckDuckGo. Ej. !ddg que es software libre?.'
-            cls.NOT_FOUND = 'No se encontraron resultados.'
+            cls.NOT_FOUND = 'No se encontraron resultados para: "{}"'
 
     @classmethod
     def process(cls, msg):
@@ -31,7 +31,7 @@ class DuckDuckGo(Plugin):
             page = urlopen('https://duckduckgo.com/html?q=%s' % quote_plus(arg)).read()
             results = BeautifulSoup(page, 'html.parser').find_all('div', class_='result')[:5]
             if not results:
-                text = cls.NOT_FOUND
+                text = cls.NOT_FOUND.format(arg)
             for r in results:
                 text += r.h2.a.get_text().strip() + '\n'
                 text += r.find('a', class_='result__url').get_text().strip()+'\n'
