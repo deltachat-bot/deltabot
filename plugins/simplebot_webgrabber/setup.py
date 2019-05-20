@@ -35,7 +35,7 @@ setup(
     keywords='deltachat simplebot plugin',
     #project_urls={},
     py_modules=[MODULE_NAME],
-    install_requires=['simplebot', 'requests'],
+    install_requires=['simplebot', 'requests', 'beautifulsoup4'],
     python_requires='>=3.5',
     entry_points={
         'simplebot.plugins': '{} = {}:{}'.format(PLUGIN_NAME, MODULE_NAME, CLASS_NAME)
