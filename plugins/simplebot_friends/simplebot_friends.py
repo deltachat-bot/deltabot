@@ -73,7 +73,7 @@ class DeltaFriends(Plugin):
         return True
 
     @classmethod
-    def list_cmd(cls, _, _):
+    def list_cmd(cls, addr, text):
         get_desc = lambda d: d if d else cls.NO_DESC
         text = 'DeltaFriends(%s):\n\n' % len(cls.friends)
         text += '\n\n'.join(['%s: %s' % (addr,get_desc(desc))
