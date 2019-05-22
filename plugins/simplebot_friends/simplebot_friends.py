@@ -11,17 +11,17 @@ class DeltaFriends(Plugin):
 
     name = 'DeltaFriends'
     description = 'Provides the !friends command, use `!friends !help` for more info. Ex. !friends !join male,tech,free software,rock music.'
-    version = '0.1.0'
+    version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
-    MAX_BIO_LEN = 60
+    MAX_BIO_LEN = 80
     USER_ADDED = 'You are now in the DeltaFriends list'
     USER_REMOVED = 'You was removed from the DeltaFriends list'
     USER_NOT_FOUND = 'You are NOT in the DeltaFriends list'
     SEARCH_RESULTS = 'Search results for "{}":\n\n'
     NO_DESC = '(No description)'
     hcmd_list = '!friends !list command will return the list of users wanting to make new friends'
-    hcmd_join = '!friends !join <bio> will add you to the list, "bio" is up to {} characters of words describing yourself. Ex. !friends !join male, Cuban, tech, free software, music'
+    hcmd_join = '!friends !join <bio> will add you to the list or update your bio, "bio" is up to {} characters of words describing yourself. Ex. !friends !join male, Cuban, tech, free software, music'
     hcmd_leave = '!friends !leave command will remove you from the DeltaFriends list'
     hcmd_search = '!friends !search <text> search for friends which bio or email match the given text'
 
@@ -39,7 +39,7 @@ class DeltaFriends(Plugin):
             cls.SEARCH_RESULTS = 'Resultados para "{}":\n\n'
             cls.NO_DESC = '(Sin descripción)'
             cls.hcmd_list = '!friends !list este comando te mostrará la lista de personas que buscan nuevos amigos'
-            cls.hcmd_join = '!friends !join <bio> usa este comando para unirte a la lista, "<bio>" son palabras que te identifique o tus gustos (hasta {} caracteres). Ej. !friends !join programador, software libre, música, anime, CAV'
+            cls.hcmd_join = '!friends !join <bio> usa este comando para unirte a la lista o actualizar tu biografía, "<bio>" son palabras que te identifique o tus gustos (hasta {} caracteres). Ej. !friends !join programador, software libre, música, anime, CAV'
             cls.hcmd_leave = '!friends !leave usa este comando para quitarte de la lista de DeltaFriends'
             cls.hcmd_search = '!friends !search <texto> este comando permite buscar amigos basado en el texto que le pases. Ej. "!friends !search Habana" para buscar todas las personas que hayan dicho ser de La Habana'
 
@@ -102,8 +102,8 @@ class DeltaFriends(Plugin):
         for addr,desc in friends:
             desc = get_desc(desc)
             if t.findall(desc) or t.findall(addr):
-                friends += '{}: {}\n\n'.format(addr, desc)
-        return cls.SEARCH_RESULTS.format(text)+friends
+                results += '{}: {}\n\n'.format(addr, desc)
+        return cls.SEARCH_RESULTS.format(text)+results
 
     @classmethod
     def help_cmd(cls):

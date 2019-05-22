@@ -6,7 +6,7 @@ class Echo(Plugin):
 
     name = 'Echo'
     description = 'Provides the !echo <text> command to reply back <text>. Ex. !echo hello world.'
-    version = '0.1.0'
+    version = '0.1.1'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
 
@@ -18,11 +18,11 @@ class Echo(Plugin):
 
     @classmethod
     def process(cls, msg):
-        arg = cls.get_args('!echo', msg.text)
-        if arg is None:
+        text = cls.get_args('!echo', msg.text)
+        if text is None:
             return False
-        if not arg:
-            arg = '🤖'
+        if not text:
+            text = '🤖'
         chat = cls.ctx.acc.create_chat_by_message(msg)
-        chat.send_text(arg)
+        chat.send_text(text)
         return True

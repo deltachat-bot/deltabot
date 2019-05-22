@@ -6,7 +6,7 @@ class Helper(Plugin):
 
     name = 'Help'
     description = 'Provides the !help command. Ex. !help.'
-    version = '0.1.0'
+    version = '0.1.1'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
     BANNER = 'SimpleBot for Delta Chat.\nInstalled plugins:\n\n'
