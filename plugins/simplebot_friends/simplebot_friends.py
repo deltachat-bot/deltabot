@@ -28,7 +28,9 @@ class DeltaFriends(Plugin):
     @classmethod
     def activate(cls, ctx):
         super().activate(ctx)
-        cls.DB_PATH = os.path.join(cls.ctx.basedir, 'deltafriends.db')  #TODO: use sqlite
+        cls.conn = sqlite3.connect(os.path.join(cls.ctx.basedir, 'deltafriends.db'))
+        with cls.conn:
+            cls.conn.execute('''CREATE TABLE IF NOT EXISTS deltafriends (addr TEXT NOT NULL, bio TEXT, PRIMARY KEY(addr))''')
         if ctx.locale == 'es':
             cls.description = 'Provee el comando !friends, para más información utilice !friends !help. Ej. !friends !join chico, música, tecnología, series, buscando amigos.'
             cls.USER_ADDED = 'Ahora estás en la lista de DeltaFriends'
@@ -40,9 +42,6 @@ class DeltaFriends(Plugin):
             cls.hcmd_join = '!friends !join <bio> usa este comando para unirte a la lista, "<bio>" son palabras que te identifique o tus gustos (hasta {} caracteres). Ej. !friends !join programador, software libre, música, anime, CAV'
             cls.hcmd_leave = '!friends !leave usa este comando para quitarte de la lista de DeltaFriends'
             cls.hcmd_search = '!friends !search <texto> este comando permite buscar amigos basado en el texto que le pases. Ej. "!friends !search Habana" para buscar todas las personas que hayan dicho ser de La Habana'
-        cls.conn = sqlite3.connect(db_path)
-        with cls.conn:
-            cls.conn.execute('''CREATE TABLE IF NOT EXISTS deltafriends (addr TEXT NOT NULL, bio TEXT, PRIMARY KEY(addr))''')
 
     @classmethod
     def deactivate(cls, ctx):
