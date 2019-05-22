@@ -68,7 +68,7 @@ class DeltaFriends(Plugin):
 
     @classmethod
     def list_cmd(cls, addr, text):
-        friends = cls.conn.execute('SELECT * FROM deltafriends ORDER BY addr')
+        friends = cls.conn.execute('SELECT * FROM deltafriends ORDER BY addr').fetchall()
         get_desc = lambda d: d if d else cls.NO_DESC
         text = 'DeltaFriends({}):\n\n'.format(len(friends))
         text += '\n\n'.join(['{}: {}'.format(addr, get_desc(desc))
@@ -95,11 +95,10 @@ class DeltaFriends(Plugin):
 
     @classmethod
     def search_cmd(cls, _, text):
-        friends = cls.conn.execute('SELECT * FROM deltafriends ORDER BY addr')
         results = ''
         get_desc = lambda d: d if d else cls.NO_DESC
         t = re.compile(text, re.IGNORECASE)
-        for addr,desc in friends:
+        for addr,desc in cls.conn.execute('SELECT * FROM deltafriends ORDER BY addr'):
             desc = get_desc(desc)
             if t.findall(desc) or t.findall(addr):
                 results += '{}: {}\n\n'.format(addr, desc)
