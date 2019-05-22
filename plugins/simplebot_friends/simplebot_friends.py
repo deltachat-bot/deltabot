@@ -2,21 +2,10 @@
 import json
 import os
 import re
+import sqlite3
 
 from simplebot import Plugin
 
-
-def load_friends(db_path):
-    try:
-        with open(db_path) as fd:
-            return json.load(fd)
-    except FileNotFoundError:
-        return dict()
-
-
-def save_friends(friends, db_path):
-    with open(db_path, 'w') as fd:
-        json.dump(friends, fd)
 
 class DeltaFriends(Plugin):
 
@@ -25,7 +14,6 @@ class DeltaFriends(Plugin):
     version = '0.1.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
-    DB_PATH = os.path.abspath(os.path.expanduser('~/deltafriends.json'))  #TODO: use simplebot config dir and sqlite
     MAX_BIO_LEN = 60
     USER_ADDED = 'You are now in the DeltaFriends list'
     USER_REMOVED = 'You was removed from the DeltaFriends list'
@@ -40,6 +28,7 @@ class DeltaFriends(Plugin):
     @classmethod
     def activate(cls, ctx):
         super().activate(ctx)
+        cls.DB_PATH = os.path.join(cls.ctx.basedir, 'deltafriends.db')  #TODO: use sqlite
         if ctx.locale == 'es':
             cls.description = 'Provee el comando !friends, para más información utilice !friends !help. Ej. !friends !join chico, música, tecnología, series, buscando amigos.'
             cls.USER_ADDED = 'Ahora estás en la lista de DeltaFriends'
@@ -51,7 +40,13 @@ class DeltaFriends(Plugin):
             cls.hcmd_join = '!friends !join <bio> usa este comando para unirte a la lista, "<bio>" son palabras que te identifique o tus gustos (hasta {} caracteres). Ej. !friends !join programador, software libre, música, anime, CAV'
             cls.hcmd_leave = '!friends !leave usa este comando para quitarte de la lista de DeltaFriends'
             cls.hcmd_search = '!friends !search <texto> este comando permite buscar amigos basado en el texto que le pases. Ej. "!friends !search Habana" para buscar todas las personas que hayan dicho ser de La Habana'
-        cls.friends = load_friends(cls.DB_PATH)
+        cls.conn = sqlite3.connect(db_path)
+        with cls.conn:
+            cls.conn.execute('''CREATE TABLE IF NOT EXISTS deltafriends (addr TEXT NOT NULL, bio TEXT, PRIMARY KEY(addr))''')
+
+    @classmethod
+    def deactivate(cls, ctx):
+        cls.conn.close()
 
     @classmethod
     def process(cls, msg):
@@ -74,36 +69,38 @@ class DeltaFriends(Plugin):
 
     @classmethod
     def list_cmd(cls, addr, text):
+        friends = cls.conn.execute('SELECT * FROM deltafriends ORDER BY addr')
         get_desc = lambda d: d if d else cls.NO_DESC
-        text = 'DeltaFriends(%s):\n\n' % len(cls.friends)
-        text += '\n\n'.join(['%s: %s' % (addr,get_desc(desc))
-                             for addr,desc in sorted(cls.friends.items())])
-        return text        
+        text = 'DeltaFriends({}):\n\n'.format(len(friends))
+        text += '\n\n'.join(['{}: {}'.format(addr, get_desc(desc))
+                             for addr,desc in friends])
+        return text
 
     @classmethod
     def join_cmd(cls, addr, text):
-        text = ' '.join([word for word in text.split()])
-        if len(text) > cls.MAX_BIO_LEN:
-            text = text[:cls.MAX_BIO_LEN] + '...'
-        cls.friends[addr] = text
-        save_friends(cls.friends, cls.DB_PATH)
+        bio = ' '.join([word for word in text.split()])
+        if len(bio) > cls.MAX_BIO_LEN:
+            bio = bio[:cls.MAX_BIO_LEN] + '...'
+        with cls.conn:
+            cls.conn.execute('INSERT OR REPLACE INTO deltafriends VALUES (?, ?)', (addr, bio))
         return cls.USER_ADDED
 
     @classmethod
-    def leave_cmd(cls, addr, text):
-        try:
-            cls.friends.pop(addr)
-            save_friends(cls.friends, cls.DB_PATH)
+    def leave_cmd(cls, addr, _):
+        with cls.conn:
+            rowcount = cls.conn.execute('DELETE FROM deltafriends WHERE addr=?', addr).rowcount
+        if rowcount == 1:
             return cls.USER_REMOVED
-        except KeyError:
+        else:
             return cls.USER_NOT_FOUND
 
     @classmethod
     def search_cmd(cls, _, text):
-        friends = ''
+        friends = cls.conn.execute('SELECT * FROM deltafriends ORDER BY addr')
+        results = ''
         get_desc = lambda d: d if d else cls.NO_DESC
         t = re.compile(text, re.IGNORECASE)
-        for addr,desc in sorted(cls.friends.items()):
+        for addr,desc in friends:
             desc = get_desc(desc)
             if t.findall(desc) or t.findall(addr):
                 friends += '{}: {}\n\n'.format(addr, desc)
