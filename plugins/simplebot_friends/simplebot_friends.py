@@ -61,7 +61,7 @@ class DeltaFriends(Plugin):
         req = arg
         addr = msg.get_sender_contact().addr
         for cmd,action in [('!join', cls.join_cmd), ('!leave', cls.leave_cmd), ('!search', cls.search_cmd),
-                           ('!list', cls.list_cmd]:
+                           ('!list', cls.list_cmd)]:
             arg = cls.get_args(cmd, req)
             if arg is not None:
                 text = action(addr, arg)
