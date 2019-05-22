@@ -106,7 +106,7 @@ def info(ctx):
 def serve(ctx, locale):
     """serve and react to incoming messages"""
     context = simplebot.Context
-    context.basedir = ctx.basedir
+    context.basedir = ctx.parent.basedir
     context.locale = locale
     context.logger = get_logger()
     
