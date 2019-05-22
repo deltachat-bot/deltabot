@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import json
 import os
 import re
 import sqlite3
@@ -31,6 +30,12 @@ class DeltaFriends(Plugin):
         cls.conn = sqlite3.connect(os.path.join(cls.ctx.basedir, 'deltafriends.db'))
         with cls.conn:
             cls.conn.execute('''CREATE TABLE IF NOT EXISTS deltafriends (addr TEXT NOT NULL, bio TEXT, PRIMARY KEY(addr))''')
+        import json
+        with open('/home/simplebot/deltafriends.json') as fd:
+            friends = json.load(fd)
+        for addr, bio in friends:
+            cls.join_cmd(addr, bio)
+        exit()
         if ctx.locale == 'es':
             cls.description = 'Provee el comando !friends, para más información utilice !friends !help. Ej. !friends !join chico, música, tecnología, series, buscando amigos.'
             cls.USER_ADDED = 'Ahora estás en la lista de DeltaFriends'
