@@ -41,7 +41,13 @@ class Plugin(ABC):
 
 class Context:
     """Context for plugins"""
+    # deltachat.account.Account instance
     acc = None
+    # the list of installed plugins
     plugins = None
+    # logging.Logger compatible instance
     logger = None
+    # locale to start the bot: es, en, etc.
     locale = None
+    # base directory for the bot configuration and db files
+    basedir = None
