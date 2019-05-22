@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 import os
+import re
 
 from simplebot import Plugin
 
@@ -57,24 +58,22 @@ class DeltaFriends(Plugin):
         arg = cls.get_args('!friends', msg.text)
         if arg is None:
             return False
-        if not arg:
-            text = cls.dump_friends()
+        req = arg
+        addr = msg.get_sender_contact().addr
+        for cmd,action in [('!join', cls.join_cmd), ('!leave', cls.leave_cmd), ('!search', cls.search_cmd),
+                           ('!list', cls.list_cmd]:
+            arg = cls.get_args(cmd, req)
+            if arg is not None:
+                text = action(addr, arg)
+                break
         else:
-            req = arg
-            addr = msg.get_sender_contact().addr
-            for cmd,action in [('!join', cls.join_cmd), ('!leave', cls.leave_cmd), ('!search', cls.search_cmd)]:
-                arg = cls.get_args(cmd, req)
-                if arg is not None:
-                    text = action(addr, arg)
-                    break
-            else:
-                text = cls.get_help()
+            text = cls.help_cmd()
         chat = cls.ctx.acc.create_chat_by_message(msg)
         chat.send_text(text)
         return True
 
     @classmethod
-    def dump_friends(cls):
+    def list_cmd(cls, _, _):
         get_desc = lambda d: d if d else cls.NO_DESC
         text = 'DeltaFriends(%s):\n\n' % len(cls.friends)
         text += '\n\n'.join(['%s: %s' % (addr,get_desc(desc))
@@ -103,12 +102,14 @@ class DeltaFriends(Plugin):
     def search_cmd(cls, _, text):
         friends = ''
         get_desc = lambda d: d if d else cls.NO_DESC
+        t = re.compile(text, re.IGNORECASE)
         for addr,desc in sorted(cls.friends.items()):
             desc = get_desc(desc)
-            if re.findall(text, desc) or re.findall(text, addr):
+            if t.findall(desc) or t.findall(addr):
                 friends += '{}: {}\n\n'.format(addr, desc)
         return cls.SEARCH_RESULTS.format(text)+friends
 
     @classmethod
-    def get_help(cls):
-        return '\n\n'.join(['DeltaFriends:\n', cls.hcmd_list, cls.hcmd_join.format(cls.MAX_BIO_LEN), cls.hcmd_leave])
+    def help_cmd(cls):
+        return '\n\n'.join(['DeltaFriends:\n', cls.hcmd_list, cls.hcmd_join.format(cls.MAX_BIO_LEN),
+                            cls.hcmd_search, cls.hcmd_leave])
