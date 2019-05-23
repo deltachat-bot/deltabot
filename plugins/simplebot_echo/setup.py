@@ -24,14 +24,14 @@ setup(
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/x-rst',
     url='https://github.com/adbenitez/simplebot',
-    classifiers=(
+    classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Plugins',
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Operating System :: OS Independent',
         'Topic :: Utilities'
-    ),
+    ],
     keywords='deltachat simplebot plugin',
     #project_urls={},
     py_modules=[MODULE_NAME],
