@@ -114,6 +114,12 @@ def serve(ctx, locale):
     if not acc.is_configured():
         fail(ctx, "account not configured: {}".format(acc.db_path))
     acc.set_config("save_mime_headers", "1")
+    acc.set_config('mdns_enabled', '0')
+    acc.set_config('sentbox_watch', '0')
+    acc.set_config('mvbox_watch', '0')
+    acc.set_config('mvbox_move', '0')
+    acc.set_config('displayname', 'SimpleBot🤖')
+
     context.acc = acc
     
     load_plugins(context)
