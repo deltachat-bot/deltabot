@@ -25,15 +25,15 @@ class GetDelta(Plugin):
             return False
         arg = arg.lower()
         if arg == 'ios':
-            text = 'Delta Chat - iOS:\n\nhttps://testflight.apple.com/join/WVoYFOZe'
+            text = 'Delta Chat ‒ iOS:\n\nhttps://testflight.apple.com/join/WVoYFOZe'
         else:
             platform = arg if arg == 'desktop' else 'android'
             page = urlopen('https://github.com/deltachat/deltachat-{}/releases'.format(platform)).read()
             latest = BeautifulSoup(page, 'html.parser').find('div', class_='label-latest')
-            text = 'Delta Chat - {}({}):\n\n'.format(platform.capitalize(), latest.ul.a['title'].strip())
+            text = 'Delta Chat ‒ {}({}):\n\n'.format(platform.capitalize(), latest.ul.a['title'].strip())
             text += latest.find('div', class_='markdown-body').get_text()
             for box in list(latest.find_all('div', class_='Box-body'))[:-2]:
-                text += '\nhttps://github.com'+box.a['href']
+                text += '\nhttps://github.com{}\n'.format(box.a['href'])
         chat = cls.ctx.acc.create_chat_by_message(msg)
         chat.send_text(text)
         return True
