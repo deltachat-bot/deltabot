@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-from simplebot import Plugin
+import string
+import random
 
+from simplebot import Plugin
 import deltachat as dc
 
 
@@ -12,12 +14,13 @@ class GroupMaster(Plugin):
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
     PUBLIC_GROUP = '[pub]'
+    MAX_TOPIC_SIZE = 250
     HELP = '\n\n'.join(['!group !list will show the list of public groups and their ID.',
                         '!group !id send this command in a group to see its ID.',
                         '!group !join <ID> will join you to the public group with the given ID.',
                         '!group !leave <ID> will remove you from the group with the given ID.',
                         '!group !public/!private use this commands in a group to make it public or private.',
-                        '!group !topic [new topic] replace the current topic or show the current topic if no new topic was provided.',
+                        '!group !topic [new topic] replace the current topic or show the current topic if no new topic was provided (topics must be < {} characters).'.format(MAX_TOPIC_SIZE),
                         '!group !add <ID> <addrs> will add a comma-separated list of addresses to the group with the given ID.',
                         '!group !remove <ID> <addr> will remove the member with the given address from the group with the give ID.',
                         '!group !msg <ID> <msg> will send the given message to the group with the given ID.'])
@@ -45,9 +48,9 @@ class GroupMaster(Plugin):
             cls.HELP = '\n\n'.join(['!group !list muestra la lista de grupos públicos y sus ID.',
                                     '!group !id envia este comando en un grupo para obtener su ID.',
                                     '!group !join te permite unirte al grupo público con el ID dado.',
-                                    '!group !leave <ID> usa este comando para abandonar el grupo con el ID dado',
+                                    '!group !leave <ID> usa este comando para abandonar el grupo con el ID dado.',
                                     '!group !public/!private usa estos comandos en un grupo para hacerlo público o privado.',
-                                    '!group !topic [nuevo tema] sustituye el tema actual o muestra el tema actual si no es dado uno nuevo',
+                                    '!group !topic [nuevo tema] sustituye el tema actual o muestra el tema actual si no es dado uno nuevo (tamaño máximo del tema: {} caracteres).'.format(cls.MAX_TOPIC_SIZE),
                                     '!group !add <ID> <correos> permite agregar una lista separada por comas de direcciones de correo al grupo con el  ID dado.',
                                     '!group !remove <ID> <correo> permite eliminar un miembro del grupo con el ID dado.',
                                     '!group !msg <ID> <msg> permite enviar un mensaje al grupo con el ID dado.'])
@@ -109,7 +112,18 @@ class GroupMaster(Plugin):
 
     @classmethod
     def id_cmd(cls, msg, _):
-        return 'ID: {}'.format(msg.chat.id)
+        if chat.get_type() not in (dc.const.DC_CHAT_TYPE_GROUP,
+                                   dc.const.DC_CHAT_TYPE_VERIFIED_GROUP):
+            return 'Not a group.' # cls.NOT_A_GROUP
+        _, _, pub = cls.parse_group_name(msg.chat.get_name())
+        if pub:
+            gid = msg.chat.id
+        else:
+            # TODO: load from db if exist, generate otherwise
+            gid = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits)
+                          for _ in range(10))
+            gid = 'http://delta.chat/join/{}-{}'.format(gid, msg.chat.id)
+        return 'ID: {}'.format()
 
     @classmethod
     def public_cmd(cls, msg, _):
