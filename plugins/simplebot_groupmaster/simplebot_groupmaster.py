@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from simplebot import Plugin
 
-import deltachat
+import deltachat as dc
 
 
 class GroupMaster(Plugin):
@@ -12,22 +12,48 @@ class GroupMaster(Plugin):
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
     PUBLIC_GROUP = '[pub]'
-    HELP = '!group !list will show the list of public groups and their ID.\n\n!group !id send this command in a group to see its ID.\n\n!group !join <ID> will join you to the public group with the given ID.\n\n!group !leave ID will remove you from the group with the given ID.\n\nTo make a group public add this bot to the group and append the keyword "[pub]" to the name of the group (ex. YourGroupName [pub]), to make the group private again, remove the keyword "[pub]" from its name or remove the bot from the group.'
-    LISTCMD_BANNER = 'Groups (%s):\n\n'
-    UNKNOW_GROUP = 'unknow group ID: %s'
-    REMOVED_FROM_GROUP = 'removed from %s [ID:%s]'
-    ADDED_TO_GROUP = 'added to %s [ID:%s]'
+    HELP = '\n\n'.join(['!group !list will show the list of public groups and their ID.',
+                        '!group !id send this command in a group to see its ID.',
+                        '!group !join <ID> will join you to the public group with the given ID.',
+                        '!group !leave <ID> will remove you from the group with the given ID.',
+                        '!group !public/!private use this commands in a group to make it public or private.',
+                        '!group !topic [new topic] replace the current topic or show the current topic if no new topic was provided.',
+                        '!group !add <ID> <addrs> will add a comma-separated list of addresses to the group with the given ID.',
+                        '!group !remove <ID> <addr> will remove the member with the given address from the group with the give ID.',
+                        '!group !msg <ID> <msg> will send the given message to the group with the given ID.'])
+    LISTCMD_BANNER = 'Groups ({}):\n\n'
+    UNKNOW_GROUP = 'unknow group ID: {}'
+    REMOVED_FROM_GROUP = 'removed from {} [ID:{}]'
+    REMOVED_FROM_GROUP_BY = 'removed from {} [ID:{}] by {}'
+    ADDED_TO_GROUP = 'added to {} [ID:{}]\n\nTopic:\n{}'
+    ADDED_TO_GROUP_BY = 'added to {} [ID:{}] by {}\n\nTopic:\n{}'
+    GROUP_STATUS_PUBLIC = 'Group status: Public'
+    GROUP_STATUS_PRIVATE = 'Group status: Private'
+    TOPIC = 'Topic:\n{}'
 
     @classmethod
     def activate(cls, ctx):
         super().activate(ctx)
         if ctx.locale == 'es':
             cls.description = 'Provee el comando !group, utilice !group !help para más información. Ej. !group !list.'
-            cls.LISTCMD_BANNER = 'Grupos (%s):\n\n'
-            cls.UNKNOW_GROUP = 'Grupo desconocido, ID: %s'
-            cls.REMOVED_FROM_GROUP = 'Fuiste eliminado de %s [ID:%s]'
-            cls.ADDED_TO_GROUP = 'Fuiste añadido a %s [ID:%s]'
-            cls.HELP = '!group !list muestra la lista de grupos públicos y sus ID.\n\n!group !id envia este comando en un grupo para obtener su ID.\n\n!group !join <ID> te permite unirte al grupo público con el ID dado.\n\n!group !leave ID usa este comando para abandonar el grupo con el ID dado.\n\nPara hacer un grupo público, añade este bot al grupo y agrega la palabra "[pub]" al final del nombre del grupo (ej. NombreDelGrupo [pub]), para hacer el grupo privado otra vez, elimina la palabra "[pub]" del nombre del grupo o quita este bot del grupo.'
+            cls.LISTCMD_BANNER = 'Grupos ({}):\n\n'
+            cls.UNKNOW_GROUP = 'Grupo desconocido, ID: {}'
+            cls.REMOVED_FROM_GROUP = 'Fuiste eliminado de {} [ID:{}]'
+            cls.REMOVED_FROM_GROUP_BY = 'Fuiste eliminado de {} [ID:{}] por {}'
+            cls.ADDED_TO_GROUP = 'Fuiste añadido a {} [ID:{}]\n\nTema:\n'
+            cls.ADDED_TO_GROUP_BY = 'Fuiste añadido a {} [ID:{}] por {}\n\nTema:\n'
+            cls.HELP = '\n\n'.join(['!group !list muestra la lista de grupos públicos y sus ID.',
+                                    '!group !id envia este comando en un grupo para obtener su ID.',
+                                    '!group !join te permite unirte al grupo público con el ID dado.',
+                                    '!group !leave <ID> usa este comando para abandonar el grupo con el ID dado',
+                                    '!group !public/!private usa estos comandos en un grupo para hacerlo público o privado.',
+                                    '!group !topic [nuevo tema] sustituye el tema actual o muestra el tema actual si no es dado uno nuevo',
+                                    '!group !add <ID> <correos> permite agregar una lista separada por comas de direcciones de correo al grupo con el  ID dado.',
+                                    '!group !remove <ID> <correo> permite eliminar un miembro del grupo con el ID dado.',
+                                    '!group !msg <ID> <msg> permite enviar un mensaje al grupo con el ID dado.'])
+            cls.GROUP_STATUS_PUBLIC = 'Estado del grupo: Público'
+            cls.GROUP_STATUS_PRIVATE = 'Estado del grupo: Privado'
+            cls.TOPIC = 'Tema:\n{}'
 
     @classmethod
     def process(cls, msg):
@@ -36,22 +62,43 @@ class GroupMaster(Plugin):
             return False
         chat = cls.ctx.acc.create_chat_by_message(msg)
         req = arg
-        for cmd,action in [('!id', cls.id_cmd), ('!list', cls.list_cmd), ('!join', cls.join_cmd), ('!leave', cls.leave_cmd)]:
+        for cmd,action in [('!id', cls.id_cmd), ('!list', cls.list_cmd), ('!join', cls.join_cmd),
+                           ('!leave', cls.leave_cmd), ('!public', cls.public_cmd), ('!private', cls.private_cmd),
+                           ('!topic', cls.topic_cmd), ('!add', cls.add_cmd)]:
             arg = cls.get_args(cmd, req)
             if arg is not None:
                 text = action(msg, arg)
                 break
         else:
             text = cls.name+':\n\n'+cls.HELP
-        chat.send_text(text)
+        if text:
+            chat.send_text(text)
         return True
+
+    @classmethod
+    def parse_group_name(cls, group_name):
+        title = group_name.split(':')
+        name = title[0].strip()
+        topic = ''
+        pub = ''
+        if len(title) > 1:
+            topic = ':'.join(title[1:])
+            if topic.endswith(cls.PUBLIC_GROUP):
+                topic = topic.strip(cls.PUBLIC_GROUP).strip()
+                pub = cls.PUBLIC_GROUP
+        else:
+            if name.endswith(cls.PUBLIC_GROUP):
+                name = name.strip(cls.PUBLIC_GROUP).strip()
+                pub = cls.PUBLIC_GROUP
+        return (name, topic, pub)
 
     @classmethod
     def get_groups(cls, public_only=True):
         me = cls.ctx.acc.get_self_contact()
         groups = []
         for chat in cls.ctx.acc.get_chats():
-            if deltachat.capi.lib.dc_chat_get_type(chat._dc_chat) == 120:
+            if chat.get_type() in (dc.const.DC_CHAT_TYPE_GROUP,
+                                   dc.const.DC_CHAT_TYPE_VERIFIED_GROUP):
                 if me not in chat.get_contacts():
                     chat.delete()
                 else:
@@ -61,33 +108,122 @@ class GroupMaster(Plugin):
         return groups
 
     @classmethod
-    def id_cmd(cls, msg, arg):
-        return 'ID: %s' % (msg.chat.id,)
+    def id_cmd(cls, msg, _):
+        return 'ID: {}'.format(msg.chat.id)
+
+    @classmethod
+    def public_cmd(cls, msg, _):
+        name = msg.chat.get_name()
+        if not name.endswith(cls.PUBLIC_GROUP):
+            msg.chat.set_name('{} {}'.format(name, cls.PUBLIC_GROUP))
+        return cls.GROUP_STATUS_PUBLIC
+
+    @classmethod
+    def private_cmd(cls, msg, _):
+        name = msg.chat.get_name()
+        if name.endswith(cls.PUBLIC_GROUP):
+            msg.chat.set_name(name.strip(cls.PUBLIC_GROUP))
+        return cls.GROUP_STATUS_PRIVATE
+
+    @classmethod
+    def topic_cmd(cls, msg, new_topic):
+        name, topic, pub = cls.parse_group_name(msg.chat.get_name())
+        if new_topic:
+            if len(new_topic) > 250:
+                new_topic = new_topic[:250]+'...'
+            msg.chat.set_name('{}: {} {}'.format(name, new_topic, pub))
+            topic = new_topic
+        return cls.TOPIC.format(topic)
 
     @classmethod
     def join_cmd(cls, msg, arg):
-        group_id = int(arg)
-        for g in cls.get_groups():
-            if g.id == group_id:
-                g.add_contact(msg.get_sender_contact())
-                return cls.ADDED_TO_GROUP % (g.get_name(), g.id)
-        return cls.UNKNOW_GROUP % group_id
+        group_id = arg
+        try:
+            group_id = int(group_id)
+            for g in cls.get_groups():
+                if g.id == group_id:
+                    g.add_contact(msg.get_sender_contact())
+                    name, topic, _ = cls.parse_group_name(g.get_name())
+                    return cls.ADDED_TO_GROUP.format(name, g.id, topic)
+        except ValueError:
+            pass
+        return cls.UNKNOW_GROUP.format(group_id)
 
     @classmethod
     def leave_cmd(cls, msg, arg):
-        group_id = int(arg)
+        group_id = arg
+        try:
+            group_id = int(group_id)
+            for g in cls.get_groups(public_only=False):
+                if g.id == group_id and msg.get_sender_contact() in g.get_contacts():
+                    g.remove_contact(msg.get_sender_contact())
+                    name, _, _ = cls.parse_group_name(g.get_name())
+                    return cls.REMOVED_FROM_GROUP.format(name, g.id)
+        except ValueError:
+            pass
+        return cls.UNKNOW_GROUP.format(group_id)
+
+    @classmethod
+    def add_cmd(cls, msg, arg):
+        i = arg.find(' ')
+        try:
+            group_id = int(arg[:i])
+            addrs = arg[i:].strip().split(',')
+            if i < 0 or not addrs:
+                raise ValueError
+        except ValueError:
+            return cls.name+':\n\n'+cls.HELP
         for g in cls.get_groups(public_only=False):
             if g.id == group_id and msg.get_sender_contact() in g.get_contacts():
-                deltachat.capi.lib.dc_remove_contact_from_chat(g._dc_context, g.id, msg.get_sender_contact().id)
-                return cls.REMOVED_FROM_GROUP % (g.get_name(), g.id)
-        return cls.UNKNOW_GROUP % (group_id,)
-        
+                name, topic, _ = cls.parse_group_name(g.get_name())
+                author = msg.get_sender_contact().addr
+                for addr in addrs:
+                    c = cls.ctx.acc.create_contact(addr.strip())
+                    g.add_contact(c)
+                    chat = cls.ctx.acc.create_chat_by_contact(c)
+                    chat.send_text(cls.ADDED_TO_GROUP_BY.format(name, g.id, author, topic))
+                return ''
+
+    @classmethod
+    def remove_cmd(cls, msg, arg):
+        i = arg.find(' ')
+        try:
+            group_id = int(arg[:i])
+            addr = arg[i:].strip()
+            if i < 0 or not addrs:
+                raise ValueError
+        except ValueError:
+            return cls.name+':\n\n'+cls.HELP
+        for g in cls.get_groups(public_only=False):
+            if g.id == group_id and msg.get_sender_contact() in g.get_contacts():
+                c = [c for c in cls.ctx.acc.get_contacts(addr) if c.addr == addr][0]  # TODO: error if addr not in group
+                g.remove_contact(c)
+                chat = cls.ctx.acc.create_chat_by_contact(c)
+                chat.send_text(cls.REMOVED_FROM_GROUP_BY.format(name, g.id, author))
+                return ''
+
+    @classmethod
+    def msg_cmd(cls, msg, arg):
+        i = arg.find(' ')
+        try:
+            group_id = int(arg[:i])
+            msg = arg[i:].strip()
+            if i < 0 or not msg:
+                raise ValueError
+        except ValueError:
+            return cls.name+':\n\n'+cls.HELP
+        sender = msg.get_sender_contact()
+        for g in cls.get_groups(public_only=False):
+            if g.id == group_id and sender in g.get_contacts():
+                g.send_text('{}:\n{}'.format(sender.addr, msg))
+                return ''
 
     @classmethod
     def list_cmd(cls, msg, arg):
         groups = cls.get_groups()
         groups.sort(key=lambda g: g.get_name())
-        text = cls.LISTCMD_BANNER % (len(groups),)
+        text = cls.LISTCMD_BANNER.format(len(groups))
         for g in groups:
-            text += '%s [ID:%s]:\n* %s 👤\n' % (g.get_name(), g.id, len(g.get_contacts()))
+            name, _, _ = cls.parse_group_name(g.get_name())
+            text += '{} [ID:{}]:\n* {} 👤\n'.format(name, g.id, len(g.get_contacts()))
         return text

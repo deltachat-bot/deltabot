@@ -70,7 +70,7 @@ class DeltaFriends(Plugin):
         friends = cls.conn.execute('SELECT * FROM deltafriends ORDER BY addr').fetchall()
         get_desc = lambda d: d if d else cls.NO_DESC
         text = 'DeltaFriends({}):\n\n'.format(len(friends))
-        text += '\n\n'.join(['👤 {}: {}'.format(addr, get_desc(desc))
+        text += '\n\n'.join(['🔘 {}: {}'.format(addr, get_desc(desc))
                              for addr,desc in friends])
         return text
 
@@ -100,7 +100,7 @@ class DeltaFriends(Plugin):
         for addr,desc in cls.conn.execute('SELECT * FROM deltafriends ORDER BY addr'):
             desc = get_desc(desc)
             if t.findall(desc) or t.findall(addr):
-                results += '👤 {}: {}\n\n'.format(addr, desc)
+                results += '🔘 {}: {}\n\n'.format(addr, desc)
         return cls.SEARCH_RESULTS.format(text)+results
 
     @classmethod
