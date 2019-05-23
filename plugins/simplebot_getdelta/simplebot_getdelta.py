@@ -30,7 +30,7 @@ class GetDelta(Plugin):
             platform = arg if arg == 'desktop' else 'android'
             page = urlopen('https://github.com/deltachat/deltachat-{}/releases'.format(platform)).read()
             latest = BeautifulSoup(page, 'html.parser').find('div', class_='label-latest')
-            text = 'Delta Chat - {}({}):\n\n'.format(platform.capitalize(), latest.ul.a['title'].trip())
+            text = 'Delta Chat - {}({}):\n\n'.format(platform.capitalize(), latest.ul.a['title'].strip())
             text += latest.find('div', class_='markdown-body').get_text()
             for a in list(latest.find('div', class_='Box-body').find_all('a'))[:-2]:
                 text += '\nhttps://github.com'+a['href']
