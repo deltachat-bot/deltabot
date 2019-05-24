@@ -124,7 +124,7 @@ class GroupMaster(Plugin):
             gid = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits)
                           for _ in range(10))
             gid = 'http://delta.chat/join/{}-{}'.format(gid, msg.chat.id)
-        return 'ID: {}'.format()
+        return 'ID: {}'.format(gid)
 
     @classmethod
     def public_cmd(cls, msg, _):
