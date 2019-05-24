@@ -39,4 +39,5 @@ setup(
     entry_points={
         'simplebot.plugins': '{} = {}:{}'.format(PLUGIN_NAME, MODULE_NAME, CLASS_NAME)
     },
+    include_package_data=True
 )
