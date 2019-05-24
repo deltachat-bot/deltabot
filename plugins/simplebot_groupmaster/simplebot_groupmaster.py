@@ -114,7 +114,7 @@ class GroupMaster(Plugin):
     @classmethod
     def id_cmd(cls, msg, _):
         if msg.chat.get_type() not in (dc.const.DC_CHAT_TYPE_GROUP,
-                                   dc.const.DC_CHAT_TYPE_VERIFIED_GROUP):
+                                       dc.const.DC_CHAT_TYPE_VERIFIED_GROUP):
             return 'Not a group.' # cls.NOT_A_GROUP
         _, _, pub = cls.parse_group_name(msg.chat.get_name())
         if pub:
