@@ -16,7 +16,8 @@ env = Environment(
 class DuckDuckGo(Plugin):
 
     name = 'DuckDuckGo'
-    description = 'Provides the !ddg <text> command to search <text> in DuckDuckGo. Ex. !ddg free as in freedom.'
+    description = 'Provides the !ddg command to search in DuckDuckGo.'
+    long_description = 'Examples:\n!ddg Delta Chat\n!ddg riseup provider site:support.delta.chat'
     version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
@@ -46,7 +47,7 @@ class DuckDuckGo(Plugin):
                 text += r.find('a', class_='result__snippet').get_text() +'\n\n'
         else:
             template = env.get_template('help.html')
-            text = template.render(ctx=cls)
+            text = template.render(plugin=cls)
         chat = cls.ctx.acc.create_chat_by_message(msg)
         chat.send_text(text)
         return True
