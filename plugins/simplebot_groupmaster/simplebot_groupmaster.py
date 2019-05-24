@@ -222,7 +222,7 @@ class GroupMaster(Plugin):
         i = arg.find(' ')
         try:
             group_id = int(arg[:i])
-            msg = arg[i:].strip()
+            text = arg[i:].strip()
             if i < 0 or not msg:
                 raise ValueError
         except ValueError:
@@ -230,7 +230,7 @@ class GroupMaster(Plugin):
         sender = msg.get_sender_contact()
         for g in cls.get_groups(public_only=False):
             if g.id == group_id and sender in g.get_contacts():
-                g.send_text('{}:\n{}'.format(sender.addr, msg))
+                g.send_text('{}:\n{}'.format(sender.addr, text))
                 return ''
 
     @classmethod
