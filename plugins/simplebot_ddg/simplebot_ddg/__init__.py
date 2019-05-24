@@ -22,6 +22,7 @@ class DuckDuckGo(Plugin):
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
     NOT_FOUND = 'No results found for: "{}"'
+    TEMP_FILE = name+'.html'
 
     @classmethod
     def activate(cls, ctx):
@@ -38,7 +39,7 @@ class DuckDuckGo(Plugin):
         if arg:
             text = ''
             page = urlopen('https://duckduckgo.com/html?q=%s' % quote_plus(arg)).read()
-            results = BeautifulSoup(page, 'html.parser').find_all('div', class_='result')[:6]
+            results = BeautifulSoup(page, 'html.parser').find_all('div', class_='result')
             if not results:
                 text = cls.NOT_FOUND.format(arg)
             for r in results:
@@ -48,6 +49,8 @@ class DuckDuckGo(Plugin):
         else:
             template = env.get_template('help.html')
             text = template.render(plugin=cls)
+        with open(cls.TEMP_FILE, 'w') as fd:
+            fd.write(text)
         chat = cls.ctx.acc.create_chat_by_message(msg)
-        chat.send_text(text)
+        chat.send_file(cls.TEMP_FILE, mime_type='text/html')
         return True
