@@ -67,7 +67,8 @@ class GroupMaster(Plugin):
         req = arg
         for cmd,action in [('!id', cls.id_cmd), ('!list', cls.list_cmd), ('!join', cls.join_cmd),
                            ('!leave', cls.leave_cmd), ('!public', cls.public_cmd), ('!private', cls.private_cmd),
-                           ('!topic', cls.topic_cmd), ('!add', cls.add_cmd)]:
+                           ('!topic', cls.topic_cmd), ('!add', cls.add_cmd), ('!remove', cls.remove_cmd),
+                           ('!msg', cls.msg_cmd)]:
             arg = cls.get_args(cmd, req)
             if arg is not None:
                 text = action(msg, arg)
