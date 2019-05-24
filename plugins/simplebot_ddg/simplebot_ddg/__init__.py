@@ -55,7 +55,7 @@ class DuckDuckGo(Plugin):
         if arg is None:
             return False
         if arg:
-            script = r'alert("hi");for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${"https://duckduckgo.com"}/$1`)}`);a.href=`mailto:${"' + cls.ctx.acc.get_self_contact().addr + r'"}?subject=%21web%20&body=${b}`}'
+            script = r'for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${"https://duckduckgo.com"}/$1`)}`);a.href=`mailto:${"' + cls.ctx.acc.get_self_contact().addr + r'"}?subject=%21web%20&body=${b}`}'
             text = get_page('https://duckduckgo.com/lite?q={}'.format(quote_plus(arg)), script)
             #results = page.find_all('div', class_='result')
             # if not results:
