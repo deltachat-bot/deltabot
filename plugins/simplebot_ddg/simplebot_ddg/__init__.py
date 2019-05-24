@@ -3,7 +3,7 @@ from urllib.request import urlopen
 from urllib.parse import quote_plus
 
 from simplebot import Plugin
-from bs4 import BeautifulSoup
+import bs4
 from jinja2 import Environment, PackageLoader, select_autoescape
 import requests
 
