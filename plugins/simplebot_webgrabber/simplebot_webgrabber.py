@@ -41,7 +41,7 @@ class WebGrabber(Plugin):
                 r = requests.get(arg, headers=headers, stream=True)
                 if 'text/html' in r.headers['content-type']:
                     soup = bs4.BeautifulSoup(r.text, 'html.parser')
-                    [t.extract() for t in soup(['script', 'meta', 'iframe', 'noscript'])]
+                    [t.extract() for t in soup(['script', 'meta', 'iframe', 'noscript', 'link'])]
                     comments = soup.find_all(text=lambda text:isinstance(text, bs4.Comment))
                     [comment.extract() for comment in comments]
                     for a in soup.find_all('a', attrs={'href':True}):

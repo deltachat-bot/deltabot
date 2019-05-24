@@ -4,12 +4,20 @@ from urllib.parse import quote_plus
 
 from simplebot import Plugin
 from bs4 import BeautifulSoup
+from jinja2 import Environment, PackageLoader, select_autoescape
+
+
+env = Environment(
+    loader=PackageLoader('simplebot_ddg', 'templates'),
+    autoescape=select_autoescape(['html', 'xml'])
+)
+
 
 class DuckDuckGo(Plugin):
 
     name = 'DuckDuckGo'
     description = 'Provides the !ddg <text> command to search <text> in DuckDuckGo. Ex. !ddg free as in freedom.'
-    version = '0.1.1'
+    version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
     NOT_FOUND = 'No results found for: "{}"'
@@ -37,7 +45,8 @@ class DuckDuckGo(Plugin):
                 text += r.find('a', class_='result__url').get_text().strip()+'\n'
                 text += r.find('a', class_='result__snippet').get_text() +'\n\n'
         else:
-            text = cls.description
+            template = env.get_template('help.html')
+            text = template.render(ctx=cls)
         chat = cls.ctx.acc.create_chat_by_message(msg)
         chat.send_text(text)
         return True
