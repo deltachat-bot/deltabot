@@ -5,12 +5,30 @@ from urllib.parse import quote_plus
 from simplebot import Plugin
 from bs4 import BeautifulSoup
 from jinja2 import Environment, PackageLoader, select_autoescape
+import requests
 
 
 env = Environment(
     loader=PackageLoader('simplebot_ddg', 'templates'),
     autoescape=select_autoescape(['html', 'xml'])
 )
+
+
+def get_page(url, script=None):
+    headers = {'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
+    r = requests.get(url, headers=headers, stream=True)
+    if 'text/html' not in r.headers['content-type']:
+        r.connection.close()
+        return None
+    soup = bs4.BeautifulSoup(r.text, 'html.parser')
+    [t.extract() for t in soup(['script', 'meta', 'iframe', 'noscript', 'link'])]
+    comments = soup.find_all(text=lambda text:isinstance(text, bs4.Comment))
+    [comment.extract() for comment in comments]
+    if script is not None:
+        s = soup.new_tag('script')
+        s.string = script
+        soup.body.append(s)
+    return str(soup)
 
 
 class DuckDuckGo(Plugin):
@@ -37,15 +55,17 @@ class DuckDuckGo(Plugin):
         if arg is None:
             return False
         if arg:
-            text = ''
-            page = urlopen('https://duckduckgo.com/html?q=%s' % quote_plus(arg)).read()
-            results = BeautifulSoup(page, 'html.parser').find_all('div', class_='result')
-            if not results:
-                text = cls.NOT_FOUND.format(arg)
-            for r in results:
-                text += r.h2.a.get_text().strip() + '\n'
-                text += r.find('a', class_='result__url').get_text().strip()+'\n'
-                text += r.find('a', class_='result__snippet').get_text() +'\n\n'
+            script = r'for(let e of document.getElementsByTagName("a")){const h=e.href;h&&-1===h.indexOf("mailto:")&&(e.href="mailto:' + cls.ctx.acc.get_self_contact().addr + r'?subject=!web&body="+encodeURI(`${h}`))}'
+            text = get_page('https://duckduckgo.com/html?q={}'.format(quote_plus(arg)), script)
+            #results = page.find_all('div', class_='result')
+            # if not results:
+            #     text = cls.NOT_FOUND.format(arg)
+            # template = env.get_template('index.html')
+            # text = template.render(plugin=cls, results=results)
+            # for r in results:
+            #     text += r.h2.a.get_text().strip() + '\n'
+            #     text += r.find('a', class_='result__url').get_text().strip()+'\n'
+            #     text += r.find('a', class_='result__snippet').get_text() +'\n\n'
         else:
             template = env.get_template('help.html')
             text = template.render(plugin=cls)

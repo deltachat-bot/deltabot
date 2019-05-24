@@ -5,6 +5,17 @@
   </head>
   <body>
     <h1>{{plugin.name}}</h1>
+    <ul>
+    {% for r in results %}
+    <li>
+      <h3>{{ r.h2.a.get_text().strip() }}</h3>
+      {{  }}
+      <a href="{{ r.find('a', class_='result__url').get_text().strip() }}">{{ item.caption }}</a>
+    </li>
+    {% endfor %}
+    </ul>
+    text += +'\n'
+            #     text += r.find('a', class_='result__snippet').get_text() +'\n\n'
     {{ plugin.description }}
   </body>
 </html>
