@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
+import os
+
 from simplebot import Plugin
 from jinja2 import Environment, PackageLoader, select_autoescape
+
 
 class Helper(Plugin):
 
