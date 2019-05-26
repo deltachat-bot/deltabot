@@ -9,7 +9,7 @@ class Helper(Plugin):
 
     name = 'Help'
     description = 'Provides this help page.'
-    long_description = 'To learn more about a plugin press the "More" button, to use them press the "Use" button, you will be prompted to use an app, select to always open with Delta Chat, a command will be autocompleted for you, send it to process your request.'
+    long_description = 'To learn more about a plugin press the <strong>"More"</strong> button, to use them press the <strong>"Use"</strong> button, you will be prompted to use an app, select to always open with Delta Chat, a command will be autocompleted for you, send it to process your request.'
     version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'

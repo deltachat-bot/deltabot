@@ -23,7 +23,7 @@ class Plugin(ABC):
         if re.match(cmd+r'\b', text):
             return text[len(cmd):].strip()
         return None
-            
+
     @classmethod
     @abstractmethod
     def process(cls, msg):
