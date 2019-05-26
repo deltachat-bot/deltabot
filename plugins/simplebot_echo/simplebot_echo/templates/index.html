@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="{{ plugin.ctx.locale }}">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ plugin.name }}</title>
+  </head>
+  <body>
+    <h1>{{ plugin.name }}</h1>
+    <noscript>{{ plugin.NOSCRIPT }}</noscript>  
+    <form action="mailto:{{ plugin.ctx.acc.get_self_contact().addr }}" method="get">
+      <input name="subject" type="hidden" value="!echo"/>
+      <input name="body" type="text" value=""/>
+      <input alt="Echo!" title="Echo!" type="submit" value=""/>
+    </form>
+  </body>
+</html>

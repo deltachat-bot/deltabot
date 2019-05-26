@@ -5,18 +5,17 @@ from simplebot import Plugin
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 
-class Helper(Plugin):
+class Echo(Plugin):
 
-    name = 'Help'
-    description = 'Provides this help page.'
-    long_description = 'To learn more about a plugin press the "More" button, to use them press the "Use" button, you will be prompted to use an app, select to always open with Delta Chat, a command will be autocompleted for you, send it to process your request.'
+    name = 'Echo'
+    description = 'Simple plugin to reply back a message.'
+    long_description = 'To use it you can simply send a message starting with the command !echo. For example: !echo hello world'
     version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
-    cmd = '!help'
+    cmd = '!echo'
 
     NOSCRIPT = 'You need a browser with JavaScript support for this page to work correctly.'
-    # BANNER = 'SimpleBot for Delta Chat.\nInstalled plugins:\n\n'
 
     @classmethod
     def activate(cls, ctx):
@@ -28,15 +27,18 @@ class Helper(Plugin):
         )
         cls.template = env.get_template('index.html')
         # if ctx.locale == 'es':
-        #     cls.description = 'Provee el comando !help que muestra este mensaje. Ej. !help.'
-        #     cls.BANNER = 'SimpleBot para Delta Chat.\nPlugins instalados:\n\n'
+        #     cls.description = 'Provee el comando `!echo <texto>` el cual hace que el bot responda el texto que le pases. Ej. !echo hola mundo.'
 
     @classmethod
     def process(cls, msg):
-        if cls.get_args(cls.cmd, msg.text) is not None:
+        text = cls.get_args(cls.cmd, msg.text)
+        if text is None:
+            return False
+        chat = cls.ctx.acc.create_chat_by_message(msg)
+        if not text:
             with open(cls.TEMP_FILE, 'w') as fd:
                 fd.write(cls.template.render(plugin=cls))
-            chat = cls.ctx.acc.create_chat_by_message(msg)
             chat.send_file(cls.TEMP_FILE, mime_type='text/html')
-            return True
-        return False
+        else:
+            chat.send_text(text)
+        return True
