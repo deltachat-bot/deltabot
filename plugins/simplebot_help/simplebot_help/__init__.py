@@ -34,8 +34,12 @@ class Helper(Plugin):
     @classmethod
     def process(cls, msg):
         if cls.get_args(cls.cmd, msg.text) is not None:
+            plugins = sorted(cls.ctx.plugins, key=lambda p: p.name)
+            plugins.pop(cls)
+            plugins.insert(0, cls)
+            bot_addr = cls.ctx.acc.get_self_contact().addr
             with open(cls.TEMP_FILE, 'w') as fd:
-                fd.write(cls.template.render(plugin=cls))
+                fd.write(cls.template.render(plugin=cls, plugins=plugins, bot_addr=bot_addr))
             chat = cls.ctx.acc.create_chat_by_message(msg)
             chat.send_file(cls.TEMP_FILE, mime_type='text/html')
             return True
