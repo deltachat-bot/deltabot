@@ -17,6 +17,7 @@
 	  background: #4479BA;
 	  color: #FFF;
 	  padding: 8px 12px;
+	  margin: 5px;
 	  text-decoration: none;
       }
       .hidden {
@@ -36,7 +37,7 @@
       <h3>{{ p.name }}</h3>
       <p>{{ p.description }}</p>
       <p class="hidden">{{ p.long_description }}</p>
-      <a class="btn" href="#">More</a>
+      <a class="btn" href="#" onclick="alert('not implemented yet')">More</a>
       <a class="btn" href="mailto:{{ bot_addr }}?subject={{ p.cmd }}">Use</a>
     </div>
     {% endfor %}
