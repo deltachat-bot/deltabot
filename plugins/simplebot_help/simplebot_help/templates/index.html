@@ -17,7 +17,7 @@
 	  background: #4479BA;
 	  color: #FFF;
 	  padding: 8px 12px;
-	  margin: 5px;
+	  margin: 10px;
 	  text-decoration: none;
       }
       .hidden {
@@ -31,15 +31,20 @@
   </head>
   <body>
     <h1>SimpleBot</h1>
-    <noscript>{{ plugin.NOSCRIPT }}</noscript>  
-    {% for p in plugins %}
-    <div class="box">
-      <h3>{{ p.name }}</h3>
-      <p>{{ p.description }}</p>
-      <p class="hidden">{{ p.long_description }}</p>
-      <a class="btn" href="#" onclick="alert('not implemented yet')">More</a>
-      <a class="btn" href="mailto:{{ bot_addr }}?subject={{ p.cmd }}">Use</a>
+    <noscript>{{ plugin.NOSCRIPT }}</noscript>
+    <div id="content">
+      {% for p in plugins %}
+      <div class="box">
+	<h3>{{ p.name }}</h3>
+	<p>{{ p.description }}</p>
+	<p class="">{{ p.long_description }}</p>
+	<a class="btn" href="#" onclick="alert('not implemented yet')">More</a>
+	<a class="btn" href="mailto:{{ bot_addr }}?subject={{ p.cmd }}">Use</a>
+      </div>
+      {% endfor %}
     </div>
-    {% endfor %}
   </body>
+  <script>
+    // todo: remove hidden from #content
+  </script>
 </html>
