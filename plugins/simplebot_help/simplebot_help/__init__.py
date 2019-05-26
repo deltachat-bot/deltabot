@@ -35,7 +35,7 @@ class Helper(Plugin):
     def process(cls, msg):
         if cls.get_args(cls.cmd, msg.text) is not None:
             plugins = sorted(cls.ctx.plugins, key=lambda p: p.name)
-            plugins.pop(cls)
+            plugins.remove(cls)
             plugins.insert(0, cls)
             bot_addr = cls.ctx.acc.get_self_contact().addr
             with open(cls.TEMP_FILE, 'w') as fd:
