@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ plugin.name }}</title>
     <style>
-      .link_button {
+      .btn {
 	  -webkit-border-radius: 4px;
 	  -moz-border-radius: 4px;
 	  border-radius: 4px;
@@ -26,7 +26,10 @@
     <noscript>{{ plugin.NOSCRIPT }}</noscript>  
     <ul>
     {% for p in plugin.ctx.plugins %}
-    <li><h3>{{ p.name }}</h3><p>{{ p.description }}</p><a href="{{ p.cmd }}">Use</a></li>
+    <li><h3>{{ p.name }}</h3>
+      <p>{{ p.description }}</p>
+      <a class="btn" href="mailto:{{ bot_addr }}?subject={{ p.cmd }}">Use</a>
+    </li>
     {% endfor %}
     </ul>
   </body>
