@@ -9,7 +9,7 @@
     <h1>SimpleBot</h1>
     <noscript>{{ plugin.NOSCRIPT }}</noscript>  
     <ul>
-    {% for p in sorted(plugin.ctx.plugins, key=lambda x:x.name) %}
+    {% for p in plugin.ctx.plugins %}
     <li><h3>{{ p.name }}</h3><p>{{ p.description }}</p></li>
     {% endfor %}
     </ul>
