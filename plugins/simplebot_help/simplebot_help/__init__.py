@@ -21,12 +21,12 @@ class Helper(Plugin):
     @classmethod
     def activate(cls, ctx):
         super().activate(ctx)
+        cls.TEMP_FILE = os.path.join(cls.ctx.basedir, cls.name+'.html')
         env = Environment(
             loader=PackageLoader('simplebot_ddg', 'templates'),
             autoescape=select_autoescape(['html', 'xml'])
         )
         cls.template = env.get_template('index.html')
-        cls.TEMP_FILE = os.path.join(cls.ctx.basedir, cls.name+'.html')
         # if ctx.locale == 'es':
         #     cls.description = 'Provee el comando !help que muestra este mensaje. Ej. !help.'
         #     cls.BANNER = 'SimpleBot para Delta Chat.\nPlugins instalados:\n\n'
