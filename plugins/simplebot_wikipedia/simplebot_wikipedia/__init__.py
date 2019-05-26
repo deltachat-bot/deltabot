@@ -1,15 +1,18 @@
 # -*- coding: utf-8 -*-
 from simplebot import Plugin
 import wikipedia
+from jinja2 import Environment, PackageLoader, select_autoescape
 
 
 class Wikipedia(Plugin):
 
     name = 'Wikipedia'
-    description = 'Provides the !w <text> command to search <text> in Wikipedia. Ex. !w GNU.'
-    version = '0.1.0'
+    description = 'Provides the !w <text> command.'
+    long_description = 'To search <text> in Wikipedia. Ex. !w GNU.'
+    version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
+    cmd = '!w'
 
     @classmethod
     def activate(cls, ctx):

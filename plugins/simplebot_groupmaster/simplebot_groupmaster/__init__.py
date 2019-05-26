@@ -2,17 +2,20 @@
 import string
 import random
 
+from jinja2 import Environment, PackageLoader, select_autoescape
 from simplebot import Plugin
 import deltachat as dc
-
 
 class GroupMaster(Plugin):
 
     name = 'GroupMaster'
-    description = 'Provides the !group command, use !group !help for more info. Ex. !group !list.'
-    version = '0.1.0'
+    description = 'Provides the !group command.'
+    long_description = 'Ex. !group !list.'
+    version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
+    cmd = '!group'
+
     PUBLIC_GROUP = '[pub]'
     MAX_TOPIC_SIZE = 250
     HELP = '\n\n'.join(['!group !list will show the list of public groups and their ID.',
@@ -37,26 +40,26 @@ class GroupMaster(Plugin):
     @classmethod
     def activate(cls, ctx):
         super().activate(ctx)
-        if ctx.locale == 'es':
-            cls.description = 'Provee el comando !group, utilice !group !help para más información. Ej. !group !list.'
-            cls.LISTCMD_BANNER = 'Grupos ({}):\n\n'
-            cls.UNKNOW_GROUP = 'Grupo desconocido, ID: {}'
-            cls.REMOVED_FROM_GROUP = 'Fuiste eliminado de {} [ID:{}]'
-            cls.REMOVED_FROM_GROUP_BY = 'Fuiste eliminado de {} [ID:{}] por {}'
-            cls.ADDED_TO_GROUP = 'Fuiste añadido a {} [ID:{}]\n\nTema:\n'
-            cls.ADDED_TO_GROUP_BY = 'Fuiste añadido a {} [ID:{}] por {}\n\nTema:\n'
-            cls.HELP = '\n\n'.join(['!group !list muestra la lista de grupos públicos y sus ID.',
-                                    '!group !id envia este comando en un grupo para obtener su ID.',
-                                    '!group !join te permite unirte al grupo público con el ID dado.',
-                                    '!group !leave <ID> usa este comando para abandonar el grupo con el ID dado.',
-                                    '!group !public/!private usa estos comandos en un grupo para hacerlo público o privado.',
-                                    '!group !topic [nuevo tema] sustituye el tema actual o muestra el tema actual si no es dado uno nuevo (tamaño máximo del tema: {} caracteres).'.format(cls.MAX_TOPIC_SIZE),
-                                    '!group !add <ID> <correos> permite agregar una lista separada por comas de direcciones de correo al grupo con el  ID dado.',
-                                    '!group !remove <ID> <correo> permite eliminar un miembro del grupo con el ID dado.',
-                                    '!group !msg <ID> <msg> permite enviar un mensaje al grupo con el ID dado.'])
-            cls.GROUP_STATUS_PUBLIC = 'Estado del grupo: Público'
-            cls.GROUP_STATUS_PRIVATE = 'Estado del grupo: Privado'
-            cls.TOPIC = 'Tema:\n{}'
+        # if ctx.locale == 'es':
+        #     cls.description = 'Provee el comando !group, utilice !group !help para más información. Ej. !group !list.'
+        #     cls.LISTCMD_BANNER = 'Grupos ({}):\n\n'
+        #     cls.UNKNOW_GROUP = 'Grupo desconocido, ID: {}'
+        #     cls.REMOVED_FROM_GROUP = 'Fuiste eliminado de {} [ID:{}]'
+        #     cls.REMOVED_FROM_GROUP_BY = 'Fuiste eliminado de {} [ID:{}] por {}'
+        #     cls.ADDED_TO_GROUP = 'Fuiste añadido a {} [ID:{}]\n\nTema:\n'
+        #     cls.ADDED_TO_GROUP_BY = 'Fuiste añadido a {} [ID:{}] por {}\n\nTema:\n'
+        #     cls.HELP = '\n\n'.join(['!group !list muestra la lista de grupos públicos y sus ID.',
+        #                             '!group !id envia este comando en un grupo para obtener su ID.',
+        #                             '!group !join te permite unirte al grupo público con el ID dado.',
+        #                             '!group !leave <ID> usa este comando para abandonar el grupo con el ID dado.',
+        #                             '!group !public/!private usa estos comandos en un grupo para hacerlo público o privado.',
+        #                             '!group !topic [nuevo tema] sustituye el tema actual o muestra el tema actual si no es dado uno nuevo (tamaño máximo del tema: {} caracteres).'.format(cls.MAX_TOPIC_SIZE),
+        #                             '!group !add <ID> <correos> permite agregar una lista separada por comas de direcciones de correo al grupo con el  ID dado.',
+        #                             '!group !remove <ID> <correo> permite eliminar un miembro del grupo con el ID dado.',
+        #                             '!group !msg <ID> <msg> permite enviar un mensaje al grupo con el ID dado.'])
+        #     cls.GROUP_STATUS_PUBLIC = 'Estado del grupo: Público'
+        #     cls.GROUP_STATUS_PRIVATE = 'Estado del grupo: Privado'
+        #     cls.TOPIC = 'Tema:\n{}'
 
     @classmethod
     def process(cls, msg):

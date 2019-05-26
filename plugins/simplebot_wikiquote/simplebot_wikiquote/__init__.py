@@ -7,10 +7,12 @@ import wikiquote as wq
 class Wikiquote(Plugin):
 
     name = 'Wikiquote'
-    description = 'Provides the !quote [text] command to get the quote of the day or a random quote from the given text. Ex. !quote Richard Stallman'
-    version = '0.1.0'
+    description = 'Provides the !quote [text] command.'
+    long_description = 'To get the quote of the day or a random quote from the given text. Ex. !quote Richard Stallman'
+    version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
+    cmd = '!quote'
 
     @classmethod
     def activate(cls, ctx):

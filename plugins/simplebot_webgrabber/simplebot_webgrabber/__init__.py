@@ -4,6 +4,7 @@ from urllib.request import quote
 from simplebot import Plugin
 import bs4
 import requests
+from jinja2 import Environment, PackageLoader, select_autoescape
 
 
 def get_page(url, script=None):
@@ -26,10 +27,13 @@ def get_page(url, script=None):
 class WebGrabber(Plugin):
 
     name = 'WebGrabber'
-    description = 'Provides the !web <url> command to request the given url. Ex. !web http://delta.chat.'
-    version = '0.1.0'
+    description = 'Provides the !web <url> command.'
+    long_description = 'Ex. !web http://delta.chat'
+    version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
+    cmd = '!web'
+
     TEMP_FILE = 'page.html'
     NOT_ALLOWED = 'Only html pages are allowed'
     DOWNLOAD_FAILED = 'Falied to get the url: "{}"'
@@ -37,10 +41,10 @@ class WebGrabber(Plugin):
     @classmethod
     def activate(cls, ctx):
         super().activate(ctx)
-        if ctx.locale == 'es':
-            cls.description = 'Provee el comando `!web <url>` el cual permite obtener la página web con la url dada. Ej. !web http://delta.chat.'
-            cls.NOT_ALLOWED = 'Solo está permitido descargar páginas web'
-            cls.DOWNLOAD_FAILED = 'No fue posible obtener la url: "{}"'
+        # if ctx.locale == 'es':
+        #     cls.description = 'Provee el comando `!web <url>` el cual permite obtener la página web con la url dada. Ej. !web http://delta.chat.'
+        #     cls.NOT_ALLOWED = 'Solo está permitido descargar páginas web'
+        #     cls.DOWNLOAD_FAILED = 'No fue posible obtener la url: "{}"'
 
     @classmethod
     def process(cls, msg):
