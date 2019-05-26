@@ -32,7 +32,7 @@
   <body>
     <h1>SimpleBot</h1>
     <noscript>{{ plugin.NOSCRIPT }}</noscript>
-    <div id="content">
+    <div id="content" hidden>
       {% for p in plugins %}
       <div class="box">
 	<h3>{{ p.name }}</h3>
@@ -45,6 +45,14 @@
     </div>
   </body>
   <script>
-    // todo: remove hidden from #content
+    document.getElementById("content").style.display = "block";
+    function toogleMore() {
+	var b = document.getElementById("TODO");
+	if (b.style.display === "none") {
+	    b.style.display = "block";
+	} else {
+	    b.style.display = "none";
+	}
+    }
   </script>
 </html>
