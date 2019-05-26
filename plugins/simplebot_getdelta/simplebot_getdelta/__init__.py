@@ -3,20 +3,24 @@ from urllib.request import urlopen
 
 from simplebot import Plugin
 from bs4 import BeautifulSoup
+from jinja2 import Environment, PackageLoader, select_autoescape
+
 
 class GetDelta(Plugin):
 
     name = 'GetDelta'
-    description = 'Provides the !getdelta command to get info and links for the latest release of Delta Chat (iOS, Desktop or Android). Ex. !getdelta Android.'
-    version = '0.1.0'
+    description = 'Provides the !getdelta command.'
+    long_description = 'To get info and links for the latest release of Delta Chat (iOS, Desktop or Android). Ex. !getdelta Android'
+    version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
+    cmd = '!getdelta'
 
     @classmethod
     def activate(cls, ctx):
         super().activate(ctx)
-        if ctx.locale == 'es':
-            cls.description = 'Provee el comando !getdelta para obtener información y enlaces de la última versión de Delta Chat(iOS, Desktop o Android). Ej. !getdelta Android.'
+        # if ctx.locale == 'es':
+        #     cls.description = 'Provee el comando !getdelta para obtener información y enlaces de la última versión de Delta Chat(iOS, Desktop o Android). Ej. !getdelta Android.'
 
     @classmethod
     def process(cls, msg):

@@ -4,15 +4,20 @@ import re
 import sqlite3
 
 from simplebot import Plugin
+from jinja2 import Environment, PackageLoader, select_autoescape
 
 
 class DeltaFriends(Plugin):
 
     name = 'DeltaFriends'
-    description = 'Provides the !friends command, use `!friends !help` for more info. Ex. !friends !join male,tech,free software,rock music.'
+    description = 'Provides the !friends command.'
+    long_description = 'Ex. !friends !join male,tech,free software,rock music.'
     version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
+    cmd = '!friends'
+
+    NOSCRIPT = 'You need a browser with JavaScript support for this page to work correctly.'
     MAX_BIO_LEN = 80
     USER_ADDED = 'You are now in the DeltaFriends list'
     USER_REMOVED = 'You was removed from the DeltaFriends list'
@@ -27,20 +32,26 @@ class DeltaFriends(Plugin):
     @classmethod
     def activate(cls, ctx):
         super().activate(ctx)
+        cls.TEMP_FILE = os.path.join(cls.ctx.basedir, cls.name+'.html')
+        env = Environment(
+            loader=PackageLoader(__name__, 'templates'),
+            autoescape=select_autoescape(['html', 'xml'])
+        )
+        cls.template = env.get_template('index.html')
         cls.conn = sqlite3.connect(os.path.join(cls.ctx.basedir, 'deltafriends.db'))
         with cls.conn:
             cls.conn.execute('''CREATE TABLE IF NOT EXISTS deltafriends (addr TEXT NOT NULL, bio TEXT, PRIMARY KEY(addr))''')
-        if ctx.locale == 'es':
-            cls.description = 'Provee el comando !friends, para más información utilice !friends !help. Ej. !friends !join chico, música, tecnología, series, buscando amigos.'
-            cls.USER_ADDED = 'Ahora estás en la lista de DeltaFriends'
-            cls.USER_REMOVED = 'Fuiste eliminado de la lista de DeltaFriends'
-            cls.USER_NOT_FOUND = 'No estás en la lista de DeltaFriends'
-            cls.SEARCH_RESULTS = 'Resultados para "{}":\n\n'
-            cls.NO_DESC = '(Sin descripción)'
-            cls.hcmd_list = '!friends !list este comando te mostrará la lista de personas que buscan nuevos amigos'
-            cls.hcmd_join = '!friends !join <bio> usa este comando para unirte a la lista o actualizar tu biografía, "<bio>" son palabras que te identifique o tus gustos (hasta {} caracteres). Ej. !friends !join programador, software libre, música, anime, CAV'
-            cls.hcmd_leave = '!friends !leave usa este comando para quitarte de la lista de DeltaFriends'
-            cls.hcmd_search = '!friends !search <texto> este comando permite buscar amigos basado en el texto que le pases. Ej. "!friends !search Habana" para buscar todas las personas que hayan dicho ser de La Habana'
+        # if ctx.locale == 'es':
+        #     cls.description = 'Provee el comando !friends, para más información utilice !friends !help. Ej. !friends !join chico, música, tecnología, series, buscando amigos.'
+        #     cls.USER_ADDED = 'Ahora estás en la lista de DeltaFriends'
+        #     cls.USER_REMOVED = 'Fuiste eliminado de la lista de DeltaFriends'
+        #     cls.USER_NOT_FOUND = 'No estás en la lista de DeltaFriends'
+        #     cls.SEARCH_RESULTS = 'Resultados para "{}":\n\n'
+        #     cls.NO_DESC = '(Sin descripción)'
+        #     cls.hcmd_list = '!friends !list este comando te mostrará la lista de personas que buscan nuevos amigos'
+        #     cls.hcmd_join = '!friends !join <bio> usa este comando para unirte a la lista o actualizar tu biografía, "<bio>" son palabras que te identifique o tus gustos (hasta {} caracteres). Ej. !friends !join programador, software libre, música, anime, CAV'
+        #     cls.hcmd_leave = '!friends !leave usa este comando para quitarte de la lista de DeltaFriends'
+        #     cls.hcmd_search = '!friends !search <texto> este comando permite buscar amigos basado en el texto que le pases. Ej. "!friends !search Habana" para buscar todas las personas que hayan dicho ser de La Habana'
 
     @classmethod
     def deactivate(cls, ctx):

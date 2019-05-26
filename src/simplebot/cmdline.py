@@ -117,7 +117,7 @@ def serve(ctx, locale):
     acc.set_config('mdns_enabled', '0')
     acc.set_config('sentbox_watch', '0')
     acc.set_config('mvbox_watch', '0')
-    acc.set_config('mvbox_move', '0')
+    acc.set_config('mvbox_move', '1')
     acc.set_config('displayname', 'SimpleBot🤖')
 
     context.acc = acc

@@ -8,10 +8,12 @@ from simplebot import Plugin
 class Wttrin(Plugin):
 
     name = 'Wttr.in'
-    description = 'Provides the !wttr <place> command to get weather info. Ex. !wttr La Havana, Cuba.'
-    version = '0.1.0'
+    description = 'Provides the !wttr <place> command.'
+    long_description = 'To get weather info. Ex. !wttr La Havana, Cuba.'
+    version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
+    cmd = '!wttr'
 
     @classmethod
     def activate(cls, ctx):
