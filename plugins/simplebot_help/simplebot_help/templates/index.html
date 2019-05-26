@@ -19,18 +19,25 @@
 	  padding: 8px 12px;
 	  text-decoration: none;
       }
+      .hidden {
+	  display: none;
+      }
+      .box {
+	  border: solid 1px;
+      }
     </style>
   </head>
   <body>
     <h1>SimpleBot</h1>
     <noscript>{{ plugin.NOSCRIPT }}</noscript>  
-    <ul>
-    {% for p in plugin.ctx.plugins %}
-    <li><h3>{{ p.name }}</h3>
+    {% for p in plugins %}
+    <div class="box">
+      <h3>{{ p.name }}</h3>
       <p>{{ p.description }}</p>
+      <p class="hidden">{{ p.long_description }}</p>
+      <a class="btn" href="#">More</a>
       <a class="btn" href="mailto:{{ bot_addr }}?subject={{ p.cmd }}">Use</a>
-    </li>
+    </div>
     {% endfor %}
-    </ul>
   </body>
 </html>
