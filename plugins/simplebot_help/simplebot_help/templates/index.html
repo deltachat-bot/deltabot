@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="{{ plugin.ctx.locale }}">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ plugin.name }}</title>
+  </head>
+  <body>
+    <h1>SimpleBot</h1>
+    <noscript>{{ plugin.NOSCRIPT }}</noscript>  
+    <ul>
+    {% for p in plugin.ctx.plugins %}
+    <li><h3>{{ p.name }}</h3><p>{{ p.description }}</p></li>
+    {% endfor %}
+    </ul>
+  </body>
+</html>

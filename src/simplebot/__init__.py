@@ -9,11 +9,13 @@ __version__ = "0.8.0"
 class Plugin(ABC):
     """Interface for the bot's  plugins."""
 
-    name = None          # type: str
-    description = None   # type: str
-    version = None       # type: str
-    author = None        # type: str
+    name = None  # type: str
+    description = None  # type: str
+    long_description = None  # type: str
+    version = None  # type: str
+    author = None  # type: str
     author_email = None  # type: str
+    cmd = None  # type: str
 
     @staticmethod
     def get_args(cmd, text):

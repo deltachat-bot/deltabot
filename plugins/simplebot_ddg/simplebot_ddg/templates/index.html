@@ -1,21 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ plugin.ctx.locale }}">
   <head>
-    <title>{{plugin.name}}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ plugin.name }}</title>
   </head>
   <body>
-    <h1>{{plugin.name}}</h1>
-    <ul>
-    {% for r in results %}
-    <li>
-      <h3>{{ r.h2.a.get_text().strip() }}</h3>
-      {{  }}
-      <a href="{{ r.find('a', class_='result__url').get_text().strip() }}">{{ item.caption }}</a>
-    </li>
-    {% endfor %}
-    </ul>
-    text += +'\n'
-            #     text += r.find('a', class_='result__snippet').get_text() +'\n\n'
-    {{ plugin.description }}
+    <h1>{{ plugin.name }}</h1>
+    <noscript>{{ plugin.NOSCRIPT }}</noscript>  
+    <form action="mailto:{{ plugin.ctx.acc.get_self_contact().addr }}" method="get">
+      <input name="subject" type="hidden" value="!web"/>
+      <input name="body" type="text" value=""/>
+      <input alt="Search" title="Search" type="submit" value=""/>
+    </form>
   </body>
 </html>
