@@ -23,7 +23,7 @@ class Helper(Plugin):
         super().activate(ctx)
         cls.TEMP_FILE = os.path.join(cls.ctx.basedir, cls.name+'.html')
         env = Environment(
-            loader=PackageLoader('simplebot_ddg', 'templates'),
+            loader=PackageLoader(__name__, 'templates'),
             autoescape=select_autoescape(['html', 'xml'])
         )
         cls.template = env.get_template('index.html')
