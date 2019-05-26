@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 import re
+import os
 
 from setuptools import setup
 
 
 MODULE_NAME = 'simplebot_help'
 CLASS_NAME = 'Helper'
-with open(MODULE_NAME+'.py', 'rt', encoding='utf8') as fh:
+with open(os.path.join(MODULE_NAME, '__init__.py'), 'rt', encoding='utf8') as fh:
     source = fh.read()
 PLUGIN_NAME = re.search(r'name = \'(.*?)\'', source, re.M).group(1)
 VERSION = re.search(r'version = \'(.*?)\'', source, re.M).group(1)
