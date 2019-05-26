@@ -40,11 +40,12 @@ class DuckDuckGo(Plugin):
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
     NOT_FOUND = 'No results found for: "{}"'
-    TEMP_FILE = name+'.html'
+    NOSCRIPT = 'You need a browser with JavaScript support for this page to work correctly.'
 
     @classmethod
     def activate(cls, ctx):
         super().activate(ctx)
+        cls.TEMP_FILE = os.path.join(cls.ctx.basedir, cls.name+'.html')
         if ctx.locale == 'es':
             cls.description = 'Provee el comando `!ddg <texto>` para buscar en DuckDuckGo(buscador de Internet). Ej. !ddg que es software libre?.'
             cls.NOT_FOUND = 'No se encontraron resultados para: "{}"'
@@ -57,17 +58,8 @@ class DuckDuckGo(Plugin):
         if arg:
             script = r'for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${"https://duckduckgo.com"}/$1`)}`);a.href=`mailto:${"' + cls.ctx.acc.get_self_contact().addr + r'"}?subject=%21web%20&body=${b}`}'
             text = get_page('https://duckduckgo.com/lite?q={}'.format(quote_plus(arg)), script)
-            #results = page.find_all('div', class_='result')
-            # if not results:
-            #     text = cls.NOT_FOUND.format(arg)
-            # template = env.get_template('index.html')
-            # text = template.render(plugin=cls, results=results)
-            # for r in results:
-            #     text += r.h2.a.get_text().strip() + '\n'
-            #     text += r.find('a', class_='result__url').get_text().strip()+'\n'
-            #     text += r.find('a', class_='result__snippet').get_text() +'\n\n'
         else:
-            template = env.get_template('help.html')
+            template = env.get_template('index.html')
             text = template.render(plugin=cls)
         with open(cls.TEMP_FILE, 'w') as fd:
             fd.write(text)
