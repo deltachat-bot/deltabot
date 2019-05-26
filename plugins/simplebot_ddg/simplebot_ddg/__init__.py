@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from urllib.request import urlopen
 from urllib.parse import quote_plus
+import os
 
 from simplebot import Plugin
 import bs4
