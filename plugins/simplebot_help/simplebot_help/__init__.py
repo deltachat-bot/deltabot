@@ -3,6 +3,7 @@ import os
 
 from simplebot import Plugin
 from jinja2 import Environment, PackageLoader, select_autoescape
+from html_sanitizer import Sanitizer
 
 
 class Helper(Plugin):
@@ -27,6 +28,7 @@ class Helper(Plugin):
             #autoescape=select_autoescape(['html', 'xml'])
         )
         cls.template = env.get_template('index.html')
+        cls.sanitizer = Sanitizer()
         # if ctx.locale == 'es':
         #     cls.description = 'Provee el comando !help que muestra este mensaje. Ej. !help.'
         #     cls.BANNER = 'SimpleBot para Delta Chat.\nPlugins instalados:\n\n'
@@ -38,8 +40,10 @@ class Helper(Plugin):
             plugins.remove(cls)
             plugins.insert(0, cls)
             bot_addr = cls.ctx.acc.get_self_contact().addr
+            html = cls.template.render(plugin=cls, plugins=plugins, bot_addr=bot_addr)
+            html = cls.sanitizer.sanitize(html)
             with open(cls.TEMP_FILE, 'w') as fd:
-                fd.write(cls.template.render(plugin=cls, plugins=plugins, bot_addr=bot_addr))
+                fd.write(html)
             chat = cls.ctx.acc.create_chat_by_message(msg)
             chat.send_file(cls.TEMP_FILE, mime_type='text/html')
             return True
