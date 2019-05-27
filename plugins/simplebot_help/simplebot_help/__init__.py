@@ -28,7 +28,6 @@ class Helper(Plugin):
             #autoescape=select_autoescape(['html', 'xml'])
         )
         cls.template = env.get_template('index.html')
-        cls.sanitizer = Sanitizer()
         # if ctx.locale == 'es':
         #     cls.description = 'Provee el comando !help que muestra este mensaje. Ej. !help.'
         #     cls.BANNER = 'SimpleBot para Delta Chat.\nPlugins instalados:\n\n'
