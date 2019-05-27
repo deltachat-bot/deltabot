@@ -47,13 +47,13 @@
   <script>
     document.getElementById("content").style.display = "block";
     function toogleMore(btn) {
-	var longdesc = btn.previousSibling;
+	var longdesc = btn.previousElementSibling;
 	if (longdesc.style.display === "none") {
 	    longdesc.style.display = "block";
-	    btn.innerHTML = "More"
+	    btn.innerHTML = "Less"
 	} else {
 	    longdesc.style.display = "none";
-	    btn.innerHTML = "Less"
+	    btn.innerHTML = "More"
 	}
     }
   </script>
