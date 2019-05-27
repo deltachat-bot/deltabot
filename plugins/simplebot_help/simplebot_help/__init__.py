@@ -3,7 +3,7 @@ import os
 
 from simplebot import Plugin
 from jinja2 import Environment, PackageLoader, select_autoescape
-from html_sanitizer import Sanitizer
+import htmlmin
 
 
 class Helper(Plugin):
@@ -41,7 +41,7 @@ class Helper(Plugin):
             plugins.insert(0, cls)
             bot_addr = cls.ctx.acc.get_self_contact().addr
             html = cls.template.render(plugin=cls, plugins=plugins, bot_addr=bot_addr)
-            html = cls.sanitizer.sanitize(html)
+            html = htmlmin.minify(html, remove_comments=True)
             with open(cls.TEMP_FILE, 'w') as fd:
                 fd.write(html)
             chat = cls.ctx.acc.create_chat_by_message(msg)
