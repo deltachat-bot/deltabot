@@ -37,8 +37,8 @@
       <div class="box">
 	<h3>{{ p.name }}</h3>
 	<p>{{ p.description }}</p>
-	<p class="">{{ p.long_description }}</p>
-	<a class="btn" href="#" onclick="alert('not implemented yet')">More</a>
+	<p class="long_desc" hidden>{{ p.long_description }}</p>
+	<a class="btn" href="#" onclick="toogleMore(this)">More</a>
 	<a class="btn" href="mailto:{{ bot_addr }}?subject={{ p.cmd }}">Use</a>
       </div>
       {% endfor %}
@@ -46,12 +46,14 @@
   </body>
   <script>
     document.getElementById("content").style.display = "block";
-    function toogleMore() {
-	var b = document.getElementById("TODO");
-	if (b.style.display === "none") {
-	    b.style.display = "block";
+    function toogleMore(btn) {
+	var long_desc = btn.previousSibling;
+	if (long_desc.style.display === "none") {
+	    long_desc.style.display = "block";
+	    btn.innerHTML = "More"
 	} else {
-	    b.style.display = "none";
+	    long_desc.style.display = "none";
+	    btn.innerHTML = "Less"
 	}
     }
   </script>
