@@ -388,7 +388,7 @@ box-shadow: 0 2px 4px 0 rgba(0,0,0,0.16),0 2px 10px 0 rgba(0,0,0,0.12) !importan
 	</header>
 	<div class="w3-container">
 	  <p>{{ p.description }}</p>
-	  <p class="w3-hide">{{ p.long_description }}</p>
+	  <div class="w3-hide"><p>{{ p.long_description }}</p></div>
 	  <a class="w3-btn w3-dark-gray w3-large w3-left" href="#" onclick="toogleMore(this)">{{ plugin.MORE }}</a>
 	  <a class="w3-btn w3-teal w3-large w3-right" href="mailto:{{ bot_addr }}?subject={{ p.cmd }}">{{ plugin.USE }} ❯</a>
 	</div>
