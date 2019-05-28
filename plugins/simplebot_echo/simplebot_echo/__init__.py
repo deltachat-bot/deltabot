@@ -26,8 +26,10 @@ class Echo(Plugin):
             autoescape=select_autoescape(['html', 'xml'])
         )
         cls.template = env.get_template('index.html')
-        # if ctx.locale == 'es':
-        #     cls.description = 'Provee el comando `!echo <texto>` el cual hace que el bot responda el texto que le pases. Ej. !echo hola mundo.'
+        if ctx.locale == 'es':
+            cls.description = 'Un plugin sencillo para que el bot repita lo que envíes como un eco.'
+            cls.long_description = 'Para usarlo puedes enviar un mensaje que comience con !echo, por ejemplo: !echo hola mundo y el bot responderá "hola mundo", esto permite comprobar de forma rápida que el bot está funcionando.'
+            cls.NOSCRIPT = 'Necesitas un navegador que soporte JavaScript para poder usar esta funcionalidad.'
 
     @classmethod
     def process(cls, msg):
@@ -37,7 +39,7 @@ class Echo(Plugin):
         chat = cls.ctx.acc.create_chat_by_message(msg)
         if not text:
             with open(cls.TEMP_FILE, 'w') as fd:
-                fd.write(cls.template.render(plugin=cls))
+                fd.write(cls.template.render(plugin=cls, bot_addr=plugin.ctx.acc.get_self_contact().addr))
             chat.send_file(cls.TEMP_FILE, mime_type='text/html')
         else:
             chat.send_text(text)
