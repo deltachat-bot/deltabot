@@ -39,7 +39,7 @@ class Echo(Plugin):
         chat = cls.ctx.acc.create_chat_by_message(msg)
         if not text:
             with open(cls.TEMP_FILE, 'w') as fd:
-                fd.write(cls.template.render(plugin=cls, bot_addr=plugin.ctx.acc.get_self_contact().addr))
+                fd.write(cls.template.render(plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr))
             chat.send_file(cls.TEMP_FILE, mime_type='text/html')
         else:
             chat.send_text(text)
