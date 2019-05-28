@@ -43,7 +43,7 @@ class DuckDuckGo(Plugin):
         super().activate(ctx)
         cls.env = Environment(
             loader=PackageLoader(__name__, 'templates'),
-            #autoescape=select_autoescape(['html', 'xml'])
+            autoescape=select_autoescape(['html', 'xml'])
         )
 
         cls.TEMP_FILE = os.path.join(cls.ctx.basedir, cls.name+'.html')
@@ -60,12 +60,12 @@ class DuckDuckGo(Plugin):
             return False
         if arg:
             script = r'for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${"https://duckduckgo.com"}/$1`)}`);a.href=`mailto:${"' + cls.ctx.acc.get_self_contact().addr + r'"}?subject=%21web%20&body=${b}`}'
-            text = get_page('https://duckduckgo.com/lite?q={}'.format(quote_plus(arg)), script)
+            html = get_page('https://duckduckgo.com/lite?q={}'.format(quote_plus(arg)), script)
         else:
             template = cls.env.get_template('index.html')
-            text = template.render(plugin=cls)
+            html = template.render(plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr)
         with open(cls.TEMP_FILE, 'w') as fd:
-            fd.write(text)
+            fd.write(html)
         chat = cls.ctx.acc.create_chat_by_message(msg)
         chat.send_file(cls.TEMP_FILE, mime_type='text/html')
         return True
