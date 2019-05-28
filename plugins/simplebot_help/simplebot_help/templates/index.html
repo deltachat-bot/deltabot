@@ -376,7 +376,7 @@ margin-top: 15px;
     <div class="w3-container w3-blue-gray">
       <h1>SimpleBot</h1>
     </div>
-    <noscript>{{ plugin.NOSCRIPT }}</noscript>
+    <noscript><div class="w3-container w3-section w3-red"><p>{{ plugin.NOSCRIPT }}<p></div></noscript>
     <div id="content" hidden>
       {% for p in plugins %}
       <div class="plugin-card w3-card-2">
@@ -386,8 +386,8 @@ margin-top: 15px;
 	<div class="w3-container">
 	  <p>{{ p.description }}</p>
 	  <p class="w3-hide">{{ p.long_description }}</p>
-	  <a class="w3-btn w3-dark-gray w3-large w3-left" href="#" onclick="toogleMore(this)">More</a>
-	  <a class="w3-btn w3-teal w3-large w3-right" href="mailto:{{ bot_addr }}?subject={{ p.cmd }}">Use ❯</a>
+	  <a class="w3-btn w3-dark-gray w3-large w3-left" href="#" onclick="toogleMore(this)">{{ cls.MORE }}</a>
+	  <a class="w3-btn w3-teal w3-large w3-right" href="mailto:{{ bot_addr }}?subject={{ p.cmd }}">{{ cls.USE }} ❯</a>
 	</div>
 	<br>
       </div>
@@ -400,8 +400,10 @@ margin-top: 15px;
 	var longdesc = btn.previousElementSibling;
         if (longdesc.className.indexOf("w3-show") == -1) {
             longdesc.className += " w3-show";
+            btn.innerHTML = "{{ cls.LESS }}";
         } else {
             longdesc.className = longdesc.className.replace(" w3-show", "");
+            btn.innerHTML = "{{ cls.MORE }}";
         }
     }
   </script>
