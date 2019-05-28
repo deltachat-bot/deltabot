@@ -17,7 +17,9 @@ class Helper(Plugin):
     cmd = '!help'
 
     NOSCRIPT = 'You need a browser with JavaScript support for this page to work correctly.'
-    # BANNER = 'SimpleBot for Delta Chat.\nInstalled plugins:\n\n'
+    MORE = 'More'
+    LESS = 'Less'
+    USE = 'Use'
 
     @classmethod
     def activate(cls, ctx):
@@ -28,9 +30,13 @@ class Helper(Plugin):
             #autoescape=select_autoescape(['html', 'xml'])
         )
         cls.template = env.get_template('index.html')
-        # if ctx.locale == 'es':
-        #     cls.description = 'Provee el comando !help que muestra este mensaje. Ej. !help.'
-        #     cls.BANNER = 'SimpleBot para Delta Chat.\nPlugins instalados:\n\n'
+        if ctx.locale == 'es':
+            cls.description = 'Provee esta página de ayuda.'
+            cls.long_description = 'Para saber más acerca de un plugin presiona el botón <strong>"Más"</strong>, para usarlos presiona el botón <strong>"Usar"</strong>, selecciona abrir siempre con Delta Chat, un comando será autocompletado para ti, envíalo para procesar tu petición.'
+            cls.NOSCRIPT = 'Necesitas un navegador que soporte JavaScript para poder usar esta funcionalidad.'
+            cls.MORE = 'Más'
+            cls.LESS = 'Menos'
+            cls.USE = 'Usar'
 
     @classmethod
     def process(cls, msg):
