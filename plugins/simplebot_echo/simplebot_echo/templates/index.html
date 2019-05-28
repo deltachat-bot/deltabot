@@ -4,14 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ plugin.name }}</title>
+    <style>
+      .w3-red,.w3-hover-red:hover{color:#fff!important;background-color:#f44336!important}
+      .w3-btn,.w3-btn-block,.w3-button{border:none;display:inline-block;outline:0;padding:6px 16px;vertical-align:middle;overflow:hidden;text-decoration:none!important;color:#fff;background-color:#000;text-align:center;cursor:pointer;white-space:nowrap}
+      .w3-btn:hover,.w3-btn-block:hover,.w3-btn-floating:hover,.w3-btn-floating-large:hover{box-shadow:0 8px 16px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19)}
+      .w3-large{font-size:18px!important}
+      .w3-blue-grey,.w3-hover-blue-grey:hover,.w3-blue-gray,.w3-hover-blue-gray:hover{color:#fff!important;background-color:#607d8b!important}
+      .w3-container:after,.w3-container:before,.w3-panel:after,.w3-panel:before,.w3-row:after,.w3-row:before,.w3-row-padding:after,.w3-row-padding:before,.w3-cell-row:before,.w3-cell-row:after,
+.w3-topnav:after,.w3-topnav:before,.w3-clear:after,.w3-clear:before,.w3-btn-group:before,.w3-btn-group:after,.w3-btn-bar:before,.w3-btn-bar:after,.w3-bar:before,.w3-bar:after
+{content:"";display:table;clear:both}
+html{box-sizing:border-box}*,*:before,*:after{box-sizing:inherit}
+/* Extract from normalize.css by Nicolas Gallagher and Jonathan Neal git.io/normalize */
+html{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}body{margin:0}
+      .topbar {
+      box-shadow: 0 2px 4px 0 rgba(0,0,0,0.16),0 2px 10px 0 rgba(0,0,0,0.12) !important
+      }
+      .center {
+      margin: 0;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      -ms-transform: translate(-50%, -50%);
+      transform: translate(-50%, -50%);
+      }
+    </style>
   </head>
   <body>
-    <h1>{{ plugin.name }}</h1>
-    <noscript>{{ plugin.NOSCRIPT }}</noscript>  
-    <form action="mailto:{{ plugin.ctx.acc.get_self_contact().addr }}" method="get">
-      <input name="subject" type="hidden" value="!echo"/>
-      <input name="body" type="text" value=""/>
-      <input alt="Echo!" title="Echo!" type="submit" value=""/>
-    </form>
+    <div class="w3-container w3-blue-gray topbar">
+      <h1>{{ plugin.name }}</h1>
+    </div>
+    <noscript><div class="w3-container w3-section w3-red"><p>{{ plugin.NOSCRIPT }}<p></div></noscript>
+    <div id="content" hidden>
+      <div class="center">
+	<input type="text" value="" oninput="setEcho(this)"/>
+	<a id="echo-btn" class="w3-btn w3-large w3-blue-gray" href="#">Echo!</a>
+      </div>
+    </div>
+    <script>
+      document.getElementById("content").style.display = "block";
+      function setEcho(i){
+      var btn = document.getElementById("echo-btn");
+      btn.href = "mailto:{{ bot_addr }}?subject=!echo&body="+encodeURIComponent(i.value);
+      }
+    </script>
   </body>
 </html>

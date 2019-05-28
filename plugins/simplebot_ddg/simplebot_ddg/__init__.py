@@ -9,12 +9,6 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 import requests
 
 
-env = Environment(
-    loader=PackageLoader('simplebot_ddg', 'templates'),
-    autoescape=select_autoescape(['html', 'xml'])
-)
-
-
 def get_page(url, script=None):
     headers = {'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
     r = requests.get(url, headers=headers, stream=True)
@@ -23,8 +17,8 @@ def get_page(url, script=None):
         return None
     soup = bs4.BeautifulSoup(r.text, 'html.parser')
     [t.extract() for t in soup(['script', 'meta', 'iframe', 'noscript', 'link'])]
-    comments = soup.find_all(text=lambda text:isinstance(text, bs4.Comment))
-    [comment.extract() for comment in comments]
+    meta = soup.new_tag('meta', name="viewport", content="width=device-width, initial-scale=1.0")
+    soup.head.insert(1, meta)
     if script is not None:
         s = soup.new_tag('script')
         s.string = script
@@ -35,21 +29,29 @@ def get_page(url, script=None):
 class DuckDuckGo(Plugin):
 
     name = 'DuckDuckGo'
-    description = 'Provides the !ddg command to search in DuckDuckGo.'
-    long_description = 'Examples:\n!ddg Delta Chat\n!ddg riseup provider site:support.delta.chat'
+    description = 'Allows to use DuckDuckGo to search the web.'
+    long_description = 'Examples:<ul><li>!ddg Delta Chat</li><li>!ddg riseup provider site:support.delta.chat</li></ul>'
     version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
-    NOT_FOUND = 'No results found for: "{}"'
+
     NOSCRIPT = 'You need a browser with JavaScript support for this page to work correctly.'
+    SEARCH = 'Search'
 
     @classmethod
     def activate(cls, ctx):
         super().activate(ctx)
+        cls.env = Environment(
+            loader=PackageLoader(__name__, 'templates'),
+            #autoescape=select_autoescape(['html', 'xml'])
+        )
+
         cls.TEMP_FILE = os.path.join(cls.ctx.basedir, cls.name+'.html')
         if ctx.locale == 'es':
-            cls.description = 'Provee el comando `!ddg <texto>` para buscar en DuckDuckGo(buscador de Internet). Ej. !ddg que es software libre?.'
-            cls.NOT_FOUND = 'No se encontraron resultados para: "{}"'
+            cls.description = 'Permite buscar en Internet con el motor de búsquedas DuckDuckGo.'
+            cls.long_description = 'Puedes usarlo directamente con el comando !ddg <texto>, por ejemplo:<p>!ddg Cuba site:es.wikipedia.org</p>.'
+            cls.NOSCRIPT = 'Necesitas un navegador que soporte JavaScript para poder usar esta funcionalidad.'
+            cls.SEARCH = 'Buscar'
 
     @classmethod
     def process(cls, msg):
@@ -60,7 +62,7 @@ class DuckDuckGo(Plugin):
             script = r'for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${"https://duckduckgo.com"}/$1`)}`);a.href=`mailto:${"' + cls.ctx.acc.get_self_contact().addr + r'"}?subject=%21web%20&body=${b}`}'
             text = get_page('https://duckduckgo.com/lite?q={}'.format(quote_plus(arg)), script)
         else:
-            template = env.get_template('index.html')
+            template = cls.env.get_template('index.html')
             text = template.render(plugin=cls)
         with open(cls.TEMP_FILE, 'w') as fd:
             fd.write(text)
