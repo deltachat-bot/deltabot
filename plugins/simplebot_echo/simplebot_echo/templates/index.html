@@ -12,10 +12,16 @@
       .w3-blue-grey,.w3-hover-blue-grey:hover,.w3-blue-gray,.w3-hover-blue-gray:hover{color:#fff!important;background-color:#607d8b!important}
       .w3-container:after,.w3-container:before,.w3-panel:after,.w3-panel:before,.w3-row:after,.w3-row:before,.w3-row-padding:after,.w3-row-padding:before,.w3-cell-row:before,.w3-cell-row:after,
 .w3-topnav:after,.w3-topnav:before,.w3-clear:after,.w3-clear:before,.w3-btn-group:before,.w3-btn-group:after,.w3-btn-bar:before,.w3-btn-bar:after,.w3-bar:before,.w3-bar:after
-{content:"";display:table;clear:both}
+      {content:"";display:table;clear:both}
+      .w3-container{padding:0.01em 16px}
 html{box-sizing:border-box}*,*:before,*:after{box-sizing:inherit}
 /* Extract from normalize.css by Nicolas Gallagher and Jonathan Neal git.io/normalize */
-html{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}body{margin:0}
+      html{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}body{margin:0}
+      .w3-navbar li{float:left}.w3-navbar li a,.w3-navitem,.w3-navbar li .w3-btn,.w3-navbar li .w3-input{display:block;padding:8px 16px}.w3-navbar li .w3-btn,.w3-navbar li .w3-input{border:none;outline:none;width:100%}
+      .w3-input{padding:8px;display:block;border:none;border-bottom:1px solid #808080;width:100%}
+      .w3-border-0{border:0!important}.w3-border{border:1px solid #ccc!important}
+      .w3-border-blue-grey,.w3-hover-border-blue-grey:hover,.w3-border-blue-gray,.w3-hover-border-blue-gray:hover{border-color:#607d8b!important}
+      
       .topbar {
       box-shadow: 0 2px 4px 0 rgba(0,0,0,0.16),0 2px 10px 0 rgba(0,0,0,0.12) !important
       }
@@ -36,7 +42,7 @@ html{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}body{margin:0}
     <noscript><div class="w3-container w3-section w3-red"><p>{{ plugin.NOSCRIPT }}<p></div></noscript>
     <div id="content" hidden>
       <div class="center">
-	<input type="text" value="" oninput="setEcho(this)"/>
+	<input class="w3-input w3-border w3-border-blue-gray" type="text" value="" oninput="setEcho(this)"/>
 	<a id="echo-btn" class="w3-btn w3-large w3-blue-gray" href="#">Echo!</a>
       </div>
     </div>
