@@ -43,13 +43,3 @@ To see some action, add `some plugins <https://pypi.org/search/?q=simplebot&o=&c
 https://delta.chat and add your bot-email address as a contact and
 start chatting with it! You can also add the bot as a member to a
 group chat.
-
-Looking at the code
--------------------
-
-Checkout this file which contains the definition of
-a command line client used above, and its interaction
-with the bindings (``src/simplebot/cmdline.py``):
-
-https://github.com/adbenitez/simplebot/blob/master/src/simplebot/cmdline.py
-
