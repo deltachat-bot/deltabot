@@ -20,7 +20,7 @@ class Plugin(ABC):
     @staticmethod
     def get_args(cmd, text):
         """Return the args for the given command or None if the command does not match."""
-        if re.match(cmd+r'\b', text):
+        if re.match(cmd+r'\b', text, re.IGNORECASE):
             return text[len(cmd):].strip()
         return None
 

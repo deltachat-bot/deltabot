@@ -18,7 +18,7 @@ class DeltaFriends(Plugin):
     cmd = '!friends'
 
     NOSCRIPT = 'You need a browser with JavaScript support for this page to work correctly.'
-    MAX_BIO_LEN = 80
+    MAX_BIO_LEN = 250
     USER_ADDED = 'You are now in the DeltaFriends list'
     USER_REMOVED = 'You was removed from the DeltaFriends list'
     USER_NOT_FOUND = 'You are NOT in the DeltaFriends list'
@@ -64,16 +64,19 @@ class DeltaFriends(Plugin):
             return False
         req = arg
         addr = msg.get_sender_contact().addr
+        chat = cls.ctx.acc.create_chat_by_message(msg)
         for cmd,action in [('!join', cls.join_cmd), ('!leave', cls.leave_cmd), ('!search', cls.search_cmd),
-                           ('!list', cls.list_cmd)]:
+                           ('!list', cls.list_cmd), ('!help', cls.help_cmd)]:
             arg = cls.get_args(cmd, req)
             if arg is not None:
-                text = action(addr, arg)
+                chat.send_text(action(addr, arg))
                 break
         else:
-            text = cls.help_cmd()
-        chat = cls.ctx.acc.create_chat_by_message(msg)
-        chat.send_text(text)
+            if not req:
+                html = cls.template.render(plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr)
+                with open(cls.TEMP_FILE, 'w') as fd:
+                    fd.write(html)
+                chat.send_file(cls.TEMP_FILE, mime_type='text/html')
         return True
 
     @classmethod
@@ -115,6 +118,6 @@ class DeltaFriends(Plugin):
         return cls.SEARCH_RESULTS.format(text)+results
 
     @classmethod
-    def help_cmd(cls):
+    def help_cmd(cls, *args):
         return '\n\n'.join(['DeltaFriends:\n', cls.hcmd_list, cls.hcmd_join.format(cls.MAX_BIO_LEN),
                             cls.hcmd_search, cls.hcmd_leave])
