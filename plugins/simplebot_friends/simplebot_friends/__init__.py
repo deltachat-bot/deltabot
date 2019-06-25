@@ -18,6 +18,7 @@ class DeltaFriends(Plugin):
     cmd = '!friends'
 
     NOSCRIPT = 'You need a browser with JavaScript support for this page to work correctly.'
+    WRITE = 'Write'
     MAX_BIO_LEN = 250
     USER_ADDED = 'You are now in the DeltaFriends list'
     USER_REMOVED = 'You was removed from the DeltaFriends list'
@@ -33,14 +34,13 @@ class DeltaFriends(Plugin):
     def activate(cls, ctx):
         super().activate(ctx)
         cls.TEMP_FILE = os.path.join(cls.ctx.basedir, cls.name+'.html')
-        env = Environment(
+        cls.env = Environment(
             loader=PackageLoader(__name__, 'templates'),
             autoescape=select_autoescape(['html', 'xml'])
         )
-        cls.template = env.get_template('index.html')
         cls.conn = sqlite3.connect(os.path.join(cls.ctx.basedir, 'deltafriends.db'))
         with cls.conn:
-            cls.conn.execute('''CREATE TABLE IF NOT EXISTS deltafriends (addr TEXT NOT NULL, bio TEXT, PRIMARY KEY(addr))''')
+            cls.conn.execute('''CREATE TABLE IF NOT EXISTS deltafriends (addr TEXT NOT NULL, name TEXT, bio TEXT, PRIMARY KEY(addr))''')
         # if ctx.locale == 'es':
         #     cls.description = 'Provee el comando !friends, para más información utilice !friends !help. Ej. !friends !join chico, música, tecnología, series, buscando amigos.'
         #     cls.USER_ADDED = 'Ahora estás en la lista de DeltaFriends'
@@ -69,24 +69,25 @@ class DeltaFriends(Plugin):
                            ('!list', cls.list_cmd), ('!help', cls.help_cmd)]:
             arg = cls.get_args(cmd, req)
             if arg is not None:
-                chat.send_text(action(addr, arg))
+                action(chat, addr, arg)
                 break
         else:
             if not req:
-                html = cls.template.render(plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr)
+                html = cls.env.get_template('index.html').render(plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr)
                 with open(cls.TEMP_FILE, 'w') as fd:
                     fd.write(html)
                 chat.send_file(cls.TEMP_FILE, mime_type='text/html')
         return True
 
     @classmethod
-    def list_cmd(cls, addr, text):
+    def list_cmd(cls, chat, addr, text):
         friends = cls.conn.execute('SELECT * FROM deltafriends ORDER BY addr').fetchall()
         get_desc = lambda d: d if d else cls.NO_DESC
-        text = 'DeltaFriends({}):\n\n'.format(len(friends))
-        text += '\n\n'.join(['🔘 {}: {}'.format(addr, get_desc(desc))
-                             for addr,desc in friends])
-        return text
+        friends = [{'name':addr, 'addr':addr, 'bio':get_desc(desc)} for addr,desc in friends]
+        html = cls.env.get_template('list.html').render(plugin=cls, friends=friends)
+        with open(cls.TEMP_FILE, 'w') as fd:
+            fd.write(html)
+        chat.send_file(cls.TEMP_FILE, mime_type='text/html')
 
     @classmethod
     def join_cmd(cls, addr, text):
@@ -94,7 +95,7 @@ class DeltaFriends(Plugin):
         if len(bio) > cls.MAX_BIO_LEN:
             bio = bio[:cls.MAX_BIO_LEN] + '...'
         with cls.conn:
-            cls.conn.execute('INSERT OR REPLACE INTO deltafriends VALUES (?, ?)', (addr, bio))
+            cls.conn.execute('INSERT OR REPLACE INTO deltafriends VALUES (?, ?, ?)', (addr, bio))
         return cls.USER_ADDED
 
     @classmethod
