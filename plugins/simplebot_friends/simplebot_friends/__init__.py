@@ -68,7 +68,13 @@ class DeltaFriends(Plugin):
                 break
         else:
             if not req:
-                html = cls.env.get_template('index.html').render(plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr)
+                addr = msg.get_sender_contact().addr
+                bio = cls.conn.execute('SELECT bio FROM deltafriends WHERE addr=?',(addr,)).fetchone()
+                if bio is None:
+                    bio = ""
+                else:
+                    bio = bio[0]
+                html = cls.env.get_template('index.html').render(plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr, bio=bio)
                 with open(cls.TEMP_FILE, 'w') as fd:
                     fd.write(html)
                 chat = cls.ctx.acc.create_chat_by_message(msg)

@@ -38,7 +38,7 @@ background-color:#607d8b!important;
     <div class="w3-container">
       <p>      
 	<label class="w3-text-grey">{{ plugin.BIO }}</label>
-	<textarea class="w3-input" style="resize:none" oninput="setBtn(this)"></textarea>
+	<textarea class="w3-input" value="{{ bio }}" style="resize:none" oninput="setBtn(this)"></textarea>
       </p>
       <p>
 	<a id="btn" class="w3-btn w3-teal w3-large w3-center" href="">{{ plugin.JOIN_BTN }} ❯</a>
