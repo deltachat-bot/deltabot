@@ -1,17 +1,52 @@
 {% extends "base.html" %}
 {% block css %}
-.w3-btn {border:none;display:inline-block;outline:0;padding:6px 16px;vertical-align:middle;overflow:hidden;text-decoration:none!important;color:#fff;background-color:#000;text-align:center;cursor:pointer;white-space:nowrap}
 .w3-large{font-size:18px!important}
-.w3-right{float:right!important}
+.w3-center{text-align:center!important}
+.w3-modal{z-index:3;display:none;padding-top:100px;position:fixed;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgb(0,0,0);background-color:rgba(0,0,0,0.4)}
+.w3-modal-content{margin:auto;background-color:#fff;position:relative;padding:0;outline:0;width:600px}
+.w3-closebtn{text-decoration:none;float:right;font-size:24px;font-weight:bold;color:inherit}
+.w3-closebtn:hover,.w3-closebtn:focus{color:#000;text-decoration:none;cursor:pointer}
+@media (max-width:600px){.w3-modal-content{margin:0 10px;width:auto!important}.w3-modal{padding-top:30px}
+@media (max-width:768px){.w3-modal-content{width:500px}.w3-modal{padding-top:50px}}
+@media (min-width:993px){.w3-modal-content{width:900px}
 .w3-teal,.w3-hover-teal:hover{color:#fff!important;background-color:#009688!important}
+.w3-text-grey,.w3-hover-text-grey:hover{color:#757575!important}
 
 .main-color {
 color:#fff!important;
 background-color:#607d8b!important;
-background-image:linear-gradient(120deg, #77888f, #364e59);
 }
 {% endblock %}
 
 {% block content %}
-<a class="w3-btn w3-teal w3-large w3-right" href="mailto:{{ bot_addr }}">{{ TODO }} ❯</a>
+<a class="w3-btn w3-teal w3-large w3-center" onclick="document.getElementById('profile').style.display='block'">{{ plugin.JOIN_BTN }}</a>
+<a class="w3-btn w3-teal w3-large w3-center" href="mailto:{{ bot_addr }}?subject=!friends!leave">{{ plugin.LEAVE_BTN }} ❯</a>
+<a class="w3-btn w3-teal w3-large w3-center" href="mailto:{{ bot_addr }}?subject=!friends!list">{{ plugin.LIST_BTN }} ❯</a>
+
+<div id="profile" class="w3-modal">
+  <div class="w3-modal-content">
+    <header class="w3-container w3-teal">
+      <span onclick="document.getElementById('profile').style.display='none'"
+	    class="w3-closebtn">&times;</span>
+      <h2>{{ plugin.PROFILE_HEADER }}</h2>
+    </header>
+    <div class="w3-container">
+      <p>      
+	<label class="w3-text-grey">{{ plugin.BIO }}</label>
+	<textarea class="w3-input" style="resize:none" oninput="setBtn(this)"></textarea>
+      </p>
+      <p>
+	<a id="btn" class="w3-btn w3-teal w3-large w3-center" href="">{{ plugin.JOIN_BTN }} ❯</a>
+      </p>
+    </div>
+    <footer class="w3-container w3-teal">
+    </footer>
+  </div>
+</div>
+{% endblock %}
+{% block js %}
+var btn = document.getElementById("btn");
+function setBtn(i){
+btn.href = "mailto:{{ bot_addr }}?subject=!friends!join&body="+encodeURIComponent(i.value);
+}
 {% endblock %}

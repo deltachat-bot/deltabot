@@ -11,6 +11,9 @@
       .w3-container:after,.w3-container:before,.w3-panel:after,.w3-panel:before,.w3-row:after,.w3-row:before,.w3-row-padding:after,.w3-row-padding:before,.w3-cell-row:before,.w3-cell-row:after, .w3-topnav:after,.w3-topnav:before,.w3-clear:after,.w3-clear:before,.w3-btn-group:before,.w3-btn-group:after,.w3-btn-bar:before,.w3-btn-bar:after,.w3-bar:before,.w3-bar:after {content:"";display:table;clear:both}
       .w3-container{padding:0.01em 16px}
       .w3-section{margin-top:16px!important;margin-bottom:16px!important}
+      .w3-btn,.w3-btn-block{border:none;display:inline-block;outline:0;padding:6px 16px;vertical-align:middle;overflow:hidden;text-decoration:none!important;color:#fff;background-color:#000;text-align:center;cursor:pointer;white-space:nowrap}
+      .w3-btn,.w3-btn-block{-webkit-touch-callout:none;-webkit-user-select:none;-khtml-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
+      .w3-btn-block{width:100%}
       .w3-red,.w3-hover-red:hover{color:#fff!important;background-color:#f44336!important}
 
       #topbar {
@@ -24,7 +27,7 @@
       <h1>{{ plugin.name }}</h1>
     </div>
     <noscript><div class="w3-container w3-section w3-red"><p>{{ plugin.NOSCRIPT }}<p></div></noscript>
-    <div id="content" hidden>
+    <div id="content" style="display: none;">
       {% block content %}{% endblock %}
     </div>
     <script>

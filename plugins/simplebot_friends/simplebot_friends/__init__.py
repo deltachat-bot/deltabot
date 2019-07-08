@@ -18,6 +18,11 @@ class DeltaFriends(Plugin):
     cmd = '!friends'
 
     NOSCRIPT = 'You need a browser with JavaScript support for this page to work correctly.'
+    JOIN_BTN = 'Join'
+    LEAVE_BTN = 'Leave'
+    LIST_BTN = 'Users List'
+    PROFILE_HEADER = 'Profile'
+    BIO = 'Bio'
     WRITE = 'Write'
     MAX_BIO_LEN = 250
     USER_ADDED = 'You are now in the DeltaFriends list'
@@ -55,42 +60,45 @@ class DeltaFriends(Plugin):
         if arg is None:
             return False
         req = arg
-        addr = msg.get_sender_contact().addr
-        chat = cls.ctx.acc.create_chat_by_message(msg)
         for cmd,action in [('!join', cls.join_cmd), ('!leave', cls.leave_cmd),
                            ('!list', cls.list_cmd)]:
             arg = cls.get_args(cmd, req)
             if arg is not None:
-                action(chat, addr, arg)
+                action(msg, arg)
                 break
         else:
             if not req:
                 html = cls.env.get_template('index.html').render(plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr)
                 with open(cls.TEMP_FILE, 'w') as fd:
                     fd.write(html)
+                chat = cls.ctx.acc.create_chat_by_message(msg)
                 chat.send_file(cls.TEMP_FILE, mime_type='text/html')
         return True
 
     @classmethod
-    def list_cmd(cls, chat, addr, text):
-        friends = [{'name':addr, 'addr':addr, 'bio':desc}
-                   for addr,desc in cls.conn.execute('SELECT * FROM deltafriends ORDER BY addr').fetchall()]
+    def list_cmd(cls, msg, *args):
+        friends = [{'addr':addr, 'bio':bio}
+                   for addr,bio in cls.conn.execute('SELECT * FROM deltafriends ORDER BY addr').fetchall()]
         html = cls.env.get_template('list.html').render(plugin=cls, friends=friends)
         with open(cls.TEMP_FILE, 'w') as fd:
             fd.write(html)
+        chat = cls.ctx.acc.create_chat_by_message(msg)
         chat.send_file(cls.TEMP_FILE, mime_type='text/html')
 
     @classmethod
-    def join_cmd(cls, addr, text):
-        bio = ' '.join([word for word in text.split()])
-        if len(bio) > cls.MAX_BIO_LEN:
-            bio = bio[:cls.MAX_BIO_LEN] + '...'
+    def join_cmd(cls, msg, text):
+        addr = msg.get_sender_contact().addr
+        text = ' '.join(text.split())
+        if len(text) > cls.MAX_BIO_LEN:
+            text = text[:cls.MAX_BIO_LEN] + '...'
         with cls.conn:
-            cls.conn.execute('INSERT OR REPLACE INTO deltafriends VALUES (?, ?)', (addr, bio))
+            cls.conn.execute('INSERT OR REPLACE INTO deltafriends VALUES (?, ?)', (addr, text))
+        chat = cls.ctx.acc.create_chat_by_message(msg)
         chat.send_text(cls.USER_ADDED)
 
     @classmethod
-    def leave_cmd(cls, addr, _):
+    def leave_cmd(cls, msg, *args):
+        addr = msg.get_sender_contact().addr
         with cls.conn:
             rowcount = cls.conn.execute('DELETE FROM deltafriends WHERE addr=?', addr).rowcount
         if rowcount == 1:
