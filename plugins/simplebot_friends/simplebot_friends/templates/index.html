@@ -2,6 +2,7 @@
 {% block css %}
 .w3-large{font-size:18px!important}
 .w3-center{text-align:center!important}
+.w3-input{padding:8px;display:block;border:none;border-bottom:1px solid #808080;width:100%}
 .w3-modal{z-index:3;display:none;padding-top:100px;position:fixed;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgb(0,0,0);background-color:rgba(0,0,0,0.4)}
 .w3-modal-content{margin:auto;background-color:#fff;position:relative;padding:0;outline:0;width:600px}
 .w3-closebtn{text-decoration:none;float:right;font-size:24px;font-weight:bold;color:inherit}
@@ -20,14 +21,11 @@
 color:#fff!important;
 background-color:#607d8b!important;
 }
-.w3-btn-block {
-margin: 15px;
-}
 {% endblock %}
 
 {% block content %}
-<a class="w3-btn-block w3-teal w3-large w3-center" onclick="document.getElementById('profile').style.display='block'">{{ plugin.JOIN_BTN }}</a>
-<a class="w3-btn-block w3-teal w3-large w3-center" href="mailto:{{ bot_addr }}?subject=!friends!leave">{{ plugin.LEAVE_BTN }} ❯</a>
+<a class="w3-btn-block w3-teal w3-large w3-center" onclick="document.getElementById('profile').style.display='block'">{{ plugin.JOIN_BTN }}</a></br></br>
+<a class="w3-btn-block w3-teal w3-large w3-center" href="mailto:{{ bot_addr }}?subject=!friends!leave">{{ plugin.LEAVE_BTN }} ❯</a></br></br>
 <a class="w3-btn-block w3-teal w3-large w3-center" href="mailto:{{ bot_addr }}?subject=!friends!list">{{ plugin.LIST_BTN }} ❯</a>
 
 <div id="profile" class="w3-modal">
