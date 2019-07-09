@@ -13,6 +13,7 @@ def get_page(url, script=None):
     if 'text/html' not in r.headers['content-type']:
         r.connection.close()
         return None
+    r.encoding = 'utf-8'
     soup = bs4.BeautifulSoup(r.text, 'html.parser')
     [t.extract() for t in soup(['script', 'meta', 'iframe', 'noscript', 'link'])]
     comments = soup.find_all(text=lambda text:isinstance(text, bs4.Comment))
@@ -34,13 +35,17 @@ class WebGrabber(Plugin):
     author_email = 'adbenitez@nauta.cu'
     cmd = '!web'
 
-    TEMP_FILE = 'page.html'
     NOT_ALLOWED = 'Only html pages are allowed'
     DOWNLOAD_FAILED = 'Falied to get the url: "{}"'
 
     @classmethod
     def activate(cls, ctx):
         super().activate(ctx)
+        cls.TEMP_FILE = os.path.join(cls.ctx.basedir, cls.name+'.html')
+        cls.env = Environment(
+            loader=PackageLoader(__name__, 'templates'),
+            autoescape=select_autoescape(['html', 'xml'])
+        )
         # if ctx.locale == 'es':
         #     cls.description = 'Provee el comando `!web <url>` el cual permite obtener la página web con la url dada. Ej. !web http://delta.chat.'
         #     cls.NOT_ALLOWED = 'Solo está permitido descargar páginas web'
@@ -53,7 +58,10 @@ class WebGrabber(Plugin):
             return False
         chat = cls.ctx.acc.create_chat_by_message(msg)
         if not arg:
-            chat.send_text(cls.description)
+            template = cls.env.get_template('index.html')
+            with open(cls.TEMP_FILE, 'w') as fd:
+                fd.write(template.render(plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr))
+            chat.send_file(cls.TEMP_FILE, mime_type='text/html')
         else:
             try:
                 if not arg.startswith('http'):
