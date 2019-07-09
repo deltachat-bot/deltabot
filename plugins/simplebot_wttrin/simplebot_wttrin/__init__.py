@@ -34,7 +34,7 @@ class Wttrin(Plugin):
                 cls.ctx.logger.exception(ex)
                 text = str(ex)
         else:
-            text = cls.description
+            text = cls.description + cls.long_description
         chat = cls.ctx.acc.create_chat_by_message(msg)
         chat.send_text(text)
         return True
