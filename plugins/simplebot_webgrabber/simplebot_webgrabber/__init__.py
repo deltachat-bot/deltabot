@@ -14,9 +14,11 @@ def get_page(url, script=None):
     if 'text/html' not in r.headers['content-type']:
         r.connection.close()
         return None
-    r.encoding = 'utf-8'
     soup = bs4.BeautifulSoup(r.text, 'html.parser')
-    [t.extract() for t in soup(['script', 'meta', 'iframe', 'noscript', 'link'])]
+    for t in soup(['meta']):
+        if t.get('http-equiv') != 'content-type':
+            t.extract()
+    [t.extract() for t in soup(['script', 'iframe', 'noscript', 'link'])]
     comments = soup.find_all(text=lambda text:isinstance(text, bs4.Comment))
     [comment.extract() for comment in comments]
     if script is not None:
