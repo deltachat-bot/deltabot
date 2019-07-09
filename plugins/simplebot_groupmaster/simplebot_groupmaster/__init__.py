@@ -10,23 +10,22 @@ class GroupMaster(Plugin):
 
     name = 'GroupMaster'
     description = 'Provides the !group command.'
-    long_description = 'Ex. !group !list.'
+    MAX_TOPIC_SIZE = 250
+    long_description = '<br><br>'.join(['!group !list will show the list of public groups and their ID.',
+                                        '!group !id send this command in a group to see its ID.',
+                                        '!group !join <ID> will join you to the public group with the given ID.',
+                                        '!group !leave <ID> will remove you from the group with the given ID.',
+                                        '!group !public/!private use this commands in a group to make it public or private.',
+                                        '!group !topic [new topic] replace the current topic or show the current topic if no new topic was provided (topics must be < {} characters).'.format(MAX_TOPIC_SIZE),
+                                        '!group !add <ID> <addrs> will add a comma-separated list of addresses to the group with the given ID.',
+                                        '!group !remove <ID> <addr> will remove the member with the given address from the group with the give ID.',
+                                        '!group !msg <ID> <msg> will send the given message to the group with the given ID.'])
     version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
-    cmd = '!group'
+    cmd = '!group!list'
 
     PUBLIC_GROUP = '[pub]'
-    MAX_TOPIC_SIZE = 250
-    HELP = '\n\n'.join(['!group !list will show the list of public groups and their ID.',
-                        '!group !id send this command in a group to see its ID.',
-                        '!group !join <ID> will join you to the public group with the given ID.',
-                        '!group !leave <ID> will remove you from the group with the given ID.',
-                        '!group !public/!private use this commands in a group to make it public or private.',
-                        '!group !topic [new topic] replace the current topic or show the current topic if no new topic was provided (topics must be < {} characters).'.format(MAX_TOPIC_SIZE),
-                        '!group !add <ID> <addrs> will add a comma-separated list of addresses to the group with the given ID.',
-                        '!group !remove <ID> <addr> will remove the member with the given address from the group with the give ID.',
-                        '!group !msg <ID> <msg> will send the given message to the group with the given ID.'])
     LISTCMD_BANNER = 'Groups ({}):\n\n'
     UNKNOW_GROUP = 'unknow group ID: {}'
     REMOVED_FROM_GROUP = 'removed from {} [ID:{}]'
@@ -35,18 +34,25 @@ class GroupMaster(Plugin):
     ADDED_TO_GROUP_BY = 'added to {} [ID:{}] by {}\n\nTopic:\n{}'
     GROUP_STATUS_PUBLIC = 'Group status: Public'
     GROUP_STATUS_PRIVATE = 'Group status: Private'
+    DELTA_URL = 'http://delta.chat/group/'
+    LIST_BTN = 'Groups List'
     TOPIC = 'Topic:\n{}'
 
     @classmethod
     def activate(cls, ctx):
         super().activate(ctx)
+        cls.TEMP_FILE = os.path.join(cls.ctx.basedir, cls.name+'.html')
+        cls.env = Environment(
+            loader=PackageLoader(__name__, 'templates'),
+            #autoescape=select_autoescape(['html', 'xml'])
+        )
         # if ctx.locale == 'es':
         #     cls.description = 'Provee el comando !group, utilice !group !help para más información. Ej. !group !list.'
         #     cls.LISTCMD_BANNER = 'Grupos ({}):\n\n'
         #     cls.UNKNOW_GROUP = 'Grupo desconocido, ID: {}'
         #     cls.REMOVED_FROM_GROUP = 'Fuiste eliminado de {} [ID:{}]'
         #     cls.REMOVED_FROM_GROUP_BY = 'Fuiste eliminado de {} [ID:{}] por {}'
-        #     cls.ADDED_TO_GROUP = 'Fuiste añadido a {} [ID:{}]\n\nTema:\n'
+        #     cls.ADDED_TO_GROUP = 'Fuiste añadido a {} [ID:{}]\n\nTema:\n{}'
         #     cls.ADDED_TO_GROUP_BY = 'Fuiste añadido a {} [ID:{}] por {}\n\nTema:\n'
         #     cls.HELP = '\n\n'.join(['!group !list muestra la lista de grupos públicos y sus ID.',
         #                             '!group !id envia este comando en un grupo para obtener su ID.',
@@ -68,6 +74,7 @@ class GroupMaster(Plugin):
             return False
         chat = cls.ctx.acc.create_chat_by_message(msg)
         req = arg
+        text = ''
         for cmd,action in [('!id', cls.id_cmd), ('!list', cls.list_cmd), ('!join', cls.join_cmd),
                            ('!leave', cls.leave_cmd), ('!public', cls.public_cmd), ('!private', cls.private_cmd),
                            ('!topic', cls.topic_cmd), ('!add', cls.add_cmd), ('!remove', cls.remove_cmd),
@@ -77,7 +84,10 @@ class GroupMaster(Plugin):
                 text = action(msg, arg)
                 break
         else:
-            text = cls.name+':\n\n'+cls.HELP
+            template = cls.env.get_template('index.html')
+            with open(cls.TEMP_FILE, 'w') as fd:
+                fd.write(template.render(plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr))
+            chat.send_file(cls.TEMP_FILE, mime_type='text/html')
         if text:
             chat.send_text(text)
         return True
@@ -121,12 +131,12 @@ class GroupMaster(Plugin):
             return 'Not a group.' # cls.NOT_A_GROUP
         _, _, pub = cls.parse_group_name(msg.chat.get_name())
         if pub:
-            gid = msg.chat.id
+            gid = '{}{}'.format(cls.DELTA_URL, msg.chat.id)
         else:
             # TODO: load from db if exist, generate otherwise
             gid = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits)
                           for _ in range(10))
-            gid = 'http://delta.chat/join/{}-{}'.format(gid, msg.chat.id)
+            gid = '{}{}-{}'.format(cls.DELTA_URL, gid, msg.chat.id)
         return 'ID: {}'.format(gid)
 
     @classmethod
@@ -157,7 +167,7 @@ class GroupMaster(Plugin):
     def join_cmd(cls, msg, arg):
         group_id = arg
         try:
-            group_id = int(group_id)
+            group_id = int(group_id.strip(cls.DELTA_URL))
             for g in cls.get_groups():
                 if g.id == group_id:
                     g.add_contact(msg.get_sender_contact())
@@ -171,7 +181,7 @@ class GroupMaster(Plugin):
     def leave_cmd(cls, msg, arg):
         group_id = arg
         try:
-            group_id = int(group_id)
+            group_id = int(group_id.strip(cls.DELTA_URL))
             for g in cls.get_groups(public_only=False):
                 if g.id == group_id and msg.get_sender_contact() in g.get_contacts():
                     g.remove_contact(msg.get_sender_contact())
@@ -185,7 +195,7 @@ class GroupMaster(Plugin):
     def add_cmd(cls, msg, arg):
         i = arg.find(' ')
         try:
-            group_id = int(arg[:i])
+            group_id = int(arg[:i].strip(cls.DELTA_URL))
             addrs = arg[i:].strip().split(',')
             if i < 0 or not addrs:
                 raise ValueError
@@ -206,7 +216,7 @@ class GroupMaster(Plugin):
     def remove_cmd(cls, msg, arg):
         i = arg.find(' ')
         try:
-            group_id = int(arg[:i])
+            group_id = int(arg[:i].strip(cls.DELTA_URL))
             addr = arg[i:].strip()
             if i < 0 or not addrs:
                 raise ValueError
@@ -224,7 +234,7 @@ class GroupMaster(Plugin):
     def msg_cmd(cls, msg, arg):
         i = arg.find(' ')
         try:
-            group_id = int(arg[:i])
+            group_id = int(arg[:i].strip(cls.DELTA_URL))
             text = arg[i:].strip()
             if i < 0 or not msg:
                 raise ValueError
@@ -243,5 +253,5 @@ class GroupMaster(Plugin):
         text = cls.LISTCMD_BANNER.format(len(groups))
         for g in groups:
             name, _, _ = cls.parse_group_name(g.get_name())
-            text += '{} [ID:{}]:\n* {} 👤\n'.format(name, g.id, len(g.get_contacts()))
+            text += '{} [ID:{}{}]:\n* {} 👤\n'.format(name, cls.DELTA_URL, g.id, len(g.get_contacts()))
         return text
