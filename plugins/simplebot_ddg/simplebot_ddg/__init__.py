@@ -15,6 +15,7 @@ def get_page(url, script=None):
     if 'text/html' not in r.headers['content-type']:
         r.connection.close()
         return None
+    r.encoding = 'utf-8'
     soup = bs4.BeautifulSoup(r.text, 'html.parser')
     [t.extract() for t in soup(['script', 'meta', 'iframe', 'noscript', 'link'])]
     meta = soup.new_tag('meta', attrs={'name':"viewport", 'content':"width=device-width, initial-scale=1.0"})
