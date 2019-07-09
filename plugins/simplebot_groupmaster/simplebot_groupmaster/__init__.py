@@ -268,7 +268,7 @@ class GroupMaster(Plugin):
         gs = []
         for g in groups:
             name, topic, _ = cls.parse_group_name(g.get_name())
-            gs.append(name, topic, cls.delta_URL+g.id, len(g.get_contacts()))
+            gs.append(name, topic, cls.DELTA_URL+g.id, len(g.get_contacts()))
         template = cls.env.get_template('list.html')
         with open(cls.TEMP_FILE, 'w') as fd:
             fd.write(template.render(plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr, groups=gs))
