@@ -18,7 +18,7 @@ class DeltaFriends(Plugin):
     cmd = '!friends'
 
     NOSCRIPT = 'You need a browser with JavaScript support for this page to work correctly.'
-    JOIN_BTN = 'Join'
+    JOIN_BTN = 'Join/Update'
     LEAVE_BTN = 'Leave'
     LIST_BTN = 'Users List'
     PROFILE_HEADER = 'Profile'
@@ -106,7 +106,7 @@ class DeltaFriends(Plugin):
     def leave_cmd(cls, msg, *args):
         addr = msg.get_sender_contact().addr
         with cls.conn:
-            rowcount = cls.conn.execute('DELETE FROM deltafriends WHERE addr=?', addr).rowcount
+            rowcount = cls.conn.execute('DELETE FROM deltafriends WHERE addr=?', (addr,)).rowcount
         if rowcount == 1:
             return cls.USER_REMOVED
         else:
