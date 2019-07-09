@@ -25,7 +25,7 @@ class GetDelta(Plugin):
         cls.TEMP_FILE = os.path.join(cls.ctx.basedir, cls.name+'.html')
         cls.env = Environment(
             loader=PackageLoader(__name__, 'templates'),
-            autoescape=select_autoescape(['html', 'xml'])
+            #autoescape=select_autoescape(['html', 'xml'])
         )
         if ctx.locale == 'es':
             cls.description = 'Obtén enlaces de descarga e información sobre la última versión de Delta Chat.'
@@ -53,9 +53,10 @@ class GetDelta(Plugin):
     @staticmethod
     def get_info(platform):
         page = urlopen('https://github.com/deltachat/deltachat-{}/releases'.format(platform)).read()
-        latest = BeautifulSoup(page, 'html.parser').find('div', class_='label-latest')
-        text = '{}:<br>'.format(latest.ul.a['title'].strip())
-        text += latest.find('div', class_='markdown-body').get_text()
-        for box in list(latest.find_all('div', class_='Box-body'))[:-2]:
-            text += '<br>https://github.com{}'.format(box.a['href'])
-        return text
+        soup = BeautifulSoup(page, 'html.parser')
+        latest = soup.find('div', class_='label-latest').find('div', class_='release-main-section')
+        # text = '{}:<br>'.format(latest.ul.a['title'].strip())
+        # text += latest.find('div', class_='markdown-body').get_text()
+        # for box in list(latest.find_all('div', class_='Box-body'))[:-2]:
+        #     text += '<br>https://github.com{}'.format(box.a['href'])
+        return str(latest)
