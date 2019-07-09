@@ -107,10 +107,11 @@ class DeltaFriends(Plugin):
         addr = msg.get_sender_contact().addr
         with cls.conn:
             rowcount = cls.conn.execute('DELETE FROM deltafriends WHERE addr=?', (addr,)).rowcount
+        chat = cls.ctx.acc.create_chat_by_message(msg)
         if rowcount == 1:
-            return cls.USER_REMOVED
+            chat.send_text(cls.USER_REMOVED)
         else:
-            return cls.USER_NOT_FOUND
+            chat.send_text(cls.USER_NOT_FOUND)
 
     # @classmethod
     # def search_cmd(cls, _, text):
