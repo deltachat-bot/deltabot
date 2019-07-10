@@ -26,8 +26,8 @@ margin-bottom: 15px;
     <ul><li>{{ mcount }} 👤</li></ul>
     {{ plugin.TOPIC_LABEL }}
     <p>{{ topic }}</p>
-    <a class="w3-btn w3-red w3-large w3-left" href="mailto:{{ bot_addr }}?body="+encodeURIComponent("!group!leave {{ gid }}")>{{ plugin.LEAVE_BTN }} ❯</a>
-    <a class="w3-btn w3-teal w3-large w3-right" href="mailto:{{ bot_addr }}?body="+encodeURIComponent("!group!join {{ gid }}")>{{ plugin.JOIN_BTN }} ❯</a>
+    <a class="w3-btn w3-red w3-large w3-left" href="mailto:{{ bot_addr }}?body=!group!leave {{ gid }}">{{ plugin.LEAVE_BTN }} ❯</a>
+    <a class="w3-btn w3-teal w3-large w3-right" href="mailto:{{ bot_addr }}?body=!group!join {{ gid }}")>{{ plugin.JOIN_BTN }} ❯</a>
   </div>
   <br>
 </div>
