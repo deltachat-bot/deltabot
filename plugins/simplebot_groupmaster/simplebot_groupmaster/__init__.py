@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from  urllib.parse import quote_plus
 import os
 import string
 import random
@@ -269,7 +270,8 @@ class GroupMaster(Plugin):
         groups.sort(key=lambda g: g.get_name())
         for i,g in enumerate(groups):
             name, topic, _ = cls.parse_group_name(g.get_name())
-            groups[i] = (name, topic, '{}{}'.format(cls.DELTA_URL,g.id), len(g.get_contacts()))
+            gid = quote_plus('{}{}'.format(cls.DELTA_URL,g.id))
+            groups[i] = (name, topic, gid, len(g.get_contacts()))
         template = cls.env.get_template('list.html')
         with open(cls.TEMP_FILE, 'w') as fd:
             fd.write(template.render(plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr, groups=groups))
