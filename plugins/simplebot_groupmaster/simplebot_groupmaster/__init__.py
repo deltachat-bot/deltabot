@@ -265,13 +265,12 @@ class GroupMaster(Plugin):
     def list_cmd(cls, msg, arg):
         groups = cls.get_groups()
         groups.sort(key=lambda g: g.get_name())
-        gs = []
-        for g in groups:
+        for i,g in enumerate(groups):
             name, topic, _ = cls.parse_group_name(g.get_name())
-            gs.append(name, topic, '{}{}'.format(cls.DELTA_URL,g.id), len(g.get_contacts()))
+            groups[i] = (name, topic, '{}{}'.format(cls.DELTA_URL,g.id), len(g.get_contacts()))
         template = cls.env.get_template('list.html')
         with open(cls.TEMP_FILE, 'w') as fd:
-            fd.write(template.render(plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr, groups=gs))
+            fd.write(template.render(plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr, groups=groups))
         chat = cls.ctx.acc.create_chat_by_message(msg)
         chat.send_file(cls.TEMP_FILE, mime_type='text/html')
         # text = cls.LISTCMD_BANNER.format(len(groups))
