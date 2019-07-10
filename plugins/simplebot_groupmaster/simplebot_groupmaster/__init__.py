@@ -40,6 +40,7 @@ class GroupMaster(Plugin):
     TOPIC = 'Topic:\n{}'
     TOPIC_LABEL = 'Topic:'
     JOIN_BTN = 'Join'
+    LEAVE_BTN = 'Leave'
 
     @classmethod
     def activate(cls, ctx):
