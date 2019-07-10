@@ -38,6 +38,7 @@ class GroupMaster(Plugin):
     DELTA_URL = 'http://delta.chat/group/'
     LIST_BTN = 'Groups List'
     TOPIC = 'Topic:\n{}'
+    TOPIC_LABEL = 'Topic:'
     JOIN_BTN = 'Join'
 
     @classmethod
