@@ -44,14 +44,14 @@
 	<input class="w3-input w3-border w3-border-blue-gray" type="text" value="" oninput="updateLink(this)"/>
 	<a id="go-btn" class="w3-btn w3-large w3-blue-gray" href="">Search❯</a>
 	<br><br>
-	<a id="go-btn" class="w3-btn-block w3-large w3-blue-gray" href="mailto:{{ bot_addr }}?subject=!w!r">Random❯</a>
+	<a id="go-btn" class="w3-btn-block w3-large w3-blue-gray" href="mailto:{{ bot_addr }}?body=!w!r">Random❯</a>
       </div>
     </div>
     <script>
       document.getElementById("content").style.display = "block";
       function updateLink(i){
       var btn = document.getElementById("go-btn");
-      btn.href = "mailto:{{ bot_addr }}?subject={{ plugin.cmd }}&body="+encodeURIComponent(i.value);
+      btn.href = "mailto:{{ bot_addr }}?body={{ plugin.cmd }}%20"+encodeURIComponent(i.value);
       }
     </script>
   </body>
