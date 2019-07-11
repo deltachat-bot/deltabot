@@ -50,7 +50,7 @@ html{box-sizing:border-box}*,*:before,*:after{box-sizing:inherit}
       document.getElementById("content").style.display = "block";
       function setLink(i){
       var btn = document.getElementById("send-btn");
-      btn.href = "mailto:{{ bot_addr }}?subject=!ddg&body="+encodeURIComponent(i.value);
+      btn.href = "mailto:{{ bot_addr }}?body=!ddg%20"+encodeURIComponent(i.value);
       }
     </script>
   </body>

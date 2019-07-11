@@ -25,8 +25,8 @@ background-color:#607d8b!important;
 
 {% block content %}
 <a class="w3-btn-block w3-teal w3-large w3-center" onclick="document.getElementById('profile').style.display='block'">{{ plugin.JOIN_BTN }}</a></br></br>
-<a class="w3-btn-block w3-teal w3-large w3-center" href="mailto:{{ bot_addr }}?subject=!friends!leave">{{ plugin.LEAVE_BTN }} ❯</a></br></br>
-<a class="w3-btn-block w3-teal w3-large w3-center" href="mailto:{{ bot_addr }}?subject=!friends!list">{{ plugin.LIST_BTN }} ❯</a>
+<a class="w3-btn-block w3-teal w3-large w3-center" href="mailto:{{ bot_addr }}?body=!friends!leave">{{ plugin.LEAVE_BTN }} ❯</a></br></br>
+<a class="w3-btn-block w3-teal w3-large w3-center" href="mailto:{{ bot_addr }}?body=!friends!list">{{ plugin.LIST_BTN }} ❯</a>
 
 <div id="profile" class="w3-modal">
   <div class="w3-modal-content">
@@ -52,6 +52,6 @@ background-color:#607d8b!important;
 {% block js %}
 var btn = document.getElementById("btn");
 function setBtn(i){
-btn.href = "mailto:{{ bot_addr }}?subject=!friends!join&body="+encodeURIComponent(i.value);
+btn.href = "mailto:{{ bot_addr }}?body=!friends!join%20"+encodeURIComponent(i.value);
 }
 {% endblock %}

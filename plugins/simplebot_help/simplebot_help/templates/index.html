@@ -49,7 +49,7 @@
 	  <div class="w3-hide"><p>{{ p.long_description }}</p></div>
 	  <a class="w3-btn w3-dark-gray w3-large w3-left" onclick="toogleMore(this)">{{ plugin.MORE }}</a>
 	  {% if p.cmd %}
-	  <a class="w3-btn w3-teal w3-large w3-right" href="mailto:{{ bot_addr }}?subject={{ p.cmd }}">{{ plugin.USE }} ❯</a>
+	  <a class="w3-btn w3-teal w3-large w3-right" href="mailto:{{ bot_addr }}?body={{ p.cmd }}">{{ plugin.USE }} ❯</a>
 	  {% endif %}
 	</div>
 	<br>
