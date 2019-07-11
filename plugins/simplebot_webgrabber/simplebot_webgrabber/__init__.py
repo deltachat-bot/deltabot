@@ -8,7 +8,7 @@ import requests
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 
-def get_page(url, script=None):
+def get_page(url):
     headers = {'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
     r = requests.get(url, headers=headers, stream=True)
     if 'text/html' not in r.headers['content-type']:
@@ -21,10 +21,15 @@ def get_page(url, script=None):
     [t.extract() for t in soup(['script', 'iframe', 'noscript', 'link'])]
     comments = soup.find_all(text=lambda text:isinstance(text, bs4.Comment))
     [comment.extract() for comment in comments]
-    if script is not None:
-        s = soup.new_tag('script')
-        s.string = script
-        soup.body.append(s)
+    script = r'for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${url}/$1`)}`);a.href=`mailto:${"' + cls.ctx.acc.get_self_contact().addr + r'"}?body=%21web%20${b}`}'
+    s = soup.new_tag('script')
+    index = r.url.find('/', 8)
+    if index >= 0:                                
+        url = r.url[:index]
+    else:
+        url = r.url
+    s.string = 'var url = "{}";'.format(url)+script
+    soup.body.append(s)
     return str(soup)
 
 
@@ -69,8 +74,7 @@ class WebGrabber(Plugin):
             try:
                 if not arg.startswith('http'):
                     arg = 'http://'+arg
-                script = r'for(let e of document.getElementsByTagName("a")){const h=e.href;h&&-1===h.indexOf("mailto:")&&(e.href="mailto:' + cls.ctx.acc.get_self_contact().addr + r'?subject=!web&body="+encodeURI(`${h}`))}'
-                page = get_page(arg, script)
+                page = get_page(arg)
                 if page is not None:
                     # for a in soup.find_all('a', attrs={'href':True}):
                     #     if a['href'].startswith('/'):
