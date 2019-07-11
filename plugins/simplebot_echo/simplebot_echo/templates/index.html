@@ -50,7 +50,7 @@ html{box-sizing:border-box}*,*:before,*:after{box-sizing:inherit}
       document.getElementById("content").style.display = "block";
       function setEcho(i){
       var btn = document.getElementById("echo-btn");
-      btn.href = "mailto:{{ bot_addr }}?subject=!echo&body="+encodeURIComponent(i.value);
+      btn.href = "mailto:{{ bot_addr }}?body=!echo%20"+encodeURIComponent(i.value);
       }
     </script>
   </body>

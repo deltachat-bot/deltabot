@@ -49,7 +49,7 @@
       document.getElementById("content").style.display = "block";
       function updateLink(i){
       var btn = document.getElementById("go-btn");
-      btn.href = "mailto:{{ bot_addr }}?subject=!web&body="+encodeURIComponent(i.value);
+      btn.href = "mailto:{{ bot_addr }}?body=!web%20"+encodeURIComponent(i.value);
       }
     </script>
   </body>
