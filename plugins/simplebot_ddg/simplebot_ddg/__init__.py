@@ -16,7 +16,10 @@ def get_page(url, script=None):
         r.connection.close()
         return None
     soup = bs4.BeautifulSoup(r.text, 'html.parser')
-    [t.extract() for t in soup(['script', 'meta', 'iframe', 'noscript', 'link'])]
+    for t in soup(['meta']):
+        if t.get('http-equiv') != 'content-type':
+            t.extract()
+    [t.extract() for t in soup(['script', 'iframe', 'noscript', 'link'])]
     meta = soup.new_tag('meta', attrs={'name':"viewport", 'content':"width=device-width, initial-scale=1.0"})
     soup.head.insert(1, meta)
     if script is not None:

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from urllib.request import quote
+import os
 
 from simplebot import Plugin
 import bs4
@@ -7,20 +8,28 @@ import requests
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 
-def get_page(url, script=None):
+def get_page(url):
     headers = {'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
     r = requests.get(url, headers=headers, stream=True)
     if 'text/html' not in r.headers['content-type']:
         r.connection.close()
         return None
     soup = bs4.BeautifulSoup(r.text, 'html.parser')
-    [t.extract() for t in soup(['script', 'meta', 'iframe', 'noscript', 'link'])]
+    for t in soup(['meta']):
+        if t.get('http-equiv') != 'content-type':
+            t.extract()
+    [t.extract() for t in soup(['script', 'iframe', 'noscript', 'link'])]
     comments = soup.find_all(text=lambda text:isinstance(text, bs4.Comment))
     [comment.extract() for comment in comments]
-    if script is not None:
-        s = soup.new_tag('script')
-        s.string = script
-        soup.body.append(s)
+    script = r'for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${url}/$1`)}`);a.href=`mailto:${"' + WebGrabber.ctx.acc.get_self_contact().addr + r'"}?body=%21web%20${b}`}'
+    s = soup.new_tag('script')
+    index = r.url.find('/', 8)
+    if index >= 0:                                
+        url = r.url[:index]
+    else:
+        url = r.url
+    s.string = 'var url = "{}";'.format(url)+script
+    soup.body.append(s)
     return str(soup)
 
 
@@ -34,13 +43,17 @@ class WebGrabber(Plugin):
     author_email = 'adbenitez@nauta.cu'
     cmd = '!web'
 
-    TEMP_FILE = 'page.html'
     NOT_ALLOWED = 'Only html pages are allowed'
     DOWNLOAD_FAILED = 'Falied to get the url: "{}"'
 
     @classmethod
     def activate(cls, ctx):
         super().activate(ctx)
+        cls.TEMP_FILE = os.path.join(cls.ctx.basedir, cls.name+'.html')
+        cls.env = Environment(
+            loader=PackageLoader(__name__, 'templates'),
+            autoescape=select_autoescape(['html', 'xml'])
+        )
         # if ctx.locale == 'es':
         #     cls.description = 'Provee el comando `!web <url>` el cual permite obtener la página web con la url dada. Ej. !web http://delta.chat.'
         #     cls.NOT_ALLOWED = 'Solo está permitido descargar páginas web'
@@ -53,13 +66,15 @@ class WebGrabber(Plugin):
             return False
         chat = cls.ctx.acc.create_chat_by_message(msg)
         if not arg:
-            chat.send_text(cls.description)
+            template = cls.env.get_template('index.html')
+            with open(cls.TEMP_FILE, 'w') as fd:
+                fd.write(template.render(plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr))
+            chat.send_file(cls.TEMP_FILE, mime_type='text/html')
         else:
             try:
                 if not arg.startswith('http'):
                     arg = 'http://'+arg
-                script = r'for(let e of document.getElementsByTagName("a")){const h=e.href;h&&-1===h.indexOf("mailto:")&&(e.href="mailto:' + cls.ctx.acc.get_self_contact().addr + r'?subject=!web&body="+encodeURI(`${h}`))}'
-                page = get_page(arg, script)
+                page = get_page(arg)
                 if page is not None:
                     # for a in soup.find_all('a', attrs={'href':True}):
                     #     if a['href'].startswith('/'):

@@ -25,7 +25,7 @@ class GetDelta(Plugin):
         cls.TEMP_FILE = os.path.join(cls.ctx.basedir, cls.name+'.html')
         cls.env = Environment(
             loader=PackageLoader(__name__, 'templates'),
-            autoescape=select_autoescape(['html', 'xml'])
+            #autoescape=select_autoescape(['html', 'xml'])
         )
         if ctx.locale == 'es':
             cls.description = 'Obtén enlaces de descarga e información sobre la última versión de Delta Chat.'
@@ -38,12 +38,12 @@ class GetDelta(Plugin):
         if arg is None:
             return False
         arg = arg.lower()
-        ios = 'https://testflight.apple.com/join/WVoYFOZe'
+        ios = '<a href="https://testflight.apple.com/join/WVoYFOZe">https://testflight.apple.com/join/WVoYFOZe</a>'
         android = cls.get_info('android')
         desktop = cls.get_info('desktop')        
         chat = cls.ctx.acc.create_chat_by_message(msg)
         template = cls.env.get_template('index.html')
-        html = template.render(plugin=cls, platforms=[('Android',android), ('iOS',ios), ('Desktop',desktop)])
+        html = template.render(plugin=cls, platforms=[('iOS',ios), ('Android',android), ('Desktop',desktop)])
         with open(cls.TEMP_FILE, 'w') as fd:
             fd.write(html)
         chat = cls.ctx.acc.create_chat_by_message(msg)
@@ -53,9 +53,13 @@ class GetDelta(Plugin):
     @staticmethod
     def get_info(platform):
         page = urlopen('https://github.com/deltachat/deltachat-{}/releases'.format(platform)).read()
-        latest = BeautifulSoup(page, 'html.parser').find('div', class_='label-latest')
-        text = '{}:<br>'.format(latest.ul.a['title'].strip())
-        text += latest.find('div', class_='markdown-body').get_text()
-        for box in list(latest.find_all('div', class_='Box-body'))[:-2]:
-            text += '<br>https://github.com{}'.format(box.a['href'])
-        return text
+        soup = BeautifulSoup(page, 'html.parser')
+        latest = soup.find('div', class_='label-latest').find('div', class_='release-main-section')
+        for a in latest.find_all('a', attrs={'href':True}):
+            if a['href'].startswith('/'):
+                a['href'] = 'https://github.com'+a['href']
+        # text = '{}:<br>'.format(latest.ul.a['title'].strip())
+        # text += latest.find('div', class_='markdown-body').get_text()
+        # for box in list(latest.find_all('div', class_='Box-body'))[:-2]:
+        #     text += '<br>https://github.com{}'.format(box.a['href'])
+        return str(latest)

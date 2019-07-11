@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 import random
 
 from simplebot import Plugin
@@ -31,17 +32,23 @@ class Wikiquote(Plugin):
     def process(cls, msg):
         arg = cls.get_args('!quote', msg.text)
         if arg is not None:
-            if arg:
+            chat = cls.ctx.acc.create_chat_by_message(msg)
+            if cls.get_args('!today', arg):
+                quote, author = wq.quote_of_the_day(lang=cls.LANG)
+                quote = '"{}"\n\n― {}'.format(quote, author)
+                chat.send_text(quote)
+            elif arg:
                 pages = wq.search(arg, lang=cls.LANG)
                 if pages:
-                    author = random.choice(pages)
-                    quote = '"%s"\n\n-- %s' % (random.choice(wq.quotes(author, max_quotes=40, lang=cls.LANG)), author)
+                    author = pages[0]
+                    quote = '"%s"\n\n― %s' % (random.choice(wq.quotes(author, max_quotes=40, lang=cls.LANG)), author)
                 else:
                     quote = cls.QUOTE_NOT_FOUND % arg
+                chat.send_text(quote)
             else:
-                quote, author = wq.quote_of_the_day(lang=cls.LANG)
-                quote = '"%s"\n\n-- %s' % (quote, author)
-            chat = cls.ctx.acc.create_chat_by_message(msg)
-            chat.send_text(quote)
+                template = cls.env.get_template('index.html')
+                with open(cls.TEMP_FILE, 'w') as fd:
+                    fd.write(template.render(plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr))
+                chat.send_file(cls.TEMP_FILE, mime_type='text/html')
             return True
         return False
