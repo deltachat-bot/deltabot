@@ -24,7 +24,7 @@ def get_page(url):
     script = r'for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${simplebot_url}/$1`)}`);a.href=`mailto:${"' + WebGrabber.ctx.acc.get_self_contact().addr + r'"}?body=%21web%20${b}`}'
     s = soup.new_tag('script')
     index = r.url.find('/', 8)
-    if index >= 0:                                
+    if index >= 0:
         url = r.url[:index]
     else:
         url = r.url
@@ -36,8 +36,8 @@ def get_page(url):
 class WebGrabber(Plugin):
 
     name = 'WebGrabber'
-    description = 'Provides the !web <url> command.'
-    long_description = 'Ex. !web http://delta.chat'
+    description = 'Provides the !web command.'
+    long_description = 'Ex. !web http://delta.chat, !web!ddg delta chat, !web!w Cuba.'
     version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
