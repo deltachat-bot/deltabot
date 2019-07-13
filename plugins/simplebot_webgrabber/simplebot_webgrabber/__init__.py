@@ -21,14 +21,14 @@ def get_page(url):
     [t.extract() for t in soup(['script', 'iframe', 'noscript', 'link'])]
     comments = soup.find_all(text=lambda text:isinstance(text, bs4.Comment))
     [comment.extract() for comment in comments]
-    script = r'for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${url}/$1`)}`);a.href=`mailto:${"' + WebGrabber.ctx.acc.get_self_contact().addr + r'"}?body=%21web%20${b}`}'
+    script = r'for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${simplebot_url}/$1`)}`);a.href=`mailto:${"' + WebGrabber.ctx.acc.get_self_contact().addr + r'"}?body=%21web%20${b}`}'
     s = soup.new_tag('script')
     index = r.url.find('/', 8)
     if index >= 0:                                
         url = r.url[:index]
     else:
         url = r.url
-    s.string = 'var url = "{}";'.format(url)+script
+    s.string = 'var simplebot_url = "{}";'.format(url)+script
     soup.body.append(s)
     return str(soup)
 
@@ -52,7 +52,7 @@ class WebGrabber(Plugin):
         cls.TEMP_FILE = os.path.join(cls.ctx.basedir, cls.name+'.html')
         cls.env = Environment(
             loader=PackageLoader(__name__, 'templates'),
-            autoescape=select_autoescape(['html', 'xml'])
+            #autoescape=select_autoescape(['html', 'xml'])
         )
         # if ctx.locale == 'es':
         #     cls.description = 'Provee el comando `!web <url>` el cual permite obtener la página web con la url dada. Ej. !web http://delta.chat.'
@@ -76,14 +76,6 @@ class WebGrabber(Plugin):
                     arg = 'http://'+arg
                 page = get_page(arg)
                 if page is not None:
-                    # for a in soup.find_all('a', attrs={'href':True}):
-                    #     if a['href'].startswith('/'):
-                    #         index = r.url.find('/', 8)
-                    #         if index >= 0:                                
-                    #             a['href'] = r.url[:index]+a['href']
-                    #         else:
-                    #             a['href'] = r.url+a['href']
-                    #     a['href'] = 'mailto:{}?subject={}&body={}'.format(cls.ctx.acc.get_self_contact().addr, quote('!web '), quote(a['href'], safe=''))
                     with open(cls.TEMP_FILE, 'w') as fd:
                         fd.write(page)
                     chat.send_file(cls.TEMP_FILE, mime_type='text/html')
