@@ -73,13 +73,13 @@ class WebGrabber(Plugin):
                 break
         else:
             chat = cls.ctx.acc.create_chat_by_message(msg)
-            if not arg:
+            if not req:
                 template = cls.env.get_template('index.html')
                 with open(cls.TEMP_FILE, 'w') as fd:
                     fd.write(template.render(plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr))
                 chat.send_file(cls.TEMP_FILE, mime_type='text/html')
             else:
-                cls.web_cmd(chat, arg)
+                cls.web_cmd(chat, req)
         return True
 
     @classmethod
