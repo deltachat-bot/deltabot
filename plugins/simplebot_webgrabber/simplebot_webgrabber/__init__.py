@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from urllib.request import quote
+from urllib.parse import quote_plus
 import os
 
 from simplebot import Plugin
@@ -45,6 +45,7 @@ class WebGrabber(Plugin):
 
     NOT_ALLOWED = 'Only html pages are allowed'
     DOWNLOAD_FAILED = 'Falied to get the url: "{}"'
+    NOSCRIPT = 'You need a browser with JavaScript support for this page to work correctly.'
 
     @classmethod
     def activate(cls, ctx):
@@ -64,24 +65,45 @@ class WebGrabber(Plugin):
         arg = cls.get_args('!web', msg.text)
         if arg is None:
             return False
-        chat = cls.ctx.acc.create_chat_by_message(msg)
-        if not arg:
-            template = cls.env.get_template('index.html')
-            with open(cls.TEMP_FILE, 'w') as fd:
-                fd.write(template.render(plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr))
-            chat.send_file(cls.TEMP_FILE, mime_type='text/html')
+        req = arg
+        for cmd,action in [('!ddg', cls.ddg_cmd), ('!w', cls.w_cmd)]:
+            arg = cls.get_args(cmd, req)
+            if arg is not None:
+                action(msg, arg)
+                break
         else:
-            try:
-                if not arg.startswith('http'):
-                    arg = 'http://'+arg
-                page = get_page(arg)
-                if page is not None:
-                    with open(cls.TEMP_FILE, 'w') as fd:
-                        fd.write(page)
-                    chat.send_file(cls.TEMP_FILE, mime_type='text/html')
-                else:
-                    chat.send_text(cls.NOT_ALLOWED)
-            except Exception as ex:
-                cls.ctx.logger.exception(ex)
-                chat.send_text(cls.DOWNLOAD_FAILED.format(arg))
+            chat = cls.ctx.acc.create_chat_by_message(msg)
+            if not arg:
+                template = cls.env.get_template('index.html')
+                with open(cls.TEMP_FILE, 'w') as fd:
+                    fd.write(template.render(plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr))
+                chat.send_file(cls.TEMP_FILE, mime_type='text/html')
+            else:
+                cls.web_cmd(chat, arg)
         return True
+
+    @classmethod
+    def web_cmd(cls, chat, url):
+        try:
+            if not url.startswith('http'):
+                url = 'http://'+url
+            page = get_page(url)
+            if page is not None:
+                with open(cls.TEMP_FILE, 'w') as fd:
+                    fd.write(page)
+                chat.send_file(cls.TEMP_FILE, mime_type='text/html')
+            else:
+                chat.send_text(cls.NOT_ALLOWED)
+        except Exception as ex:
+            cls.ctx.logger.exception(ex)
+            chat.send_text(cls.DOWNLOAD_FAILED.format(url))
+
+    @classmethod
+    def ddg_cmd(cls, msg, arg):
+        chat = cls.ctx.acc.create_chat_by_message(msg)
+        cls.web_cmd(chat, "https://duckduckgo.com/lite?q={}".format(quote_plus(arg)))
+
+    @classmethod
+    def w_cmd(cls, msg, arg):
+        chat = cls.ctx.acc.create_chat_by_message(msg)
+        cls.web_cmd(chat, "https://{}.m.wikipedia.org/wiki/?search={}".format(cls.locale, quote_plus(arg)))

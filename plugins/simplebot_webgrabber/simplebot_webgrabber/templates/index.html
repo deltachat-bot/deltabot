@@ -19,9 +19,9 @@ transform: translate(-50%, -50%);
 {% block content %}
 <div class="center">
   <select id="selector" class="w3-select w3-border" onchange="updateLink()">
-    <option value="" selected>GET WEBPAGE</option>
-    <option value="https://duckduckgo.com/lite?q=">DuckDuckGo</option>
-    <option value="https://{{ plugin.locale }}.wikipedia.org/wiki/?search=">Wikipedia</option>
+    <option value="!web" selected>GET WEBPAGE</option>
+    <option value="!web!ddg">DuckDuckGo</option>
+    <option value="!web!w">Wikipedia</option>
   </select>
   <input id="tf" class="w3-input w3-border w3-border-blue-gray" type="text" value="" oninput="updateLink()"/>
   <a id="go-btn" class="w3-btn w3-large w3-blue-gray" href="">Go❯</a>
@@ -33,11 +33,6 @@ var btn = document.getElementById("go-btn");
 var selec = document.getElementById("selector");
 var tf = document.getElementById("tf");
 function updateLink(){
-if (selec.val == ""){
-var req = tf.value;
-}else{
-var req = selec.value+encodeURI(tf.value);
-}
-btn.href = "mailto:{{ bot_addr }}?body=!web%20"+encodeURIComponent(req);
+btn.href = "mailto:{{ bot_addr }}?body="+encodeURIComponent(selec.value+" "+tf.value);
 }
 {% endblock %}
