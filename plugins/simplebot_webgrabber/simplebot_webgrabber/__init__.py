@@ -66,7 +66,7 @@ class WebGrabber(Plugin):
         if arg is None:
             return False
         req = arg
-        for cmd,action in [('!ddg', cls.ddg_cmd), ('!w', cls.w_cmd)]:
+        for cmd,action in [('!ddg', cls.ddg_cmd), ('!wt', cls.wt_cmd), ('!w', cls.w_cmd)]:
             arg = cls.get_args(cmd, req)
             if arg is not None:
                 action(msg, arg)
@@ -107,3 +107,8 @@ class WebGrabber(Plugin):
     def w_cmd(cls, msg, arg):
         chat = cls.ctx.acc.create_chat_by_message(msg)
         cls.web_cmd(chat, "https://{}.m.wikipedia.org/wiki/?search={}".format(cls.ctx.locale, quote_plus(arg)))
+
+    @classmethod
+    def wt_cmd(cls, msg, arg):
+        chat = cls.ctx.acc.create_chat_by_message(msg)
+        cls.web_cmd(chat, "https://{}.m.wiktionary.org/wiki/?search={}".format(cls.ctx.locale, quote_plus(arg)))
