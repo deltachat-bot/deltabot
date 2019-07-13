@@ -106,4 +106,4 @@ class WebGrabber(Plugin):
     @classmethod
     def w_cmd(cls, msg, arg):
         chat = cls.ctx.acc.create_chat_by_message(msg)
-        cls.web_cmd(chat, "https://{}.m.wikipedia.org/wiki/?search={}".format(cls.locale, quote_plus(arg)))
+        cls.web_cmd(chat, "https://{}.m.wikipedia.org/wiki/?search={}".format(cls.ctx.locale, quote_plus(arg)))
