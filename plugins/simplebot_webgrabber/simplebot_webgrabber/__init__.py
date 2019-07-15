@@ -37,7 +37,7 @@ class WebGrabber(Plugin):
 
     name = 'WebGrabber'
     description = 'Provides the !web command.'
-    long_description = 'Ex. !web http://delta.chat, !web!ddg delta chat, !web!w Cuba.'
+    long_description = 'Examples:\n!web http://delta.chat\n!web!ddg delta chat\n!web!w Cuba'
     version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
