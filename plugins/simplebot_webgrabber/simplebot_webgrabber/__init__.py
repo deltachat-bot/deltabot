@@ -37,7 +37,7 @@ class WebGrabber(Plugin):
 
     name = 'WebGrabber'
     description = 'Provides the !web command.'
-    long_description = 'Examples:\n!web http://delta.chat\n!web!ddg delta chat\n!web!w Cuba'
+    long_description = 'Examples:\n!web http://delta.chat\n!ddg delta chat\n!w Cuba\n!wt freedom'
     version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
@@ -62,28 +62,18 @@ class WebGrabber(Plugin):
 
     @classmethod
     def process(cls, msg):
-        arg = cls.get_args('!web', msg.text)
-        if arg is None:
-            return False
-        req = arg
-        for cmd,action in [('!ddg', cls.ddg_cmd), ('!wt', cls.wt_cmd), ('!w', cls.w_cmd)]:
-            arg = cls.get_args(cmd, req)
+        for cmd,action in [('!ddg', cls.ddg_cmd), ('!wt', cls.wt_cmd), ('!w', cls.w_cmd),
+                           ('!web', cls.web_cmd)]:
+            arg = cls.get_args(cmd, msg.text)
             if arg is not None:
-                action(msg, arg)
+                action(cls.ctx.acc.create_chat_by_message(msg), arg)
                 break
         else:
-            chat = cls.ctx.acc.create_chat_by_message(msg)
-            if not req:
-                template = cls.env.get_template('index.html')
-                with open(cls.TEMP_FILE, 'w') as fd:
-                    fd.write(template.render(plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr))
-                chat.send_file(cls.TEMP_FILE, mime_type='text/html')
-            else:
-                cls.web_cmd(chat, req)
+            return False
         return True
 
     @classmethod
-    def web_cmd(cls, chat, url):
+    def send_page(cls, chat, url):
         try:
             if not url.startswith('http'):
                 url = 'http://'+url
@@ -99,16 +89,23 @@ class WebGrabber(Plugin):
             chat.send_text(cls.DOWNLOAD_FAILED.format(url))
 
     @classmethod
-    def ddg_cmd(cls, msg, arg):
-        chat = cls.ctx.acc.create_chat_by_message(msg)
-        cls.web_cmd(chat, "https://duckduckgo.com/lite?q={}".format(quote_plus(arg)))
+    def web_cmd(cls, chat, url):        
+        if not url:
+            template = cls.env.get_template('index.html')
+            with open(cls.TEMP_FILE, 'w') as fd:
+                fd.write(template.render(plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr))
+            chat.send_file(cls.TEMP_FILE, mime_type='text/html')
+        else:
+            cls.send_page(chat, url)
 
     @classmethod
-    def w_cmd(cls, msg, arg):
-        chat = cls.ctx.acc.create_chat_by_message(msg)
-        cls.web_cmd(chat, "https://{}.m.wikipedia.org/wiki/?search={}".format(cls.ctx.locale, quote_plus(arg)))
+    def ddg_cmd(cls, chat, arg):
+        cls.send_page(chat, "https://duckduckgo.com/lite?q={}".format(quote_plus(arg)))
 
     @classmethod
-    def wt_cmd(cls, msg, arg):
-        chat = cls.ctx.acc.create_chat_by_message(msg)
-        cls.web_cmd(chat, "https://{}.m.wiktionary.org/wiki/?search={}".format(cls.ctx.locale, quote_plus(arg)))
+    def w_cmd(cls, chat, arg):
+        cls.send_page(chat, "https://{}.m.wikipedia.org/wiki/?search={}".format(cls.ctx.locale, quote_plus(arg)))
+
+    @classmethod
+    def wt_cmd(cls, chat, arg):
+        cls.send_page(chat, "https://{}.m.wiktionary.org/wiki/?search={}".format(cls.ctx.locale, quote_plus(arg)))
