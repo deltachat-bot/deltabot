@@ -11,7 +11,7 @@ class Translator(Plugin):
     name = 'Translator'
     description = 'Translate text.'
     long_description = 'Example: !tr en es hello world'
-    version = '0.2.0'
+    version = '0.1.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
     cmd = '!tr'

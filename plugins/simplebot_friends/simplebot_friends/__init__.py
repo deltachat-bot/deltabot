@@ -11,7 +11,7 @@ class DeltaFriends(Plugin):
 
     name = 'DeltaFriends'
     description = 'Provides the !friends command.'
-    long_description = '<ul><li>!friends !list command will return the list of users wanting to make new friends</li><li>!friends !join <bio> will add you to the list or update your bio, "bio" is up to 250 characters of words describing yourself. Ex. !friends !join male, Cuban, tech, free software, music</li><li>!friends !leave command will remove you from the DeltaFriends list</li></ul>Ex. !friends !join male,tech,free software,rock music.'
+    long_description = '!friends!list command will return the list of users wanting to make new friends\n\n!friends!join <bio> will add you to the list or update your bio, "bio" is up to 250 characters of words describing yourself. Ex. !friends!join male, Cuban, tech, free software, music\n\n!friends!leave command will remove you from the DeltaFriends list.'
     version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'

@@ -27,10 +27,10 @@ class GetDelta(Plugin):
             loader=PackageLoader(__name__, 'templates'),
             #autoescape=select_autoescape(['html', 'xml'])
         )
-        if ctx.locale == 'es':
-            cls.description = 'Obtén enlaces de descarga e información sobre la última versión de Delta Chat.'
-            cls.long_description = 'Puedes obtenerlo enviandole el comando !getdelta a este bot.'
-            cls.NOSCRIPT = 'Necesitas un navegador que soporte JavaScript para poder usar esta funcionalidad.'
+        # if ctx.locale == 'es':
+        #     cls.description = 'Obtén enlaces de descarga e información sobre la última versión de Delta Chat.'
+        #     cls.long_description = 'Puedes obtenerlo enviandole el comando !getdelta a este bot.'
+        #     cls.NOSCRIPT = 'Necesitas un navegador que soporte JavaScript para poder usar esta funcionalidad.'
 
     @classmethod
     def process(cls, msg):

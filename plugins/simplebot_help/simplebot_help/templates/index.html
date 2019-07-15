@@ -46,7 +46,7 @@
 	</header>
 	<div class="w3-container">
 	  <p>{{ p.description }}</p>
-	  <div class="w3-hide"><p>{{ p.long_description }}</p></div>
+	  <div class="w3-hide"><p>{{ p.long_description.replace('\n', '<br>') }}</p></div>
 	  <a class="w3-btn w3-dark-gray w3-large w3-left" onclick="toogleMore(this)">{{ plugin.MORE }}</a>
 	  {% if p.cmd %}
 	  <a class="w3-btn w3-teal w3-large w3-right" href="mailto:{{ bot_addr }}?body={{ p.cmd }}">{{ plugin.USE }} ❯</a>
