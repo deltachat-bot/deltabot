@@ -245,7 +245,7 @@ class GroupMaster(Plugin):
         try:
             gid = int(arg[:i].strip(cls.DELTA_URL).split('-').pop())
             addrs = arg[i:].strip().split(',')
-            if i < 0 or not addrs:
+            if i < 0:
                 raise ValueError
         except ValueError:
             chat = cls.ctx.acc.create_chat_by_message(msg)
@@ -268,7 +268,7 @@ class GroupMaster(Plugin):
         try:
             gid = int(arg[:i].strip(cls.DELTA_URL).split('-').pop())
             addr = arg[i:].strip()
-            if i < 0 or not addrs:
+            if i < 0:
                 raise ValueError
         except ValueError:
             chat = cls.ctx.acc.create_chat_by_message(msg)
