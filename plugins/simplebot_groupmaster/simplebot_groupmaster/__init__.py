@@ -33,7 +33,6 @@ class GroupMaster(Plugin):
     author_email = 'adbenitez@nauta.cu'
     cmd = '!group!list'
 
-    PUBLIC_GROUP = '[pub]'
     LISTCMD_BANNER = 'Groups ({}):\n\n'
     UNKNOW_GROUP = 'unknow group ID: {}'
     REMOVED_FROM_GROUP = 'removed from {} [ID:{}]'
