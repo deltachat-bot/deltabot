@@ -220,7 +220,8 @@ class GroupMaster(Plugin):
                     if status == PUBLIC or pid1 == pid:
                         g.add_contact(msg.get_sender_contact())
                         chat.send_text(cls.ADDED_TO_GROUP.format(g.get_name(), g.id, topic))
-                    return
+                        return
+                    raise ValueError
         except ValueError:
             gid = arg
         chat.send_text(cls.UNKNOW_GROUP.format(gid))
