@@ -168,10 +168,12 @@ class GroupMaster(Plugin):
         else:
             pid, _, status = cls.get_info(msg.chat.id)
             if status == PUBLIC:
+                status = cls.GROUP_STATUS_PUBLIC
                 gid = '{}{}'.format(cls.DELTA_URL, msg.chat.id)
             else:
+                status = cls.GROUP_STATUS_PRIVATE
                 gid = '{}{}-{}'.format(cls.DELTA_URL, pid, msg.chat.id)
-            text = 'ID: {}'.format(gid)
+            text = status+'\nID: {}'.format(gid)
         chat.send_text(text)
 
     @classmethod
