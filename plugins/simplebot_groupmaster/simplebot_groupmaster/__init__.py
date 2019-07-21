@@ -59,18 +59,6 @@ class GroupMaster(Plugin):
         cls.conn = sqlite3.connect(os.path.join(cls.ctx.basedir, 'groupmaster.db'))
         with cls.conn:
             cls.conn.execute('''CREATE TABLE IF NOT EXISTS groups (id INTEGER NOT NULL, pid TEXT NOT NULL, topic TEXT, status INTEGER,  PRIMARY KEY(id))''')
-        for g in cls.get_groups():
-            name, topic, pub = cls.parse_group_name(g.get_name())
-            if topic:
-                pid, _, status = cls.get_info(g.id)
-                with cls.conn:
-                    cls.conn.execute('REPLACE INTO groups VALUES (?,?,?,?)', (g.id, pid, topic, status))
-            if pub:
-                pid, topic, _ = cls.get_info(g.id)
-                with cls.conn:
-                    cls.conn.execute('REPLACE INTO groups VALUES (?,?,?,?)', (g.id, pid, topic, PUBLIC))
-            if name != g.get_name():
-                g.set_name(name)
         # if ctx.locale == 'es':
         #     cls.description = 'Provee el comando !group, utilice !group !help para más información. Ej. !group !list.'
         #     cls.LISTCMD_BANNER = 'Grupos ({}):\n\n'
@@ -113,23 +101,6 @@ class GroupMaster(Plugin):
             chat = cls.ctx.acc.create_chat_by_message(msg)
             chat.send_file(cls.TEMP_FILE, mime_type='text/html')
         return True
-
-    @classmethod
-    def parse_group_name(cls, group_name):
-        title = group_name.split(':')
-        name = title[0].strip()
-        topic = ''
-        pub = ''
-        if len(title) > 1:
-            topic = ':'.join(title[1:])
-            if topic.endswith(cls.PUBLIC_GROUP):
-                topic = topic.strip(cls.PUBLIC_GROUP).strip()
-                pub = cls.PUBLIC_GROUP
-        else:
-            if name.endswith(cls.PUBLIC_GROUP):
-                name = name.strip(cls.PUBLIC_GROUP).strip()
-                pub = cls.PUBLIC_GROUP
-        return (name, topic, pub)
 
     @classmethod
     def get_info(cls, gid):
