@@ -1,1 +1,1 @@
-recursive-include simplebot_echo/templates *
+recursive-include simplebot_echo/locale *
