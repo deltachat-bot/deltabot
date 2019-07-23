@@ -21,7 +21,7 @@ class Echo(Plugin):
                                    languages=[ctx.locale], fallback=True)
         lang.install()
         
-        cls.description = _('Simple plugin to reply back a message.')
+        cls.description = _('Simple plugin to echo back a message.')
         cls.long_description = _('To use it you can simply send a message starting with the command !echo. For example:\n!echo hello world')
     
     @classmethod
