@@ -19,11 +19,11 @@ msgstr ""
 
 #: __init__.py:28
 msgid "plugin-description"
-msgstr "Un plugin simple, para enviar mensaje de vuelta como un eco."
+msgstr "Simple plugin to echo back a message."
 
 #: __init__.py:29
 msgid "plugin-long-description"
 msgstr ""
-"Para usarlo debes enviar un mensaje que empiece con el comando !echo. Por "
-"ejemplo:\n"
-"!echo hola mundo"
+"To use it you can simply send a message starting with the command !echo. For "
+"example:\n"
+"!echo hello world"
