@@ -2,6 +2,7 @@
 from urllib.parse import quote_plus
 import gettext
 import os
+import re
 
 from simplebot import Plugin
 import bs4
@@ -9,29 +10,8 @@ import requests
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 
-def get_page(url):
-    headers = {'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
-    r = requests.get(url, headers=headers, stream=True)
-    if 'text/html' not in r.headers['content-type']:
-        r.connection.close()
-        return None
-    soup = bs4.BeautifulSoup(r.text, 'html.parser')
-    for t in soup(['meta']):
-        if t.get('http-equiv') != 'content-type':
-            t.extract()
-    [t.extract() for t in soup(['script', 'iframe', 'noscript', 'link'])]
-    comments = soup.find_all(text=lambda text:isinstance(text, bs4.Comment))
-    [comment.extract() for comment in comments]
-    script = r'for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${simplebot_url}/$1`)}`);a.href=`mailto:${"' + WebGrabber.ctx.acc.get_self_contact().addr + r'"}?body=%21web%20${b}`}'
-    s = soup.new_tag('script')
-    index = r.url.find('/', 8)
-    if index >= 0:
-        url = r.url[:index]
-    else:
-        url = r.url
-    s.string = 'var simplebot_url = "{}";'.format(url)+script
-    soup.body.append(s)
-    return str(soup)
+HEADERS = {'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
+MAX_SIZE = 2024
 
 
 class WebGrabber(Plugin):
@@ -76,17 +56,44 @@ class WebGrabber(Plugin):
 
     @classmethod
     def send_page(cls, chat, url):
+        if not url.startswith('http'):
+            url = 'http://'+url
         try:
-            if not url.startswith('http'):
-                url = 'http://'+url
-            page = get_page(url)
-            if page is not None:
-                with open(cls.TEMP_FILE, 'w') as fd:
-                    fd.write(page)
-                chat.send_file(cls.TEMP_FILE, mime_type='text/html')
-            else:
-                chat.send_text(_('not_allowed'))
-        except Exception as ex:
+            with requests.get(url, headers=HEADERS, stream=True) as r:
+                r.raise_for_status()
+                if 'text/html' in r.headers['content-type']:
+                    soup = bs4.BeautifulSoup(r.text, 'html.parser')
+                    for t in soup(['meta']):
+                        if t.get('http-equiv') != 'content-type':
+                            t.extract()
+                    [t.extract() for t in soup(['script', 'iframe', 'noscript', 'link'])]
+                    comments = soup.find_all(text=lambda text:isinstance(text, bs4.Comment))
+                    [comment.extract() for comment in comments]
+                    script = r'for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${simplebot_url}/$1`)}`);a.href=`mailto:${"' + WebGrabber.ctx.acc.get_self_contact().addr + r'"}?body=%21web%20${b}`}'
+                    s = soup.new_tag('script')
+                    index = r.url.find('/', 8)
+                    if index >= 0:
+                        url = r.url[:index]
+                    else:
+                        url = r.url
+                    s.string = 'var simplebot_url = "{}";'.format(url)+script
+                    soup.body.append(s)
+                    with open(cls.TEMP_FILE, 'w') as fd:
+                        fd.write(str(soup))
+                    chat.send_file(cls.TEMP_FILE, mime_type='text/html')
+                elif int(r.headers.get('content-length', MAX_SIZE)) < MAX_SIZE:
+                    d = r.headers.get('content-disposition', None)
+                    if d is not None:
+                        fname = re.findall("filename=(.+)", d)[0]
+                    else:
+                        fname = r.url.split('/').pop()
+                    fpath = os.path.join(cls.ctx.basedir, 'account.db-blobs', fname)
+                    with open(fpath, 'wb') as fd:
+                        fd.write(r.content)
+                    chat.send_file(cls.TEMP_FILE)
+                else:
+                    chat.send_text(_('not_allowed'))
+        except Exception as ex:      # TODO: too much generic
             cls.ctx.logger.exception(ex)
             chat.send_text(_('download_failed').format(url))
 
