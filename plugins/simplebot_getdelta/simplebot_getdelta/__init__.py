@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from urllib.request import urlopen
+import gettext
 import os
 
 from simplebot import Plugin
