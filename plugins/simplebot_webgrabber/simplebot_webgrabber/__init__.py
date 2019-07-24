@@ -11,7 +11,7 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 
 
 HEADERS = {'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
-MAX_SIZE = 2024
+MAX_SIZE = 2097152
 
 
 class WebGrabber(Plugin):
@@ -81,16 +81,19 @@ class WebGrabber(Plugin):
                     with open(cls.TEMP_FILE, 'w') as fd:
                         fd.write(str(soup))
                     chat.send_file(cls.TEMP_FILE, mime_type='text/html')
-                elif int(r.headers.get('content-length', MAX_SIZE)) < MAX_SIZE:
-                    d = r.headers.get('content-disposition', None)
-                    if d is not None:
-                        fname = re.findall("filename=(.+)", d)[0]
+                elif 'content-length' in r.headers:
+                    if int(r.headers['content-length']) <= MAX_SIZE:
+                        d = r.headers.get('content-disposition', None)
+                        if d is not None:
+                            fname = re.findall("filename=(.+)", d)[0]
+                        else:
+                            fname = r.url.split('/').pop()
+                        fpath = os.path.join(cls.ctx.basedir, 'account.db-blobs', fname)
+                        with open(fpath, 'wb') as fd:
+                            fd.write(r.content)
+                        chat.send_file(cls.TEMP_FILE)
                     else:
-                        fname = r.url.split('/').pop()
-                    fpath = os.path.join(cls.ctx.basedir, 'account.db-blobs', fname)
-                    with open(fpath, 'wb') as fd:
-                        fd.write(r.content)
-                    chat.send_file(cls.TEMP_FILE)
+                        chat.send_text(_('not_allowed'))
                 else:
                     chat.send_text(_('not_allowed'))
         except Exception as ex:      # TODO: too much generic
