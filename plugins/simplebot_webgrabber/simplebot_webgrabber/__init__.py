@@ -81,8 +81,10 @@ class WebGrabber(Plugin):
                     with open(cls.TEMP_FILE, 'w') as fd:
                         fd.write(str(soup))
                     chat.send_file(cls.TEMP_FILE, mime_type='text/html')
-                elif 'content-length' in r.headers:
-                    if int(r.headers['content-length']) <= MAX_SIZE:
+                else:
+                    chunks = r.iter_content(chunk_size=MAX_SIZE)
+                    chunk = chunks.__next__()
+                    if len(chunk) < MAX_SIZE:
                         d = r.headers.get('content-disposition', None)
                         if d is not None:
                             fname = re.findall("filename=(.+)", d)[0]
@@ -90,12 +92,10 @@ class WebGrabber(Plugin):
                             fname = r.url.split('/').pop()
                         fpath = os.path.join(cls.ctx.basedir, 'account.db-blobs', fname)
                         with open(fpath, 'wb') as fd:
-                            fd.write(r.content)
-                        chat.send_file(cls.TEMP_FILE)
+                            fd.write(chunk)
+                        chat.send_file(fpath)
                     else:
                         chat.send_text(_('not_allowed'))
-                else:
-                    chat.send_text(_('not_allowed'))
         except Exception as ex:      # TODO: too much generic
             cls.ctx.logger.exception(ex)
             chat.send_text(_('download_failed').format(url))
