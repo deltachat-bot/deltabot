@@ -1,1 +1,2 @@
 recursive-include simplebot_getdelta/templates *
+recursive-include simplebot_getdelta/locale *

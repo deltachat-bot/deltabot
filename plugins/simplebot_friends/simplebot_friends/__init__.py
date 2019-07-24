@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import gettext
 import os
 import re
 import sqlite3
@@ -10,24 +11,12 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 class DeltaFriends(Plugin):
 
     name = 'DeltaFriends'
-    description = 'Provides the !friends command.'
-    long_description = '!friends!list command will return the list of users wanting to make new friends\n\n!friends!join <bio> will add you to the list or update your bio, "bio" is up to 250 characters of words describing yourself. Ex. !friends!join male, Cuban, tech, free software, music\n\n!friends!leave command will remove you from the DeltaFriends list.'
     version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
     cmd = '!friends'
 
-    NOSCRIPT = 'You need a browser with JavaScript support for this page to work correctly.'
-    JOIN_BTN = 'Join/Update'
-    LEAVE_BTN = 'Leave'
-    LIST_BTN = 'Users List'
-    PROFILE_HEADER = 'Profile'
-    BIO = 'Bio'
-    WRITE = 'Write'
     MAX_BIO_LEN = 250
-    USER_ADDED = 'You are now in the DeltaFriends list'
-    USER_REMOVED = 'You was removed from the DeltaFriends list'
-    USER_NOT_FOUND = 'You are NOT in the DeltaFriends list'
 
     @classmethod
     def activate(cls, ctx):
@@ -40,16 +29,25 @@ class DeltaFriends(Plugin):
         cls.conn = sqlite3.connect(os.path.join(cls.ctx.basedir, 'deltafriends.db'))
         with cls.conn:
             cls.conn.execute('''CREATE TABLE IF NOT EXISTS deltafriends (addr TEXT NOT NULL, bio TEXT, PRIMARY KEY(addr))''')
-        # if ctx.locale == 'es':
-        #     cls.description = 'Provee el comando !friends, para más información utilice !friends !help. Ej. !friends !join chico, música, tecnología, series, buscando amigos.'
-        #     cls.USER_ADDED = 'Ahora estás en la lista de DeltaFriends'
-        #     cls.USER_REMOVED = 'Fuiste eliminado de la lista de DeltaFriends'
-        #     cls.USER_NOT_FOUND = 'No estás en la lista de DeltaFriends'
-        #     cls.hcmd_list = '!friends !list este comando te mostrará la lista de personas que buscan nuevos amigos'
-        #     cls.hcmd_join = '!friends !join <bio> usa este comando para unirte a la lista o actualizar tu biografía, "<bio>" son palabras que te identifique o tus gustos (hasta {} caracteres). Ej. !friends !join programador, software libre, música, anime, CAV'
-        #     cls.hcmd_leave = '!friends !leave usa este comando para quitarte de la lista de DeltaFriends'
-        #     cls.hcmd_search = '!friends !search <texto> este comando permite buscar amigos basado en el texto que le pases. Ej. "!friends !search Habana" para buscar todas las personas que hayan dicho ser de La Habana'
 
+        localedir = os.path.join(os.path.dirname(__file__), 'locale')
+        try:
+            lang = gettext.translation('simplebot_friends', localedir=localedir,
+                                       languages=[ctx.locale])
+        except OSError:
+            lang = gettext.translation('simplebot_friends', localedir=localedir,
+                                       languages=['en'])
+        lang.install()
+        cls.description = _('plugin.description')
+        cls.long_description = _('plugin.long_description').format(cls.MAX_BIO_LEN)
+        cls.NOSCRIPT = _('noscript_msg')
+        cls.JOIN_BTN = _('join_btn')
+        cls.LEAVE_BTN = _('leave_btn')
+        cls.LIST_BTN = _('list_btn')
+        cls.PROFILE_HEADER = _('profile_header')
+        cls.BIO = _('bio_label')
+        cls.WRITE_BTN = _('write_btn')
+    
     @classmethod
     def deactivate(cls, ctx):
         cls.conn.close()
@@ -100,7 +98,7 @@ class DeltaFriends(Plugin):
         with cls.conn:
             cls.conn.execute('INSERT OR REPLACE INTO deltafriends VALUES (?, ?)', (addr, text))
         chat = cls.ctx.acc.create_chat_by_message(msg)
-        chat.send_text(cls.USER_ADDED)
+        chat.send_text(_('user_added'))
 
     @classmethod
     def leave_cmd(cls, msg, *args):
@@ -109,22 +107,6 @@ class DeltaFriends(Plugin):
             rowcount = cls.conn.execute('DELETE FROM deltafriends WHERE addr=?', (addr,)).rowcount
         chat = cls.ctx.acc.create_chat_by_message(msg)
         if rowcount == 1:
-            chat.send_text(cls.USER_REMOVED)
+            chat.send_text(_('user_removed'))
         else:
-            chat.send_text(cls.USER_NOT_FOUND)
-
-    # @classmethod
-    # def search_cmd(cls, _, text):
-    #     results = ''
-    #     get_desc = lambda d: d if d else cls.NO_DESC
-    #     t = re.compile(text, re.IGNORECASE)
-    #     for addr,desc in cls.conn.execute('SELECT * FROM deltafriends ORDER BY addr'):
-    #         desc = get_desc(desc)
-    #         if t.findall(desc) or t.findall(addr):
-    #             results += '🔘 {}: {}\n\n'.format(addr, desc)
-    #     return cls.SEARCH_RESULTS.format(text)+results
-
-    # @classmethod
-    # def help_cmd(cls, *args):
-    #     return '\n\n'.join(['DeltaFriends:\n', cls.hcmd_list, cls.hcmd_join.format(cls.MAX_BIO_LEN),
-    #                         cls.hcmd_leave])
+            chat.send_text(_('user_not_found'))

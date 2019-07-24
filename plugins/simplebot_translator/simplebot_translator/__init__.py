@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import gettext
 import os
 
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -9,27 +10,25 @@ import translators as ts
 class Translator(Plugin):
 
     name = 'Translator'
-    description = 'Translate text.'
-    long_description = 'Example: !tr en es hello world'
-    version = '0.1.0'
+    version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
     cmd = '!tr'
 
-    #NOSCRIPT = 'You need a browser with JavaScript support for this page to work correctly.'
-
     @classmethod
     def activate(cls, ctx):
         super().activate(ctx)
-        # cls.TEMP_FILE = os.path.join(cls.ctx.basedir, cls.name+'.html')
-        # cls.env = Environment(
-        #     loader=PackageLoader(__name__, 'templates'),
-        #     autoescape=select_autoescape(['html', 'xml'])
-        # )
-        # if ctx.locale == 'es':
-        #     cls.description = 'Un plugin sencillo para que el bot repita lo que envíes como un eco.'
-        #     cls.long_description = 'Para usarlo puedes enviar un mensaje que comience con !echo, por ejemplo: !echo hola mundo y el bot responderá "hola mundo", esto permite comprobar de forma rápida que el bot está funcionando.'
-        #     cls.NOSCRIPT = 'Necesitas un navegador que soporte JavaScript para poder usar esta funcionalidad.'
+        localedir = os.path.join(os.path.dirname(__file__), 'locale')
+        try:
+            lang = gettext.translation('simplebot_translator', localedir=localedir,
+                                       languages=[ctx.locale])
+        except OSError:
+            lang = gettext.translation('simplebot_translator', localedir=localedir,
+                                       languages=['en'])
+        lang.install()
+        cls.description = _('plugin-description')
+        cls.long_description = _('plugin-long-description')
+    
 
     @classmethod
     def process(cls, msg):
@@ -38,10 +37,7 @@ class Translator(Plugin):
             return False
         chat = cls.ctx.acc.create_chat_by_message(msg)
         if not arg:
-            # with open(cls.TEMP_FILE, 'w') as fd:
-            #     fd.write(cls.env.get_template('index.html').render(plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr))
-            # chat.send_file(cls.TEMP_FILE, mime_type='text/html')
-            chat.send_text(cls.long_description)
+            chat.send_text(cls.description+'\n\n'+cls.long_description)
         else:
             text = arg.split()
             l1, l2, text = text[0], text[1], ' '.join(text[2:])

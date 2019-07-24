@@ -1,1 +1,2 @@
 recursive-include simplebot_translator/templates *
+recursive-include simplebot_translator/locale *
