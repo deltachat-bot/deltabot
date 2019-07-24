@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from  urllib.parse import quote_plus
+import gettext
 import os
 import random
 import string
@@ -38,10 +39,10 @@ class GroupMaster(Plugin):
             cls.conn.execute('''CREATE TABLE IF NOT EXISTS groups (id INTEGER NOT NULL, pid TEXT NOT NULL, topic TEXT, status INTEGER,  PRIMARY KEY(id))''')
         localedir = os.path.join(os.path.dirname(__file__), 'locale')
         try:
-            lang = gettext.translation('simplebot_echo', localedir=localedir,
+            lang = gettext.translation('simplebot_groupmaster', localedir=localedir,
                                        languages=[ctx.locale])
         except OSError:
-            lang = gettext.translation('simplebot_echo', localedir=localedir,
+            lang = gettext.translation('simplebot_groupmaster', localedir=localedir,
                                        languages=['en'])
         lang.install()
         cls.description = _('plugin-description')
