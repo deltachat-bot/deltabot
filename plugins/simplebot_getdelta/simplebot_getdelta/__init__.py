@@ -11,7 +11,7 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 class GetDelta(Plugin):
 
     name = 'GetDelta'
-   version = '0.2.0'
+    version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
     cmd = '!getdelta'
