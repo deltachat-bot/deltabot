@@ -1,0 +1,71 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2019-07-23 18:31-0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: __init__.py:40
+msgid "plugin.description"
+msgstr "Provee el comando !friends"
+
+#: __init__.py:41
+msgid "plugin.long_description"
+msgstr ""
+"!friends!list este comando te mostrará la lista de personas que buscan nuevos amigos\n\n"
+"!friends!join <bio> usa este comando para unirte a la lista o actualizar tu biografía, "
+"<bio> son palabras que te identifique o tus gustos (hasta {} caracteres). Ej. "
+"!friends!join programador, software libre, música, anime, CAV\n\n"
+"!friends!leave usa este comando para quitarte de la lista de DeltaFriends"
+
+#: __init__.py:42
+msgid "noscript_msg"
+msgstr "Necesitas JavaScript para que esta página funcione correctamente."
+
+#: __init__.py:43
+msgid "join_btn"
+msgstr "Unirse/Actualizar"
+
+#: __init__.py:44
+msgid "leave_btn"
+msgstr "Abandonar"
+
+#: __init__.py:45
+msgid "list_btn"
+msgstr "Lista de Usuarios"
+
+#: __init__.py:46
+msgid "profile_header"
+msgstr "Perfil"
+
+#: __init__.py:47
+msgid "bio_label"
+msgstr "Biografía"
+
+#: __init__.py:48
+msgid "write_btn"
+msgstr "Escribir"
+
+#: __init__.py:100
+msgid "user_added"
+msgstr "Ahora estás en la lista de DeltaFriends"
+
+#: __init__.py:109
+msgid "user_removed"
+msgstr "Fuiste eliminado de la lista de DeltaFriends"
+
+#: __init__.py:111
+msgid "user_not_found"
+msgstr "No estás en la lista de DeltaFriends"
