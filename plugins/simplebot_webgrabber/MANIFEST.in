@@ -1,1 +1,2 @@
 recursive-include simplebot_webgrabber/templates *
+recursive-include simplebot_webgrabber/locale *

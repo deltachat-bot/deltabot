@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from urllib.parse import quote_plus
+import gettext
 import os
 
 from simplebot import Plugin
@@ -36,16 +37,10 @@ def get_page(url):
 class WebGrabber(Plugin):
 
     name = 'WebGrabber'
-    description = 'Provides the !web command.'
-    long_description = 'Examples:\n!web http://delta.chat\n!ddg delta chat\n!w Cuba\n!wt freedom'
     version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
     cmd = '!web'
-
-    NOT_ALLOWED = 'Only html pages are allowed'
-    DOWNLOAD_FAILED = 'Falied to get the url: "{}"'
-    NOSCRIPT = 'You need a browser with JavaScript support for this page to work correctly.'
 
     @classmethod
     def activate(cls, ctx):
@@ -55,11 +50,18 @@ class WebGrabber(Plugin):
             loader=PackageLoader(__name__, 'templates'),
             #autoescape=select_autoescape(['html', 'xml'])
         )
-        # if ctx.locale == 'es':
-        #     cls.description = 'Provee el comando `!web <url>` el cual permite obtener la página web con la url dada. Ej. !web http://delta.chat.'
-        #     cls.NOT_ALLOWED = 'Solo está permitido descargar páginas web'
-        #     cls.DOWNLOAD_FAILED = 'No fue posible obtener la url: "{}"'
-
+        localedir = os.path.join(os.path.dirname(__file__), 'locale')
+        try:
+            lang = gettext.translation('simplebot_webgrabber', localedir=localedir,
+                                       languages=[ctx.locale])
+        except OSError:
+            lang = gettext.translation('simplebot_webgrabber', localedir=localedir,
+                                       languages=['en'])
+        lang.install()
+        cls.description = _('plugin.description')
+        cls.long_description = _('plugin.long_description')
+        cls.NOSCRIPT = _('noscript_msg')
+ 
     @classmethod
     def process(cls, msg):
         for cmd,action in [('!ddg', cls.ddg_cmd), ('!wt', cls.wt_cmd), ('!w', cls.w_cmd),
@@ -83,10 +85,10 @@ class WebGrabber(Plugin):
                     fd.write(page)
                 chat.send_file(cls.TEMP_FILE, mime_type='text/html')
             else:
-                chat.send_text(cls.NOT_ALLOWED)
+                chat.send_text(_('not_allowed'))
         except Exception as ex:
             cls.ctx.logger.exception(ex)
-            chat.send_text(cls.DOWNLOAD_FAILED.format(url))
+            chat.send_text(_('download_failed').format(url))
 
     @classmethod
     def web_cmd(cls, chat, url):        
