@@ -46,7 +46,7 @@ class GroupMaster(Plugin):
                                        languages=['en'])
         lang.install()
         cls.description = _('plugin-description')
-        cls.long_description = _('plugin-long-description').format(MAX_TOPIC_SIZE)
+        cls.long_description = _('plugin-long-description').format(cls.MAX_TOPIC_SIZE)
         cls.LIST_BTN = _('list_btn')
         cls.JOIN_BTN = _('join_btn')
         cls.LEAVE_BTN = _('leave_btn')
