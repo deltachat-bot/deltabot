@@ -1,1 +1,1 @@
-recursive-include simplebot_wikiquote/templates *
+recursive-include simplebot_wikiquote/locale *

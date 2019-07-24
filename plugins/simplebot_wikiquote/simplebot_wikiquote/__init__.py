@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import gettext
 import os
 import random
 
@@ -8,8 +9,6 @@ import wikiquote as wq
 class Wikiquote(Plugin):
 
     name = 'Wikiquote'
-    description = 'Provides the !quote [text] command.'
-    long_description = 'To get the quote of the day or a random quote from the given text.\nExamples:\n!quote!today\n!quote Richard Stallman'
     version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
@@ -18,15 +17,20 @@ class Wikiquote(Plugin):
     @classmethod
     def activate(cls, ctx):
         super().activate(ctx)
-        # if ctx.locale == 'es':
-        #     cls.description = 'Provee el comando `!quote [texto]` para mostrar una frase aleatoria del alguna persona relacionada con el texto dado, o la frase del día si no le pasas ningún texto. Ej. !quote José Martí'
-        #     cls.QUOTE_NOT_FOUND = 'No se encontó ninguna frase para: "%s"'
-        # else:
-        #     cls.QUOTE_NOT_FOUND = 'No quote found for: "%s"'
         if ctx.locale in wq.supported_languages():
             cls.LANG = ctx.locale
         else:
             cls.LANG = None
+        localedir = os.path.join(os.path.dirname(__file__), 'locale')
+        try:
+            lang = gettext.translation('simplebot_wikiquote', localedir=localedir,
+                                       languages=[ctx.locale])
+        except OSError:
+            lang = gettext.translation('simplebot_wikiquote', localedir=localedir,
+                                       languages=['en'])
+        lang.install()
+        cls.description = _('plugin.description')
+        cls.long_description = _('plugin.long_description')
 
     @classmethod
     def process(cls, msg):
@@ -44,7 +48,7 @@ class Wikiquote(Plugin):
                 author = pages[0]
                 quote = '"%s"\n\n― %s' % (random.choice(wq.quotes(author, max_quotes=40, lang=cls.LANG)), author)
             else:
-                quote = cls.QUOTE_NOT_FOUND % arg
+                quote = _('quote_not_found').format(arg)
             chat.send_text(quote)
         else:
             chat.send_text(cls.description+'\n\n'+cls.long_description)
