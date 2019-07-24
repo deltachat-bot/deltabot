@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import gettext
 import os
 
 from simplebot import Plugin
@@ -9,17 +10,10 @@ import htmlmin
 class Helper(Plugin):
 
     name = 'Help'
-    description = 'Provides this help page.'
-    long_description = 'To learn more about a plugin press the "More" button, to use them press the "Use" button, you will be prompted to use an app, select to always open with Delta Chat, a command will be autocompleted for you, send it to process your request.'
     version = '0.2.0'
     author = 'adbenitez'
     author_email = 'adbenitez@nauta.cu'
     cmd = '!help'
-
-    NOSCRIPT = 'You need a browser with JavaScript support for this page to work correctly.'
-    MORE = 'More'
-    LESS = 'Less'
-    USE = 'Use'
 
     @classmethod
     def activate(cls, ctx):
@@ -30,13 +24,21 @@ class Helper(Plugin):
             autoescape=select_autoescape(['html', 'xml'])
         )
         cls.template = env.get_template('index.html')
-        # if ctx.locale == 'es':
-        #     cls.description = 'Provee esta página de ayuda.'
-        #     cls.long_description = 'Para saber más acerca de un plugin presiona el botón <strong>"Más"</strong>, para usarlos presiona el botón <strong>"Usar"</strong>, selecciona abrir siempre con Delta Chat, un comando será autocompletado para ti, envíalo para procesar tu petición.'
-        #     cls.NOSCRIPT = 'Necesitas un navegador que soporte JavaScript para poder usar esta funcionalidad.'
-        #     cls.MORE = 'Más'
-        #     cls.LESS = 'Menos'
-        #     cls.USE = 'Usar'
+        localedir = os.path.join(os.path.dirname(__file__), 'locale')
+        try:
+            lang = gettext.translation('simplebot_help', localedir=localedir,
+                                       languages=[ctx.locale])
+        except OSError:
+            lang = gettext.translation('simplebot_help', localedir=localedir,
+                                       languages=['en'])
+        lang.install()
+        cls.description = _('plugin.description')
+        cls.long_description = _('plugin.long_description')
+        cls.NOSCRIPT = _('noscript_msg')
+        cls.MORE = _('more_btn')
+        cls.LESS = _('less_btn')
+        cls.USE = _('use_btn')
+    
 
     @classmethod
     def process(cls, msg):
