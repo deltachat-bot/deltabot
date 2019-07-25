@@ -102,7 +102,7 @@ class GroupMaster(Plugin):
         return groups
 
     @classmethod
-    def id_cmd(cls, msg, _):
+    def id_cmd(cls, msg, arg):
         chat = cls.ctx.acc.create_chat_by_message(msg)
         if msg.chat.get_type() not in (dc.const.DC_CHAT_TYPE_GROUP,
                                        dc.const.DC_CHAT_TYPE_VERIFIED_GROUP):
@@ -119,7 +119,7 @@ class GroupMaster(Plugin):
         chat.send_text(text)
 
     @classmethod
-    def public_cmd(cls, msg, _):
+    def public_cmd(cls, msg, arg):
         pid, topic, status = cls.get_info(msg.chat.id)
         if status != PUBLIC:
             with cls.conn:
@@ -128,7 +128,7 @@ class GroupMaster(Plugin):
         chat.send_text(_('group_status').format(_('group_public')))
 
     @classmethod
-    def private_cmd(cls, msg, _):
+    def private_cmd(cls, msg, arg):
         pid, topic, status = cls.get_info(msg.chat.id)
         if status != PRIVATE:
             with cls.conn:
@@ -192,7 +192,8 @@ class GroupMaster(Plugin):
             addrs = arg[i:].strip().split(',')
             if i < 0:
                 raise ValueError
-        except ValueError:
+        except ValueError as err:
+            cls.ctx.logger.exception(err)
             chat = cls.ctx.acc.create_chat_by_message(msg)
             chat.send_text(cls.description+'\n\n'+cls.long_description)
             return
@@ -215,7 +216,8 @@ class GroupMaster(Plugin):
             addr = arg[i:].strip()
             if i < 0:
                 raise ValueError
-        except ValueError:
+        except ValueError as err:
+            cls.ctx.logger.exception(err)
             chat = cls.ctx.acc.create_chat_by_message(msg)
             chat.send_text(cls.description+'\n\n'+cls.long_description)
             return
@@ -236,7 +238,8 @@ class GroupMaster(Plugin):
             text = arg[i:].strip()
             if i < 0 or not msg:
                 raise ValueError
-        except ValueError:
+        except ValueError as err:
+            cls.ctx.logger.exception(err)
             chat = cls.ctx.acc.create_chat_by_message(msg)
             chat.send_text(cls.description+'\n\n'+cls.long_description)
             return
