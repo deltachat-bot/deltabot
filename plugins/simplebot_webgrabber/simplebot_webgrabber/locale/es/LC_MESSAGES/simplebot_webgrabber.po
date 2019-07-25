@@ -31,7 +31,7 @@ msgstr "Necesitas JavaScript para que esta página funcione correctamente."
 
 #: __init__.py:88
 msgid "not_allowed"
-msgstr "Solo está permitido descargar páginas web"
+msgstr "Solo están permitidos archivos de menos de {}MB"
 
 #: __init__.py:91
 msgid "download_failed"
