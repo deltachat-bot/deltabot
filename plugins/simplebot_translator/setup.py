@@ -34,7 +34,7 @@ setup(
     keywords='deltachat simplebot plugin',
     #project_urls={},
     packages=[MODULE_NAME],
-    install_requires=['simplebot', 'Jinja2', 'translators'],
+    install_requires=['simplebot', 'translators'],
     python_requires='>=3.5',
     entry_points={
         'simplebot.plugins': '{} = {}:{}'.format(PLUGIN_NAME, MODULE_NAME, CLASS_NAME)

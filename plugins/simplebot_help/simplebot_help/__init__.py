@@ -4,7 +4,6 @@ import os
 
 from simplebot import Plugin
 from jinja2 import Environment, PackageLoader, select_autoescape
-import htmlmin
 
 
 class Helper(Plugin):
@@ -21,7 +20,7 @@ class Helper(Plugin):
         cls.TEMP_FILE = os.path.join(cls.ctx.basedir, cls.name+'.html')
         env = Environment(
             loader=PackageLoader(__name__, 'templates'),
-            autoescape=select_autoescape(['html', 'xml'])
+            #autoescape=select_autoescape(['html', 'xml'])
         )
         cls.template = env.get_template('index.html')
         localedir = os.path.join(os.path.dirname(__file__), 'locale')
@@ -48,7 +47,6 @@ class Helper(Plugin):
             plugins.insert(0, cls)
             bot_addr = cls.ctx.acc.get_self_contact().addr
             html = cls.template.render(plugin=cls, plugins=plugins, bot_addr=bot_addr)
-            html = htmlmin.minify(html, remove_comments=True)
             with open(cls.TEMP_FILE, 'w') as fd:
                 fd.write(html)
             chat = cls.ctx.acc.create_chat_by_message(msg)
