@@ -11,7 +11,8 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 
 
 HEADERS = {'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
-MAX_SIZE = 2097152
+MAX_SIZE_MB = 5
+MAX_SIZE = MAX_SIZE_MB*1024**2
 
 
 class WebGrabber(Plugin):
@@ -95,7 +96,7 @@ class WebGrabber(Plugin):
                             fd.write(chunk)
                         chat.send_file(fpath)
                     else:
-                        chat.send_text(_('not_allowed'))
+                        chat.send_text(_('not_allowed').format(MAX_SIZE_MB))
         except Exception as ex:      # TODO: too much generic
             cls.ctx.logger.exception(ex)
             chat.send_text(_('download_failed').format(url))
