@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import configparser
 import logging
 import os
 import time
@@ -113,12 +114,28 @@ def serve(ctx, locale):
     acc = get_account(ctx.parent.basedir)
     if not acc.is_configured():
         fail(ctx, "account not configured: {}".format(acc.db_path))
+
+    CFG_PATH = os.path.join(context.basedir, 'simplebot.cfg')
+    cfg = configparser.ConfigParser(allow_no_value=True)
+    if os.path.exists(CFG_PATH):
+        cfg.read(CFG_PATH)
+        botcfg = cfg['simplebot']
+    else:
+        cfg.add_section('simplebot')
+        botcfg = cfg['simplebot']
+        botcfg['mdns_enabled'] = '0'
+        botcfg['sentbox_watch'] = '0'
+        botcfg['mvbox_watch'] = '0'
+        botcfg['mvbox_move'] = '1'
+        botcfg['displayname'] = 'SimpleBot🤖'
+        with open(CFG_PATH, 'w') as fd:
+            cfg.write(fd)
     acc.set_config("save_mime_headers", "1")
-    acc.set_config('mdns_enabled', '0')
-    acc.set_config('sentbox_watch', '0')
-    acc.set_config('mvbox_watch', '0')
-    acc.set_config('mvbox_move', '1')
-    acc.set_config('displayname', 'SimpleBot🤖')
+    acc.set_config('mdns_enabled', botcfg['mdns_enabled'])
+    acc.set_config('sentbox_watch', botcfg['sentbox_watch'])
+    acc.set_config('mvbox_watch', botcfg['mvbox_watch'])
+    acc.set_config('mvbox_move', botcfg['mvbox_move'])
+    acc.set_config('displayname', botcfg['displayname'])
 
     context.acc = acc
     
