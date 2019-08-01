@@ -31,8 +31,8 @@ class TicTacToe(Plugin):
             os.path.join(cls.ctx.basedir, 'tictactoe.db'))
         with cls.conn:
             cls.conn.execute('''CREATE TABLE IF NOT EXISTS games
-                                (player1 TEXT NOT NULL, player2 TEXT NOT NULL, gid INTEGER NOT NULL, status INTEGER NOT NULL,
-                                 turn TEXT NOT NULL,  board TEXT NOT NULL, x TEXT NOT NULL, PRIMARY KEY(player1, player2))''')
+                                (p1 TEXT NOT NULL, p2 TEXT NOT NULL, gid INTEGER NOT NULL, status INTEGER NOT NULL,
+                                 turn TEXT NOT NULL,  board TEXT NOT NULL, x TEXT NOT NULL, PRIMARY KEY(p1, p2))''')
 
         # localedir = os.path.join(os.path.dirname(__file__), 'locale')
         # try:
@@ -89,6 +89,8 @@ class TicTacToe(Plugin):
             if game is None:  # first time playing with p2
                 chat = cls.ctx.acc.create_group_chat(
                     '{} Vs {} [{}]'.format(p1, p2, cls.name))
+                chat.add_contact(msg.get_sender_contact())
+                chat.add_contact(cls.ctx.acc.create_contact(p2))
                 with cls.conn:
                     cls.conn.execute('INSERT INTO games VALUES (?,?,?,?,?,?)',
                                      (p1, p2, chat.id, cls.INVITED_STATUS, p1, str(Board()), p1))
