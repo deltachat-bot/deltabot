@@ -103,7 +103,7 @@ class TicTacToe(Plugin):
                     'You already invited {} to play {}, to start a new game just go to the game group and send:\n!toe!new'.format(p2, cls.name))
         else:    # accepting a game
             p2 = msg.get_sender_contact().addr
-            chat = msg.create_chat_by_message(msg)
+            chat = cls.ctx.acc.create_chat_by_message(msg)
             game = cls.conn.execute(
                 'SELECT * FROM games WHERE gid=? AND p2=?', (chat.id, p2)).fetchone()
             if game is None:  # this is not your game group
