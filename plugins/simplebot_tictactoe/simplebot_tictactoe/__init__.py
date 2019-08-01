@@ -60,12 +60,13 @@ class TicTacToe(Plugin):
     @classmethod
     def run_turn(cls, chat, game):
         board = Board(game[5])
-        if board.is_solved():
+        winner = board.get_winner()
+        if winner is not None:
             game[3] = cls.FINISHED_STATUS
             with cls.conn:
                 cls.conn.execute(
                     'REPLACE INTO games VALUES (?,?,?,?,?,?,?)', game)
-            if board.is_match():
+            if winner == '-':
                 chat.send_text(
                     'Game over.\nIt is a match!\n\n{}'.format(board.pretty_str()))
             else:
@@ -76,7 +77,7 @@ class TicTacToe(Plugin):
                 cls.ctx.acc.create_contact(game[4]))
             # TODO: send html board
             priv_chat.send_text(Board(game[5]).pretty_str())
-            chat.send_text('Player {} is turn...')
+            chat.send_text('Player {} is turn...'.format(game[4]))
 
     @classmethod
     def play_cmd(cls, msg, arg):
@@ -210,23 +211,16 @@ class Board:
     def __str__(self):
         return ','.join(self._board)
 
-    def is_solved(self):
-        return ' ' not in self._board
-
-    def is_match(self):
-        return self.get_winner() == '-'
-
     def get_winner(self):
         b = self._board
-        if self.is_solved():
-            if b[0] == b[4] == b[8] or b[1] == b[4] == b[7] or b[2] == b[4] == b[6] or b[3] == b[4] == b[5]:
-                return b[4]
-            elif b[0] == b[1] == b[2] or b[0] == b[3] == b[6]:
-                return b[0]
-            elif b[6] == b[7] == b[8] or b[2] == b[5] == b[8]:
-                return b[8]
-            else:
-                return '-'
+        if b[0] == b[4] == b[8] or b[1] == b[4] == b[7] or b[2] == b[4] == b[6] or b[3] == b[4] == b[5]:
+            return b[4]
+        elif b[0] == b[1] == b[2] or b[0] == b[3] == b[6]:
+            return b[0]
+        elif b[6] == b[7] == b[8] or b[2] == b[5] == b[8]:
+            return b[8]
+        elif ' ' not in self._board:
+            return '-'
         return None
 
     def move(self, sign, pos):
