@@ -92,7 +92,7 @@ class TicTacToe(Plugin):
                 chat.add_contact(msg.get_sender_contact())
                 chat.add_contact(cls.ctx.acc.create_contact(p2))
                 with cls.conn:
-                    cls.conn.execute('INSERT INTO games VALUES (?,?,?,?,?,?)',
+                    cls.conn.execute('INSERT INTO games VALUES (?,?,?,?,?,?,?)',
                                      (p1, p2, chat.id, cls.INVITED_STATUS, p1, str(Board()), p1))
                 chat.send_text('Hello {},\nYou had been invited by {} to play {}, to start playing send a message in this group with the command:\n!toe!play'.format(
                     p2, p1, cls.name))
