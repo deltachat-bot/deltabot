@@ -110,6 +110,7 @@ class TicTacToe(Plugin):
                 chat.send_text(
                     'This is not your game group, if you are trying to play a new game, please supply the email of the friend you want to play with')
             elif game[3] == cls.INVITED_STATUS:  # accept the invitation and start playing
+                game = list(game)
                 game[3] = cls.PLAYING_STATUS
                 with cls.conn:
                     cls.conn.execute(
@@ -131,6 +132,7 @@ class TicTacToe(Plugin):
             chat.send_text(
                 'This is not your game group, please send that command in the game group you want to surrender')
         elif game[3] != cls.FINISHED_STATUS:
+            game = list(game)
             game[3] = cls.FINISHED_STATUS
             game[4] = game[6] = game[0] if game[0] != game[6] else game[1]
             with cls.conn:
@@ -150,6 +152,7 @@ class TicTacToe(Plugin):
             chat.send_text(
                 'This is not your game group, please send that command in the game group you want to start a new game')
         elif game[3] == cls.FINISHED_STATUS:
+            game = list(game)
             game[3] = cls.PLAYING_STATUS
             game[4] = game[6] = game[0] if game[0] != game[6] else game[1]
             game[5] = str(Board())
@@ -170,6 +173,7 @@ class TicTacToe(Plugin):
         game = cls.conn.execute(
             'SELECT * FROM games WHERE gid=?', (chat_id,)).fetchone()
         if game is not None and player == game[4]:
+            game = list(game)
             board = Board(game[5])
             sign = 'x' if player == game[6] else 'o'
             try:
