@@ -235,8 +235,8 @@ class Board:
         else:
             raise InvalidMove()
 
-    def pretty_str(self):
-        return ' {}| {}| {}\n--+--+--\n {}| {}| {}\n--+--+--\n {}| {}| {}'.format(self._board)
+        def pretty_str(self):
+            return ' {}| {}| {}\n--+--+--\n {}| {}| {}\n--+--+--\n {}| {}| {}'.format(self._board)
 
 
 class InvalidMove(Exception):
