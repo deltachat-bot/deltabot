@@ -197,7 +197,7 @@ class TicTacToe(Plugin):
 
 
 class Board:
-    def __init__(board_str=None):
+    def __init__(self, board_str=None):
         if board_str is None:
             self._board = [' ']*9
         else:
