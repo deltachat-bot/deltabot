@@ -119,7 +119,7 @@ class TicTacToe(Plugin):
                 chat.send_text('Game started!')
                 cls.run_turn(chat, game)
             else:  # p2 already accepted the game
-                chat = cls.ctx.acc.create_chat_by_msg(msg)
+                chat = cls.ctx.acc.create_chat_by_message(msg)
                 chat.send_text(
                     'You alredy accepted to play. To start a new game use !toe!new')
 
@@ -159,7 +159,7 @@ class TicTacToe(Plugin):
             with cls.conn:
                 cls.conn.execute(
                     'REPLACE INTO games VALUES (?,?,?,?,?,?,?)', game)
-            chat = cls.ctx.acc.create_chat_by_msg(msg)
+            chat = cls.ctx.acc.create_chat_by_message(msg)
             chat.send_text('Game started!')
             cls.run_turn(chat, game)
         else:
