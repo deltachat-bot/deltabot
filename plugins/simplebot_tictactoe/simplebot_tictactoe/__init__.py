@@ -196,7 +196,7 @@ class TicTacToe(Plugin):
 
     @classmethod
     def help_cmd(cls, msg, arg):
-        chat = msg.create_chat_by_message(msg)
+        chat = cls.ctx.acc.create_chat_by_message(msg)
         chat.send_text('to do')
 
 
@@ -235,7 +235,7 @@ class Board:
         else:
             raise InvalidMove()
 
-    def pretty_str():
+    def pretty_str(self):
         return ' {}| {}| {}\n--+--+--\n {}| {}| {}\n--+--+--\n {}| {}| {}'.format(self._board)
 
 
