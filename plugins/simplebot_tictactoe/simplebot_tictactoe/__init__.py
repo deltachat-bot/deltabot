@@ -117,7 +117,7 @@ class TicTacToe(Plugin):
                     cls.conn.execute(
                         'REPLACE INTO games VALUES (?,?,?,?,?,?,?)', game)
                 chat = cls.ctx.acc.create_chat_by_message(msg)
-                chat.send_text('Game started!')
+                chat.send_text('Game started!\nGroup id:{}'.format(chat.id))
                 cls.run_turn(chat, game)
             else:  # p2 already accepted the game
                 chat = cls.ctx.acc.create_chat_by_message(msg)
