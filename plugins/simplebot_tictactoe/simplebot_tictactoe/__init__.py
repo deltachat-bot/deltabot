@@ -137,8 +137,9 @@ class TicTacToe(Plugin):
                 'This is not your game group, please send that command in the game group you want to surrender')
         elif game[3] != cls.FINISHED_STATUS:
             game = list(game)
+            loser = msg.get_sender_contact().addr
             game[3] = cls.FINISHED_STATUS
-            game[4] = game[6] = game[0] if game[0] != game[6] else game[1]
+            game[4] = game[6] = game[0] if game[0] != loser else game[1]
             with cls.conn:
                 cls.conn.execute(
                     'REPLACE INTO games VALUES (?,?,?,?,?,?,?)', game)
