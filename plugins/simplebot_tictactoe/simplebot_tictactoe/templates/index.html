@@ -21,7 +21,7 @@ background-color:#607d8b!important;
 <section class="toeBox">
   {% for i,val in board %}
   {% if val == ' ' %}
-  <a href="mailto:{{ bot_addr }}?body=!toe!move%20{{ gid }}%20{{ i }}"></a>
+  <a href="mailto:{{ bot_addr }}?body=!toe!move%20{{ gid }}%20{{ i }}"><div></div></a>
   {% else: %}
   <div>{{ val }}</div>
   {% endif %}
