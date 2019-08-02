@@ -76,8 +76,10 @@ class TicTacToe(Plugin):
             priv_chat = cls.ctx.acc.create_chat_by_contact(
                 cls.ctx.acc.create_contact(game[4]))
             bot_addr = cls.ctx.acc.get_self_contact().addr
+            board = enumerate(b.board)
+            board = [board[:3], board[3:6], board[6:]]
             html = cls.env.get_template('index.html').render(
-                plugin=cls, bot_addr=bot_addr, gid=chat.id, board=enumerate(b.board))
+                plugin=cls, bot_addr=bot_addr, gid=chat.id, board=board)
             with open(cls.TEMP_FILE, 'w') as fd:
                 fd.write(html)
             priv_chat.send_file(cls.TEMP_FILE, mime_type='text/html')
