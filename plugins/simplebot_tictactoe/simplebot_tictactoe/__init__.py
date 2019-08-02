@@ -75,8 +75,12 @@ class TicTacToe(Plugin):
         else:
             priv_chat = cls.ctx.acc.create_chat_by_contact(
                 cls.ctx.acc.create_contact(game[4]))
-            # TODO: send html board
-            priv_chat.send_text(Board(game[5]).pretty_str())
+            bot_addr = cls.ctx.acc.get_self_contact().addr
+            html = env.get_template('index.html').render(
+                plugin=cls, bot_addr=bot_addr)
+            with open(cls.TEMP_FILE, 'w') as fd:
+                fd.write(html)
+            priv_chat.send_file(cls.TEMP_FILE, mime_type='text/html')
             chat.send_text('Player {} is turn...'.format(game[4]))
 
     @classmethod
@@ -125,7 +129,7 @@ class TicTacToe(Plugin):
 
     @classmethod
     def surrender_cmd(cls, msg, arg):
-        chat = msg.create_chat_by_message(msg)
+        chat = cls.ctx.acc.create_chat_by_message(msg)
         game = cls.conn.execute(
             'SELECT * FROM games WHERE gid=?', (chat.id,)).fetchone()
         if game is None:  # this is not your game group
@@ -145,7 +149,7 @@ class TicTacToe(Plugin):
 
     @classmethod
     def new_cmd(cls, msg, arg):
-        chat = msg.create_chat_by_message(msg)
+        chat = cls.ctx.acc.create_chat_by_message(msg)
         game = cls.conn.execute(
             'SELECT * FROM games WHERE gid=?', (chat.id,)).fetchone()
         if game is None:  # this is not your game group
