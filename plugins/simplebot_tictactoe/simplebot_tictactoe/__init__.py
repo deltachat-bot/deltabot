@@ -81,7 +81,6 @@ class TicTacToe(Plugin):
 
     @classmethod
     def play_cmd(cls, msg, arg):
-        arg = arg.strip()
         if arg:  # inviting someone to play
             p1 = msg.get_sender_contact().addr
             p2 = arg
@@ -213,11 +212,11 @@ class Board:
 
     def get_winner(self):
         b = self._board
-        if b[0] == b[4] == b[8] or b[1] == b[4] == b[7] or b[2] == b[4] == b[6] or b[3] == b[4] == b[5]:
+        if b[4] != ' ' and (b[0] == b[4] == b[8] or b[1] == b[4] == b[7] or b[2] == b[4] == b[6] or b[3] == b[4] == b[5]):
             return b[4]
-        elif b[0] == b[1] == b[2] or b[0] == b[3] == b[6]:
+        elif b[0] != ' ' and (b[0] == b[1] == b[2] or b[0] == b[3] == b[6]):
             return b[0]
-        elif b[6] == b[7] == b[8] or b[2] == b[5] == b[8]:
+        elif b[8] != ' ' and (b[6] == b[7] == b[8] or b[2] == b[5] == b[8]):
             return b[8]
         elif ' ' not in self._board:
             return '-'
@@ -230,7 +229,10 @@ class Board:
             raise InvalidMove()
 
     def pretty_str(self):
-        return ' {}| {}| {}\n--+--+--\n {}| {}| {}\n--+--+--\n {}| {}| {}'.format(*self._board)
+        text = '{}{}{}\n{}{}{}\n{}{}{}'.format(*self._board)
+        text = text.replace('x', '❎')
+        text = text.replace('o', '🅾')
+        text = text.replace(' ', '⬜')
 
 
 class InvalidMove(Exception):
