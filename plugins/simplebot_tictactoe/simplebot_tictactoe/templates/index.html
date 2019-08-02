@@ -1,30 +1,36 @@
 {% extends "base.html" %}
 
 {% block css %}
-.main-color {
-color:#fff!important;
-background-color:#607d8b!important;
+.table{
+display: table;
+margin: 0px auto;
 }
 
-.toeBox {
-  display: grid;
-  grid-template-columns: 50px 50px 50px;
-  grid-template-rows: 50px 50px 50px;
+.row {
+display: table-row;
 }
-.toeBox div, .toeBox a {
-  border: 1px solid black;
-  text-align: center;
+
+.cell {
+display: table-cell;
+width: 50px;
+height: 50px;
+border: 1px solid black;
+text-align: center;
 }
 {% endblock %}
 
 {% block content %}
-<section class="toeBox">
-  {% for i,val in board %}
-  {% if val == ' ' %}
-  <a href="mailto:{{ bot_addr }}?body=!toe!move%20{{ gid }}%20{{ i }}"><div></div></a>
-  {% else: %}
-  <div>{{ val }}</div>
-  {% endif %}
-  {% endfor %}
+<div class="table">
+  {% for row in board %}
+  <div class="row">
+    {% for i,val in row %}
+    {% if val == ' ' %}
+    <a href="mailto:{{ bot_addr }}?body=!toe!move%20{{ gid }}%20{{ i }}"><div class="cell"></div></a>
+    {% else: %}
+    <div class="cell">{{ val.upper() }}</div>
+    {% endif %}
+    {% endfor %}
+  </div>
+</div>
 </section>
 {% endblock %}
