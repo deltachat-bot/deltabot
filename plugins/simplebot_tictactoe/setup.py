@@ -32,12 +32,13 @@ setup(
         'Topic :: Utilities'
     ],
     keywords='deltachat simplebot plugin',
-    #project_urls={},
+    # project_urls={},
     packages=[MODULE_NAME],
     install_requires=['simplebot', 'Jinja2'],
     python_requires='>=3.5',
     entry_points={
         'simplebot.plugins': '{} = {}:{}'.format(PLUGIN_NAME, MODULE_NAME, CLASS_NAME)
     },
-    include_package_data=True
+    include_package_data=True,
+    zip_safe=False
 )
