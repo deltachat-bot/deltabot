@@ -237,7 +237,7 @@ class Board:
         text = '{}{}{}\n{}{}{}\n{}{}{}'.format(*self.board)
         text = text.replace('x', '❎')
         text = text.replace('o', '🅾')
-        text = text.replace(' ', '⬜')
+        return text.replace(' ', '⬜')
 
 
 class InvalidMove(Exception):
