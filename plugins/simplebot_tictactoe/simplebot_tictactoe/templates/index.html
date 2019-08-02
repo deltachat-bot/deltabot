@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block css %}
+.main-color {
+color:#fff!important;
+background-color:#607d8b!important;
+}
+
+.toeBox {
+  display: grid;
+  grid-template-columns: 50px 50px 50px;
+  grid-template-rows: 50px 50px 50px;
+}
+.toeBox div, .toeBox a {
+  border: 1px solid black;
+  text-align: center;
+}
+{% endblock %}
+
+{% block content %}
+<section class="toeBox">
+  {% for i,val in enumerate(board) %}
+  {% if val == ' ' %}
+  <a href="mailto:{{ bot_addr }}?body=!toe!move%20{{ gid }}%20{{ i }}"></a>
+  {% else: %}
+  <div>{{ val }}</div>
+  {% endif %}
+</section>
+{% endblock %}
