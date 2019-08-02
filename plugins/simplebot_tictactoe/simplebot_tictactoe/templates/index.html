@@ -19,7 +19,7 @@ background-color:#607d8b!important;
 
 {% block content %}
 <section class="toeBox">
-  {% for i,val in enumerate(board) %}
+  {% for i,val in board %}
   {% if val == ' ' %}
   <a href="mailto:{{ bot_addr }}?body=!toe!move%20{{ gid }}%20{{ i }}"></a>
   {% else: %}
