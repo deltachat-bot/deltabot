@@ -59,8 +59,8 @@ class TicTacToe(Plugin):
 
     @classmethod
     def run_turn(cls, chat, game):
-        board = Board(game[5])
-        winner = board.get_winner()
+        b = Board(game[5])
+        winner = b.get_winner()
         if winner is not None:
             game[3] = cls.FINISHED_STATUS
             with cls.conn:
@@ -68,16 +68,16 @@ class TicTacToe(Plugin):
                     'REPLACE INTO games VALUES (?,?,?,?,?,?,?)', game)
             if winner == '-':
                 chat.send_text(
-                    'Game over.\nIt is a match!\n\n{}'.format(board.pretty_str()))
+                    'Game over.\nIt is a match!\n\n{}'.format(b.pretty_str()))
             else:
                 chat.send_text('Game over.\n{} Wins!!!\n\n{}'.format(
-                    game[4], board.pretty_str()))
+                    game[4], b.pretty_str()))
         else:
             priv_chat = cls.ctx.acc.create_chat_by_contact(
                 cls.ctx.acc.create_contact(game[4]))
             bot_addr = cls.ctx.acc.get_self_contact().addr
             html = cls.env.get_template('index.html').render(
-                plugin=cls, bot_addr=bot_addr)
+                plugin=cls, bot_addr=bot_addr, gid=chat.id, board=b.board)
             with open(cls.TEMP_FILE, 'w') as fd:
                 fd.write(html)
             priv_chat.send_file(cls.TEMP_FILE, mime_type='text/html')
@@ -208,33 +208,33 @@ class TicTacToe(Plugin):
 class Board:
     def __init__(self, board_str=None):
         if board_str is None:
-            self._board = [' ']*9
+            self.board = [' ']*9
         else:
-            self._board = board_str.split(',')
+            self.board = board_str.split(',')
 
     def __str__(self):
-        return ','.join(self._board)
+        return ','.join(self.board)
 
     def get_winner(self):
-        b = self._board
+        b = self.board
         if b[4] != ' ' and (b[0] == b[4] == b[8] or b[1] == b[4] == b[7] or b[2] == b[4] == b[6] or b[3] == b[4] == b[5]):
             return b[4]
         elif b[0] != ' ' and (b[0] == b[1] == b[2] or b[0] == b[3] == b[6]):
             return b[0]
         elif b[8] != ' ' and (b[6] == b[7] == b[8] or b[2] == b[5] == b[8]):
             return b[8]
-        elif ' ' not in self._board:
+        elif ' ' not in self.board:
             return '-'
         return None
 
     def move(self, sign, pos):
-        if pos < len(self._board) and self._board[pos] == ' ':
-            self._board[pos] = sign
+        if pos < len(self.board) and self.board[pos] == ' ':
+            self.board[pos] = sign
         else:
             raise InvalidMove()
 
     def pretty_str(self):
-        text = '{}{}{}\n{}{}{}\n{}{}{}'.format(*self._board)
+        text = '{}{}{}\n{}{}{}\n{}{}{}'.format(*self.board)
         text = text.replace('x', '❎')
         text = text.replace('o', '🅾')
         text = text.replace(' ', '⬜')
