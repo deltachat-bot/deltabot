@@ -76,7 +76,7 @@ class TicTacToe(Plugin):
             priv_chat = cls.ctx.acc.create_chat_by_contact(
                 cls.ctx.acc.create_contact(game[4]))
             bot_addr = cls.ctx.acc.get_self_contact().addr
-            html = env.get_template('index.html').render(
+            html = cls.env.get_template('index.html').render(
                 plugin=cls, bot_addr=bot_addr)
             with open(cls.TEMP_FILE, 'w') as fd:
                 fd.write(html)
