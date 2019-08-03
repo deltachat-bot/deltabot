@@ -8,6 +8,14 @@ from deltachat.chatting import Chat
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 
+PLAYERS = 0
+GID = 1
+STATUS = 2
+TURN = 3
+BOARD = 4
+X = 5
+
+
 class TicTacToe(Plugin):
 
     name = 'Tic Tac Toe'
@@ -31,8 +39,8 @@ class TicTacToe(Plugin):
             os.path.join(cls.ctx.basedir, 'tictactoe.db'))
         with cls.conn:
             cls.conn.execute('''CREATE TABLE IF NOT EXISTS games
-                                (p1 TEXT NOT NULL, p2 TEXT NOT NULL, gid INTEGER NOT NULL, status INTEGER NOT NULL,
-                                 turn TEXT NOT NULL,  board TEXT NOT NULL, x TEXT NOT NULL, PRIMARY KEY(p1, p2))''')
+                                (players TEXT NOT NULL, gid INTEGER NOT NULL, status INTEGER NOT NULL,
+                                 turn TEXT NOT NULL,  board TEXT NOT NULL, x TEXT NOT NULL, PRIMARY KEY(players))''')
 
         # localedir = os.path.join(os.path.dirname(__file__), 'locale')
         # try:
@@ -59,22 +67,24 @@ class TicTacToe(Plugin):
 
     @classmethod
     def run_turn(cls, chat, game):
-        b = Board(game[5])
+        b = Board(game[BOARD])
+        p1, p2 = game[PLAYERS].split(',')
         winner = b.get_winner()
         if winner is not None:
-            game[3] = cls.FINISHED_STATUS
+            game[STATUS] = cls.FINISHED_STATUS
             with cls.conn:
                 cls.conn.execute(
-                    'REPLACE INTO games VALUES (?,?,?,?,?,?,?)', game)
+                    'REPLACE INTO games VALUES (?,?,?,?,?,?)', game)
             if winner == '-':
                 chat.send_text(
-                    'Game over.\nIt is a match!\n\n{}'.format(b.pretty_str()))
+                    'Game over.\nIt is a draw!\n\n{}'.format(b.pretty_str()))
             else:
+                winner = p1 if p1 != game[TURN] else p2
                 chat.send_text('Game over.\n{} Wins!!!\n\n{}'.format(
-                    game[4], b.pretty_str()))
+                    winner, b.pretty_str()))
         else:
             priv_chat = cls.ctx.acc.create_chat_by_contact(
-                cls.ctx.acc.create_contact(game[4]))
+                cls.ctx.acc.create_contact(game[TURN]))
             bot_addr = cls.ctx.acc.get_self_contact().addr
             board = list(enumerate(b.board))
             board = [board[:3], board[3:6], board[6:]]
@@ -83,46 +93,54 @@ class TicTacToe(Plugin):
             with open(cls.TEMP_FILE, 'w') as fd:
                 fd.write(html)
             priv_chat.send_file(cls.TEMP_FILE, mime_type='text/html')
-            chat.send_text('Player {} is turn...'.format(game[4]))
+            chat.send_text(
+                '{}\n\n{} is your turn...'.format(game[BOARD], game[TURN]))
 
     @classmethod
     def play_cmd(cls, msg, arg):
         if arg:  # inviting someone to play
             p1 = msg.get_sender_contact().addr
             p2 = arg
+            if p1 == p2:
+                chat = cls.ctx.acc.create_chat_by_message(msg)
+                chat.send_text("You can't play with yourself")
+                return
+            players = ','.join(sorted([p1, p2]))
             game = cls.conn.execute(
-                'SELECT * FROM games WHERE p1=? AND p2=?', (p1, p2)).fetchone()
+                'SELECT * FROM games WHERE players=?', (players,)).fetchone()
             if game is None:  # first time playing with p2
                 chat = cls.ctx.acc.create_group_chat(
-                    '{} Vs {} [{}]'.format(p1, p2, cls.name))
+                    '❎ {} Vs {} [{}]'.format(p1, p2, cls.name))
                 chat.add_contact(msg.get_sender_contact())
                 chat.add_contact(cls.ctx.acc.create_contact(p2))
                 with cls.conn:
-                    cls.conn.execute('INSERT INTO games VALUES (?,?,?,?,?,?,?)',
-                                     (p1, p2, chat.id, cls.INVITED_STATUS, p1, str(Board()), p1))
+                    cls.conn.execute('INSERT INTO games VALUES (?,?,?,?,?,?)',
+                                     (players, chat.id, cls.INVITED_STATUS, p1, str(Board()), p1))
                 chat.send_text('Hello {},\nYou had been invited by {} to play {}, to start playing send a message in this group with the command:\n!toe!play'.format(
                     p2, p1, cls.name))
             else:
-                chat = cls.ctx.acc.create_chat_by_contact(
-                    msg.get_sender_contact())
+                chat = cls.ctx.acc.create_chat_by_message(msg)
                 chat.send_text(
                     'You already invited {} to play {}, to start a new game just go to the game group and send:\n!toe!new'.format(p2, cls.name))
         else:    # accepting a game
             p2 = msg.get_sender_contact().addr
             chat = cls.ctx.acc.create_chat_by_message(msg)
             game = cls.conn.execute(
-                'SELECT * FROM games WHERE gid=? AND p2=?', (chat.id, p2)).fetchone()
-            if game is None:  # this is not your game group
+                'SELECT * FROM games WHERE gid=?', (chat.id,)).fetchone()
+            # this is not your game group
+            orig_p2 = [p for p in game[PLAYERS].split(',') if p != game[X]][0]
+            if game is None or p2 != orig_p2:
                 chat.send_text(
-                    'This is not your game group, if you are trying to play a new game, please supply the email of the friend you want to play with')
-            elif game[3] == cls.INVITED_STATUS:  # accept the invitation and start playing
+                    'This is not your game group, if you are trying to invite a new friend, please supply the email of the friend you want to play with')
+            # accept the invitation and start playing
+            elif game[STATUS] == cls.INVITED_STATUS:
                 game = list(game)
-                game[3] = cls.PLAYING_STATUS
+                game[STATUS] = cls.PLAYING_STATUS
                 with cls.conn:
                     cls.conn.execute(
-                        'REPLACE INTO games VALUES (?,?,?,?,?,?,?)', game)
+                        'REPLACE INTO games VALUES (?,?,?,?,?,?)', game)
                 chat = cls.ctx.acc.create_chat_by_message(msg)
-                chat.send_text('Game started!\nGroup id:{}'.format(chat.id))
+                chat.send_text('Game started!')
                 cls.run_turn(chat, game)
             else:  # p2 already accepted the game
                 chat = cls.ctx.acc.create_chat_by_message(msg)
@@ -132,20 +150,22 @@ class TicTacToe(Plugin):
     @classmethod
     def surrender_cmd(cls, msg, arg):
         chat = cls.ctx.acc.create_chat_by_message(msg)
+        loser = msg.get_sender_contact().addr
         game = cls.conn.execute(
             'SELECT * FROM games WHERE gid=?', (chat.id,)).fetchone()
-        if game is None:  # this is not your game group
+        # this is not your game group
+        if game is None or loser not in game[PLAYERS].split(','):
             chat.send_text(
                 'This is not your game group, please send that command in the game group you want to surrender')
-        elif game[3] != cls.FINISHED_STATUS:
+        elif game[STATUS] != cls.FINISHED_STATUS:
             game = list(game)
-            loser = msg.get_sender_contact().addr
-            game[3] = cls.FINISHED_STATUS
-            game[4] = game[6] = game[0] if game[0] != loser else game[1]
+            p1, p2 = game[PLAYERS].split(',')
+            game[STATUS] = cls.FINISHED_STATUS
+            game[TRURN] = game[X] = p1 if p1 != loser else p2
             with cls.conn:
                 cls.conn.execute(
-                    'REPLACE INTO games VALUES (?,?,?,?,?,?,?)', game)
-            chat.send_text('{} Wins!!!'.format(game[4]))
+                    'REPLACE INTO games VALUES (?,?,?,?,?,?)', game)
+            chat.send_text('Game Over.\n{} Wins!!!'.format(game[TURN]))
         else:
             chat.send_text(
                 'There are no game running. To start a new game use !toe!new')
@@ -153,19 +173,22 @@ class TicTacToe(Plugin):
     @classmethod
     def new_cmd(cls, msg, arg):
         chat = cls.ctx.acc.create_chat_by_message(msg)
+        sender = msg.get_sender_contact().addr
         game = cls.conn.execute(
             'SELECT * FROM games WHERE gid=?', (chat.id,)).fetchone()
-        if game is None:  # this is not your game group
+        # this is not your game group
+        if game is None or sender not in game[PLAYERS].split(','):
             chat.send_text(
                 'This is not your game group, please send that command in the game group you want to start a new game')
-        elif game[3] == cls.FINISHED_STATUS:
+        elif game[STATUS] == cls.FINISHED_STATUS:
             game = list(game)
-            game[3] = cls.PLAYING_STATUS
-            game[4] = game[6] = game[0] if game[0] != game[6] else game[1]
-            game[5] = str(Board())
+            p1, p2 = game[PLAYERS].split(',')
+            game[STATUS] = cls.PLAYING_STATUS
+            game[TURN] = game[X] = p1 if p1 != game[X] else p2
+            game[BOARD] = str(Board())
             with cls.conn:
                 cls.conn.execute(
-                    'REPLACE INTO games VALUES (?,?,?,?,?,?,?)', game)
+                    'REPLACE INTO games VALUES (?,?,?,?,?,?)', game)
             chat = cls.ctx.acc.create_chat_by_message(msg)
             chat.send_text('Game started!')
             cls.run_turn(chat, game)
@@ -179,32 +202,33 @@ class TicTacToe(Plugin):
         player = msg.get_sender_contact().addr
         game = cls.conn.execute(
             'SELECT * FROM games WHERE gid=?', (chat_id,)).fetchone()
-        if game is not None and player == game[4]:
+        if game is not None and player == game[TURN]:
             game = list(game)
-            board = Board(game[5])
-            sign = 'x' if player == game[6] else 'o'
+            p1, p2 = game[PLAYERS].split(',')
+            board = Board(game[BOARD])
+            sign = 'x' if player == game[X] else 'o'
             try:
                 board.move(sign, pos)
-                game[4] = game[0] if game[1] == player else game[1]
-                game[5] = str(board)
+                game[TURN] = p1 if p1 != player else p2
+                game[BOARD] = str(board)
                 with cls.conn:
                     cls.conn.execute(
-                        'REPLACE INTO games VALUES (?,?,?,?,?,?,?)', game)
+                        'REPLACE INTO games VALUES (?,?,?,?,?,?)', game)
                 chat = Chat(cls.ctx.acc._dc_context, chat_id)
                 cls.run_turn(chat, game)
             except InvalidMove:
-                chat = cls.ctx.acc.create_chat_by_contact(
-                    msg.get_sender_contact())
+                chat = cls.ctx.acc.create_chat_by_message(msg)
                 chat.send_text('Invalid move!')
         else:
-            chat = cls.ctx.acc.create_chat_by_contact(msg.get_sender_contact())
+            chat = cls.ctx.acc.create_chat_by_message(msg.get_sender_contact())
             chat.send_text(
                 "It's NOT your turn, please wait the other player to move")
 
     @classmethod
     def help_cmd(cls, msg, arg):
         chat = cls.ctx.acc.create_chat_by_message(msg)
-        chat.send_text('to do')
+        chat.send_text('{}\n\n{}'.format(
+            cls.description, cls.long_description))
 
 
 class Board:
