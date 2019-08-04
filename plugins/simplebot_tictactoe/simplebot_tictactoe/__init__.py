@@ -50,8 +50,8 @@ class TicTacToe(Plugin):
         #     lang = gettext.translation('simplebot_echo', localedir=localedir,
         #                                languages=['en'])
         # lang.install()
-        # cls.description = _('plugin-description')
-        # cls.long_description = _('plugin-long-description')
+        cls.description = 'under construction'  # _('plugin-description')
+        cls.long_description = 'do not use'  # _('plugin-long-description')
 
     @classmethod
     def process(cls, msg):
