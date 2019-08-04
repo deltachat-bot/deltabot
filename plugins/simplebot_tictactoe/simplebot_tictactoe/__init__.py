@@ -94,7 +94,7 @@ class TicTacToe(Plugin):
                 fd.write(html)
             priv_chat.send_file(cls.TEMP_FILE, mime_type='text/html')
             chat.send_text(
-                '{}\n\n{} is your turn...'.format(game[BOARD], game[TURN]))
+                '{}\n\n{} is your turn...'.format(b.pretty_str(), game[TURN]))
 
     @classmethod
     def play_cmd(cls, msg, arg):
