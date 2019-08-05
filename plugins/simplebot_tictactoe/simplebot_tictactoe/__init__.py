@@ -161,7 +161,7 @@ class TicTacToe(Plugin):
             game = list(game)
             p1, p2 = game[PLAYERS].split(',')
             game[STATUS] = cls.FINISHED_STATUS
-            game[TRURN] = game[X] = p1 if p1 != loser else p2
+            game[TURN] = game[X] = p1 if p1 != loser else p2
             with cls.conn:
                 cls.conn.execute(
                     'REPLACE INTO games VALUES (?,?,?,?,?,?)', game)
