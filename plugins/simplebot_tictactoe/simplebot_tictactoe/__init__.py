@@ -42,16 +42,13 @@ class TicTacToe(Plugin):
                                 (players TEXT NOT NULL, gid INTEGER NOT NULL, status INTEGER NOT NULL,
                                  turn TEXT NOT NULL,  board TEXT NOT NULL, x TEXT NOT NULL, PRIMARY KEY(players))''')
 
-        # localedir = os.path.join(os.path.dirname(__file__), 'locale')
-        # try:
-        #     lang = gettext.translation('simplebot_echo', localedir=localedir,
-        #                                languages=[ctx.locale])
-        # except OSError:
-        #     lang = gettext.translation('simplebot_echo', localedir=localedir,
-        #                                languages=['en'])
-        # lang.install()
-        cls.description = 'under construction'  # _('plugin-description')
-        cls.long_description = 'do not use'  # _('plugin-long-description')
+        localedir = os.path.join(os.path.dirname(__file__), 'locale')
+        lang = gettext.translation('simplebot_echo', localedir=localedir,
+                                   languages=[ctx.locale], fallback=True)
+        lang.install()
+        cls.description = _('Tic Tac Toe game to play with friends')
+        cls.long_description = _(
+            'This is a simple game to play with another humman oponent.\nUse !toe!play <email> to invite a friend to play.\nIn the group created for the game use !toe!surrender to quit a game.\nUse !toe!new in the game group to start a new game.')
 
     @classmethod
     def process(cls, msg):
@@ -77,10 +74,10 @@ class TicTacToe(Plugin):
                     'REPLACE INTO games VALUES (?,?,?,?,?,?)', game)
             if winner == '-':
                 chat.send_text(
-                    'Game over.\nIt is a draw!\n\n{}'.format(b.pretty_str()))
+                    _('Game over.\nIt is a draw!\n\n{}').format(b.pretty_str()))
             else:
                 winner = p1 if p1 != game[TURN] else p2
-                chat.send_text('Game over.\n{} Wins!!!\n\n{}'.format(
+                chat.send_text(_('Game over.\n{} Wins!!!\n\n{}').format(
                     winner, b.pretty_str()))
         else:
             priv_chat = cls.ctx.acc.create_chat_by_contact(
@@ -94,7 +91,7 @@ class TicTacToe(Plugin):
                 fd.write(html)
             priv_chat.send_file(cls.TEMP_FILE, mime_type='text/html')
             chat.send_text(
-                '{} is your turn...\n\n{}'.format(game[TURN], b.pretty_str()))
+                _('{} is your turn...\n\n{}').format(game[TURN], b.pretty_str()))
 
     @classmethod
     def play_cmd(cls, msg, arg):
@@ -103,7 +100,7 @@ class TicTacToe(Plugin):
             p2 = arg
             if p1 == p2:
                 chat = cls.ctx.acc.create_chat_by_message(msg)
-                chat.send_text("You can't play with yourself")
+                chat.send_text(_("You can't play with yourself"))
                 return
             players = ','.join(sorted([p1, p2]))
             game = cls.conn.execute(
@@ -116,12 +113,12 @@ class TicTacToe(Plugin):
                 with cls.conn:
                     cls.conn.execute('INSERT INTO games VALUES (?,?,?,?,?,?)',
                                      (players, chat.id, cls.INVITED_STATUS, p1, str(Board()), p1))
-                chat.send_text('Hello {},\nYou had been invited by {} to play {}, to start playing send a message in this group with the command:\n!toe!play'.format(
+                chat.send_text(_('Hello {},\nYou had been invited by {} to play {}, to start playing send a message in this group with the command:\n!toe!play').format(
                     p2, p1, cls.name))
             else:
                 chat = cls.ctx.acc.create_chat_by_message(msg)
                 chat.send_text(
-                    'You already invited {} to play {}, to start a new game just go to the game group and send:\n!toe!new'.format(p2, cls.name))
+                    _('You already has a game group with {}, to start a new game just go to the game group and send:\n!toe!new').format(p2))
         else:    # accepting a game
             p2 = msg.get_sender_contact().addr
             chat = cls.ctx.acc.create_chat_by_message(msg)
@@ -131,7 +128,7 @@ class TicTacToe(Plugin):
             orig_p2 = [p for p in game[PLAYERS].split(',') if p != game[X]][0]
             if game is None or p2 != orig_p2:
                 chat.send_text(
-                    'This is not your game group, if you are trying to invite a new friend, please supply the email of the friend you want to play with')
+                    _('You are not allowed to do that, if you are trying to invite a new friend, please provide the email of the friend you want to play with'))
             # accept the invitation and start playing
             elif game[STATUS] == cls.INVITED_STATUS:
                 game = list(game)
@@ -140,12 +137,12 @@ class TicTacToe(Plugin):
                     cls.conn.execute(
                         'REPLACE INTO games VALUES (?,?,?,?,?,?)', game)
                 chat = cls.ctx.acc.create_chat_by_message(msg)
-                chat.send_text('Game started!')
+                chat.send_text(_('Game started!'))
                 cls.run_turn(chat, game)
             else:  # p2 already accepted the game
                 chat = cls.ctx.acc.create_chat_by_message(msg)
                 chat.send_text(
-                    'You alredy accepted to play. To start a new game use !toe!new')
+                    _('You alredy accepted to play. To start a new game use !toe!new'))
 
     @classmethod
     def surrender_cmd(cls, msg, arg):
@@ -156,7 +153,7 @@ class TicTacToe(Plugin):
         # this is not your game group
         if game is None or loser not in game[PLAYERS].split(','):
             chat.send_text(
-                'This is not your game group, please send that command in the game group you want to surrender')
+                _('This is not your game group, please send that command in the game group you want to surrender'))
         elif game[STATUS] != cls.FINISHED_STATUS:
             game = list(game)
             p1, p2 = game[PLAYERS].split(',')
@@ -165,10 +162,10 @@ class TicTacToe(Plugin):
             with cls.conn:
                 cls.conn.execute(
                     'REPLACE INTO games VALUES (?,?,?,?,?,?)', game)
-            chat.send_text('Game Over.\n{} Wins!!!'.format(game[TURN]))
+            chat.send_text(_('Game Over.\n{} Wins!!!').format(game[TURN]))
         else:
             chat.send_text(
-                'There are no game running. To start a new game use !toe!new')
+                _('There are no game running. To start a new game use !toe!new'))
 
     @classmethod
     def new_cmd(cls, msg, arg):
@@ -179,7 +176,7 @@ class TicTacToe(Plugin):
         # this is not your game group
         if game is None or sender not in game[PLAYERS].split(','):
             chat.send_text(
-                'This is not your game group, please send that command in the game group you want to start a new game')
+                _('This is not your game group, please send that command in the game group you want to start a new game'))
         elif game[STATUS] == cls.FINISHED_STATUS:
             game = list(game)
             p1, p2 = game[PLAYERS].split(',')
@@ -190,11 +187,11 @@ class TicTacToe(Plugin):
                 cls.conn.execute(
                     'REPLACE INTO games VALUES (?,?,?,?,?,?)', game)
             chat = cls.ctx.acc.create_chat_by_message(msg)
-            chat.send_text('Game started!')
+            chat.send_text(_('Game started!'))
             cls.run_turn(chat, game)
         else:
             chat.send_text(
-                'There are a game running already, to start a new one first end this game or surrender')
+                _('There are a game running already, to start a new one first end this game or surrender'))
 
     @classmethod
     def move_cmd(cls, msg, arg):
@@ -218,11 +215,11 @@ class TicTacToe(Plugin):
                 cls.run_turn(chat, game)
             except InvalidMove:
                 chat = cls.ctx.acc.create_chat_by_message(msg)
-                chat.send_text('Invalid move!')
+                chat.send_text(_('Invalid move!'))
         else:
             chat = cls.ctx.acc.create_chat_by_message(msg.get_sender_contact())
             chat.send_text(
-                "It's NOT your turn, please wait the other player to move")
+                _("It's NOT your turn, please wait the other player to move"))
 
     @classmethod
     def help_cmd(cls, msg, arg):
