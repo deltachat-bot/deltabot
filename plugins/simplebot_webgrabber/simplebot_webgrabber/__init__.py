@@ -66,7 +66,7 @@ class WebGrabber(Plugin):
                 if 'text/html' in r.headers['content-type']:
                     soup = bs4.BeautifulSoup(r.text, 'html.parser')
                     for t in soup(['meta']):
-                        if t.get('http-equiv') != 'content-type':
+                        if t.get('http-equiv') != 'content-type' and t.get('charset') is None:
                             t.extract()
                     [t.extract()
                      for t in soup(['script', 'iframe', 'noscript', 'link'])]
