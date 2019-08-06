@@ -73,6 +73,13 @@ class WebGrabber(Plugin):
                     comments = soup.find_all(
                         text=lambda text: isinstance(text, bs4.Comment))
                     [comment.extract() for comment in comments]
+                    for t in soup(['img']):
+                        src = t.get('src')
+                        if src:
+                            t.name = 'a'
+                            t['href'] = src
+                            t.string = '[{}]'.format(t.get('alt', 'IMAGE'))
+                            del t['src'], t['alt']
                     script = r'for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${simplebot_url}/$1`)}`);a.href=`mailto:${"' + WebGrabber.ctx.acc.get_self_contact(
                     ).addr + r'"}?body=%21web%20${b}`}'
                     s = soup.new_tag('script')
