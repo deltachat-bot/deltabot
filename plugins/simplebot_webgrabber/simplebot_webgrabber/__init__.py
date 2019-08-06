@@ -10,7 +10,8 @@ import requests
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 
-HEADERS = {'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
+HEADERS = {
+    'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
 MAX_SIZE_MB = 5
 MAX_SIZE = MAX_SIZE_MB*1024**2
 
@@ -42,11 +43,11 @@ class WebGrabber(Plugin):
         cls.description = _('plugin.description')
         cls.long_description = _('plugin.long_description')
         cls.NOSCRIPT = _('noscript_msg')
- 
+
     @classmethod
     def process(cls, msg):
-        for cmd,action in [('!ddg', cls.ddg_cmd), ('!wt', cls.wt_cmd), ('!w', cls.w_cmd),
-                           ('!web', cls.web_cmd)]:
+        for cmd, action in [('!ddg', cls.ddg_cmd), ('!wt', cls.wt_cmd), ('!w', cls.w_cmd),
+                            ('!web', cls.web_cmd)]:
             arg = cls.get_args(cmd, msg.text)
             if arg is not None:
                 action(cls.ctx.acc.create_chat_by_message(msg), arg)
@@ -67,10 +68,13 @@ class WebGrabber(Plugin):
                     for t in soup(['meta']):
                         if t.get('http-equiv') != 'content-type':
                             t.extract()
-                    [t.extract() for t in soup(['script', 'iframe', 'noscript', 'link'])]
-                    comments = soup.find_all(text=lambda text:isinstance(text, bs4.Comment))
+                    [t.extract()
+                     for t in soup(['script', 'iframe', 'noscript', 'link'])]
+                    comments = soup.find_all(
+                        text=lambda text: isinstance(text, bs4.Comment))
                     [comment.extract() for comment in comments]
-                    script = r'for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${simplebot_url}/$1`)}`);a.href=`mailto:${"' + WebGrabber.ctx.acc.get_self_contact().addr + r'"}?body=%21web%20${b}`}'
+                    script = r'for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${simplebot_url}/$1`)}`);a.href=`mailto:${"' + WebGrabber.ctx.acc.get_self_contact(
+                    ).addr + r'"}?body=%21web%20${b}`}'
                     s = soup.new_tag('script')
                     index = r.url.find('/', 8)
                     if index >= 0:
@@ -88,10 +92,12 @@ class WebGrabber(Plugin):
                     if len(chunk) < MAX_SIZE:
                         d = r.headers.get('content-disposition', None)
                         if d is not None:
-                            fname = re.findall("filename=(.+)", d)[0]
+                            fname = re.findall(
+                                "filename=(.+)", d)[0].strip('"')
                         else:
-                            fname = r.url.split('/').pop()
-                        fpath = os.path.join(cls.ctx.basedir, 'account.db-blobs', fname)
+                            fname = r.url.split('/').pop().split('?')[0]
+                        fpath = os.path.join(
+                            cls.ctx.basedir, 'account.db-blobs', fname)
                         with open(fpath, 'wb') as fd:
                             fd.write(chunk)
                         chat.send_file(fpath)
@@ -102,23 +108,27 @@ class WebGrabber(Plugin):
             chat.send_text(_('download_failed').format(url))
 
     @classmethod
-    def web_cmd(cls, chat, url):        
+    def web_cmd(cls, chat, url):
         if not url:
             template = cls.env.get_template('index.html')
             with open(cls.TEMP_FILE, 'w') as fd:
-                fd.write(template.render(plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr))
+                fd.write(template.render(
+                    plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr))
             chat.send_file(cls.TEMP_FILE, mime_type='text/html')
         else:
             cls.send_page(chat, url)
 
     @classmethod
     def ddg_cmd(cls, chat, arg):
-        cls.send_page(chat, "https://duckduckgo.com/lite?q={}".format(quote_plus(arg)))
+        cls.send_page(
+            chat, "https://duckduckgo.com/lite?q={}".format(quote_plus(arg)))
 
     @classmethod
     def w_cmd(cls, chat, arg):
-        cls.send_page(chat, "https://{}.m.wikipedia.org/wiki/?search={}".format(cls.ctx.locale, quote_plus(arg)))
+        cls.send_page(
+            chat, "https://{}.m.wikipedia.org/wiki/?search={}".format(cls.ctx.locale, quote_plus(arg)))
 
     @classmethod
     def wt_cmd(cls, chat, arg):
-        cls.send_page(chat, "https://{}.m.wiktionary.org/wiki/?search={}".format(cls.ctx.locale, quote_plus(arg)))
+        cls.send_page(
+            chat, "https://{}.m.wiktionary.org/wiki/?search={}".format(cls.ctx.locale, quote_plus(arg)))
