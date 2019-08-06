@@ -1,0 +1,2 @@
+recursive-include simplebot_tictactoe/locale *
+recursive-include simplebot_tictactoe/templates *
