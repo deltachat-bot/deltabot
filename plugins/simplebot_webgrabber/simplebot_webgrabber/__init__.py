@@ -78,6 +78,23 @@ class WebGrabber(Plugin):
                             t['href'] = src
                             t.string = '[{}]'.format(t.get('alt', 'IMAGE'))
                             del t['src'], t['alt']
+                    styles = [str(s) for s in soup.find_all('style')]
+                    for t in soup(lambda t: t.has_attr('class') or t.has_attr('id')):
+                        classes = []
+                        for cls in t.get('class', '').split():
+                            for s in styles:
+                                if '.'+cls in s:
+                                    classes.append(cls)
+                                    break
+                        del t['class']
+                        if classes:
+                            t['class'] = ' '.join(classes)
+                        if t.get('id'):
+                            for s in styles:
+                                if '#'+t['id'] in s:
+                                    break
+                            else:
+                                del t['id']
                     script = r'for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${simplebot_url}/$1`)}`);a.href=`mailto:${"' + WebGrabber.ctx.acc.get_self_contact(
                     ).addr + r'"}?body=%21web%20${b}`}'
                     t = soup.new_tag('script')
