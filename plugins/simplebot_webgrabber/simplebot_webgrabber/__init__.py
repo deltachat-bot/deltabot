@@ -89,7 +89,7 @@ class WebGrabber(Plugin):
                         del t['class']
                         if classes:
                             t['class'] = ' '.join(classes)
-                        if t.get('id'):
+                        if t.get('id') is not None:
                             for s in styles:
                                 if '#'+t['id'] in s:
                                     break
