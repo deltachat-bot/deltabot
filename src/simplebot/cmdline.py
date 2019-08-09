@@ -123,6 +123,7 @@ def serve(ctx, locale):
     else:
         cfg.add_section('simplebot')
         botcfg = cfg['simplebot']
+        botcfg['e2ee_enabled'] = '1'
         botcfg['mdns_enabled'] = '0'
         botcfg['sentbox_watch'] = '0'
         botcfg['mvbox_watch'] = '0'
@@ -136,6 +137,7 @@ def serve(ctx, locale):
     acc.set_config('mvbox_watch', botcfg['mvbox_watch'])
     acc.set_config('mvbox_move', botcfg['mvbox_move'])
     acc.set_config('displayname', botcfg['displayname'])
+    acc.set_config('e2ee_enabled', botcfg['e2ee_enabled'])
 
     context.acc = acc
     
