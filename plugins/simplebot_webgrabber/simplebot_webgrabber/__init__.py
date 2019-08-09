@@ -63,16 +63,14 @@ class WebGrabber(Plugin):
         try:
             with requests.get(url, headers=HEADERS, stream=True) as r:
                 r.raise_for_status()
+                r.encoding = 'utf-8'
                 if 'text/html' in r.headers['content-type']:
                     soup = bs4.BeautifulSoup(r.text, 'html.parser')
-                    for t in soup(['meta']):
-                        if t.get('http-equiv') != 'content-type' and t.get('charset') is None:
-                            t.extract()
-                    [t.extract()
-                     for t in soup(['script', 'iframe', 'noscript', 'link'])]
-                    comments = soup.find_all(
-                        text=lambda text: isinstance(text, bs4.Comment))
-                    [comment.extract() for comment in comments]
+                    [t.extract() for t in soup(
+                        ['script', 'iframe', 'noscript', 'link', 'meta'])]
+                    soup.body.append(soup.new_tag('meta', charset='utf-8'))
+                    [comment.extract() for comment in soup.find_all(
+                        text=lambda text: isinstance(text, bs4.Comment))]
                     for t in soup(['img']):
                         src = t.get('src')
                         if src:
@@ -82,14 +80,14 @@ class WebGrabber(Plugin):
                             del t['src'], t['alt']
                     script = r'for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${simplebot_url}/$1`)}`);a.href=`mailto:${"' + WebGrabber.ctx.acc.get_self_contact(
                     ).addr + r'"}?body=%21web%20${b}`}'
-                    s = soup.new_tag('script')
+                    t = soup.new_tag('script')
                     index = r.url.find('/', 8)
                     if index >= 0:
                         url = r.url[:index]
                     else:
                         url = r.url
-                    s.string = 'var simplebot_url = "{}";'.format(url)+script
-                    soup.body.append(s)
+                    t.string = 'var simplebot_url = "{}";'.format(url)+script
+                    soup.body.append(t)
                     with open(cls.TEMP_FILE, 'w') as fd:
                         fd.write(str(soup))
                     chat.send_file(cls.TEMP_FILE, mime_type='text/html')
