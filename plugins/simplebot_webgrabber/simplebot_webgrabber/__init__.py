@@ -81,10 +81,10 @@ class WebGrabber(Plugin):
                     styles = [str(s) for s in soup.find_all('style')]
                     for t in soup(lambda t: t.has_attr('class') or t.has_attr('id')):
                         classes = []
-                        for cls in t.get('class', []):
+                        for c in t.get('class', []):
                             for s in styles:
-                                if '.'+cls in s:
-                                    classes.append(cls)
+                                if '.'+c in s:
+                                    classes.append(c)
                                     break
                         del t['class']
                         if classes:
