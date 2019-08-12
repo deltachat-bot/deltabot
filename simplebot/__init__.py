@@ -139,6 +139,9 @@ class SimpleBot(DeltaBot):
     def remove_on_command_processed_listener(self, listener):
         self._on_command_processed_listeners.remove(listener)
 
+    def on_message_delivered(self, msg):
+        self.account.delete_messages((msg,))
+
     def on_message(self, msg):
         self.logger.debug('Received message from {}'.format(
             msg.get_sender_contact().addr,))
