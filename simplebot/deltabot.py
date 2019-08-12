@@ -63,7 +63,7 @@ class DeltaBot:
             args = self.get_args(cmd, msg)
             if args is not None:
                 try:
-                    commands[cmd][-1](msg, args)
+                    self.commands[cmd][-1](msg, args)
                     return True
                 except Exception as ex:
                     self.logger.exception(ex)
