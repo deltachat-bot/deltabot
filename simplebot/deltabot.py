@@ -59,7 +59,7 @@ class DeltaBot:
 
     def on_command(self, msg):
         for cmd in self.commands:
-            args = self.get_args(cmd)
+            args = self.get_args(cmd, msg)
             if args is not None:
                 try:
                     commands[cmd][-1](msg, args)
