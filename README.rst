@@ -52,7 +52,7 @@ Development
 Creating your own bot
 ---------------------
 
-This is an example of how to create your very own and functional "echo bot" in eight lines of code:
+This is an example of how to create your very own "echo bot" in eight lines of code:
 
 .. code-block:: python
 
