@@ -69,7 +69,7 @@ This is an example of how to create your very own "echo bot" in eight lines of c
    
    bot.start()
 
-Replace "/path/to/bot/dir/", "<email>" and "<password>" for appropriate values and run the code,
+Replace "/path/to/bot/dir/", "<email>" and "<password>" with appropriate values and run the code,
 send a test message to the bot address: `/echo hello world`, the bot should reply with a "hello world"
 message.
 
