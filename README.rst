@@ -51,21 +51,20 @@ Creating your own bot
 
 This is an example of how to create your very own and functional "echo bot" in eight lines of code:
 
-``` python
-from simplebot.deltabot import DeltaBot
+.. code-block:: python
 
-def on_echo(msg, text):
-    bot.get_chat(msg).send_text(text)
-
-bot = DeltaBot('/path/to/bot/dir/')
-bot.add_command('/echo', ['[text]'], 'Test command', on_echo)
-
-if not bot.is_configured():
-    bot.configure('<email>', '<password>')
-
-bot.start()
-
-```
+   from simplebot.deltabot import DeltaBot
+   
+   def on_echo(msg, text):
+       bot.get_chat(msg).send_text(text)
+   
+   bot = DeltaBot('/path/to/bot/dir/')
+   bot.add_command('/echo', ['[text]'], 'Test command', on_echo)
+   
+   if not bot.is_configured():
+       bot.configure('<email>', '<password>')
+   
+   bot.start()
 
 Replace "/path/to/bot/dir/", "<email>" and "<password>" for appropriate values and run the code,
 send a test message to the bot address: `/echo hello world`, the bot should reply with a "hello world"
