@@ -19,42 +19,30 @@ MAX_SIZE = MAX_SIZE_MB*1024**2
 class WebGrabber(Plugin):
 
     name = 'WebGrabber'
-    version = '0.2.0'
-    author = 'adbenitez'
-    author_email = 'adbenitez@nauta.cu'
-    cmd = '!web'
+    version = '0.3.0'
 
     @classmethod
-    def activate(cls, ctx):
-        super().activate(ctx)
-        cls.TEMP_FILE = os.path.join(cls.ctx.basedir, cls.name+'.html')
+    def activate(cls, bot):
+        super().activate(bot)
+        cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name+'.html')
         cls.env = Environment(
             loader=PackageLoader(__name__, 'templates'),
             #autoescape=select_autoescape(['html', 'xml'])
         )
         localedir = os.path.join(os.path.dirname(__file__), 'locale')
-        try:
-            lang = gettext.translation('simplebot_webgrabber', localedir=localedir,
-                                       languages=[ctx.locale])
-        except OSError:
-            lang = gettext.translation('simplebot_webgrabber', localedir=localedir,
-                                       languages=['en'])
+        lang = gettext.translation('simplebot_webgrabber', localedir=localedir,
+                                   languages=[bot.locale], fallback=True)
         lang.install()
-        cls.description = _('plugin.description')
-        cls.long_description = _('plugin.long_description')
-        cls.NOSCRIPT = _('noscript_msg')
-
-    @classmethod
-    def process(cls, msg):
-        for cmd, action in [('!ddg', cls.ddg_cmd), ('!wt', cls.wt_cmd), ('!w', cls.w_cmd),
-                            ('!web', cls.web_cmd)]:
-            arg = cls.get_args(cmd, msg.text)
-            if arg is not None:
-                action(cls.ctx.acc.create_chat_by_message(msg), arg)
-                break
-        else:
-            return False
-        return True
+        cls.description = _('Access the web using DeltaChat.')
+        cls.commands = [
+            ('/ddg', ['<text>'], _('Search in DuckDuckGo'), cls.ddg_cmd),
+            ('/wt', ['<text>'], _('Search in Wiktionary'), cls.wt_cmd),
+            ('/w', ['<text>'], _('Search in Wikipedia'), cls.w_cmd),
+            ('/web', ['<url>'], _('Get a webpage or file'), cls.web_cmd),
+            ('/web/app', [], _('Sends an html app to help you to use the plugin.'), cls.app_cmd)]
+        cls.bot.add_commands(cls.commands)
+        cls.NOSCRIPT = _(
+            'You need a browser with JavaScript support for this page to work correctly.')
 
     @classmethod
     def send_page(cls, chat, url):
@@ -95,8 +83,8 @@ class WebGrabber(Plugin):
                                     break
                             else:
                                 del t['id']
-                    script = r'for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${simplebot_url}/$1`)}`);a.href=`mailto:${"' + WebGrabber.ctx.acc.get_self_contact(
-                    ).addr + r'"}?body=%21web%20${b}`}'
+                    script = r'for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${simplebot_url}/$1`)}`);a.href=`mailto:${"' + WebGrabber.bot.get_address(
+                    ) + r'"}?body=/web%20${b}`}'
                     t = soup.new_tag('script')
                     index = r.url.find('/', 8)
                     if index >= 0:
@@ -119,38 +107,41 @@ class WebGrabber(Plugin):
                         else:
                             fname = r.url.split('/').pop().split('?')[0]
                         fpath = os.path.join(
-                            cls.ctx.basedir, 'account.db-blobs', fname)
+                            cls.bot.basedir, 'account.db-blobs', fname)
                         with open(fpath, 'wb') as fd:
                             fd.write(chunk)
                         chat.send_file(fpath)
                     else:
-                        chat.send_text(_('not_allowed').format(MAX_SIZE_MB))
+                        chat.send_text(
+                            _('Only files smaller than {}MB are allowed').format(MAX_SIZE_MB))
         except Exception as ex:      # TODO: too much generic
-            cls.ctx.logger.exception(ex)
-            chat.send_text(_('download_failed').format(url))
+            cls.bot.logger.exception(ex)
+            chat.send_text(_('Falied to get url:\n{}').format(url))
 
     @classmethod
-    def web_cmd(cls, chat, url):
-        if not url:
-            template = cls.env.get_template('index.html')
-            with open(cls.TEMP_FILE, 'w') as fd:
-                fd.write(template.render(
-                    plugin=cls, bot_addr=cls.ctx.acc.get_self_contact().addr))
-            chat.send_file(cls.TEMP_FILE, mime_type='text/html')
-        else:
-            cls.send_page(chat, url)
+    def app_cmd(cls, msg, arg):
+        chat = cls.bot.get_chat(msg)
+        template = cls.env.get_template('index.html')
+        with open(cls.TEMP_FILE, 'w') as fd:
+            fd.write(template.render(
+                plugin=cls, bot_addr=cls.bot.get_address()))
+        chat.send_file(cls.TEMP_FILE, mime_type='text/html')
 
     @classmethod
-    def ddg_cmd(cls, chat, arg):
-        cls.send_page(
-            chat, "https://duckduckgo.com/lite?q={}".format(quote_plus(arg)))
+    def web_cmd(cls, msg, url):
+        cls.send_page(cls.bot.get_chat(msg), url)
 
     @classmethod
-    def w_cmd(cls, chat, arg):
-        cls.send_page(
-            chat, "https://{}.m.wikipedia.org/wiki/?search={}".format(cls.ctx.locale, quote_plus(arg)))
+    def ddg_cmd(cls, msg, arg):
+        cls.send_page(cls.bot.get_chat(msg),
+                      "https://duckduckgo.com/lite?q={}".format(quote_plus(arg)))
 
     @classmethod
-    def wt_cmd(cls, chat, arg):
-        cls.send_page(
-            chat, "https://{}.m.wiktionary.org/wiki/?search={}".format(cls.ctx.locale, quote_plus(arg)))
+    def w_cmd(cls, msg, arg):
+        cls.send_page(cls.bot.get_chat(
+            msg), "https://{}.m.wikipedia.org/wiki/?search={}".format(cls.bot.locale, quote_plus(arg)))
+
+    @classmethod
+    def wt_cmd(cls, msg, arg):
+        cls.send_page(cls.bot.get_chat(
+            msg), "https://{}.m.wiktionary.org/wiki/?search={}".format(cls.bot.locale, quote_plus(arg)))

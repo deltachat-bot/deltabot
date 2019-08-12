@@ -46,11 +46,15 @@
 	</header>
 	<div class="w3-container">
 	  <p>{{ p.description }}</p>
-	  <div class="w3-hide"><p>{{ p.long_description.replace('\n', '<br>') }}</p></div>
+	  <div id="more-section" class="w3-hide">
+	    <p>{{ p.long_description.replace('\n', '<br>') }}</p>
+	    <ul>
+	      {% for cmd, args, desc, action in p.commands %}
+	      <li><a href="mailto:{{ bot_addr }}?body={{ cmd }}">{{ cmd }} {{ args }}</a> <p>{{ desc }}</p></li>
+	      {% endfor %}
+	    </ul>
+	  </div>
 	  <a class="w3-btn w3-dark-gray w3-large w3-left" onclick="toogleMore(this)">{{ plugin.MORE }}</a>
-	  {% if p.cmd %}
-	  <a class="w3-btn w3-teal w3-large w3-right" href="mailto:{{ bot_addr }}?body={{ p.cmd }}">{{ plugin.USE }} ❯</a>
-	  {% endif %}
 	</div>
 	<br>
       </div>
@@ -59,13 +63,13 @@
   </body>
   <script>
     document.getElementById("content").style.display = "block";
+    var section = document.getElementById("more-section");
     function toogleMore(btn) {
-	var longdesc = btn.previousElementSibling;
-        if (longdesc.className.indexOf("w3-show") == -1) {
-            longdesc.className += " w3-show";
+        if (section.className.indexOf("w3-show") == -1) {
+            section.className += " w3-show";
             btn.innerHTML = "{{ plugin.LESS }}";
         } else {
-            longdesc.className = longdesc.className.replace(" w3-show", "");
+            section.className = section.className.replace(" w3-show", "");
             btn.innerHTML = "{{ plugin.MORE }}";
         }
     }

@@ -20,23 +20,21 @@ class TicTacToe(Plugin):
 
     name = 'Tic Tac Toe'
     version = '0.1.0'
-    author = 'adbenitez'
-    author_email = 'adbenitez@nauta.cu'
-    cmd = '!toe'
+
     INVITED_STATUS = -1
     FINISHED_STATUS = 0
     PLAYING_STATUS = 1
 
     @classmethod
-    def activate(cls, ctx):
-        super().activate(ctx)
-        cls.TEMP_FILE = os.path.join(cls.ctx.basedir, cls.name+'.html')
+    def activate(cls, bot):
+        super().activate(bot)
+        cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name+'.html')
         cls.env = Environment(
             loader=PackageLoader(__name__, 'templates'),
             autoescape=select_autoescape(['html', 'xml'])
         )
         cls.conn = sqlite3.connect(
-            os.path.join(cls.ctx.basedir, 'tictactoe.db'))
+            os.path.join(cls.bot.basedir, 'tictactoe.db'))
         with cls.conn:
             cls.conn.execute('''CREATE TABLE IF NOT EXISTS games
                                 (players TEXT NOT NULL, gid INTEGER NOT NULL, status INTEGER NOT NULL,
@@ -44,23 +42,18 @@ class TicTacToe(Plugin):
 
         localedir = os.path.join(os.path.dirname(__file__), 'locale')
         lang = gettext.translation('simplebot_echo', localedir=localedir,
-                                   languages=[ctx.locale], fallback=True)
+                                   languages=[bot.locale], fallback=True)
         lang.install()
         cls.description = _('Tic Tac Toe game to play with friends')
-        cls.long_description = _(
-            'This is a simple game to play with another humman oponent.\nUse !toe!play <email> to invite a friend to play.\nIn the group created for the game use !toe!surrender to quit a game.\nUse !toe!new in the game group to start a new game.')
-
-    @classmethod
-    def process(cls, msg):
-        for cmd, action in [('!toe!move', cls.move_cmd), ('!toe!play', cls.play_cmd), ('!toe!surrender', cls.surrender_cmd),
-                            ('!toe!new', cls.new_cmd), ('!toe', cls.help_cmd)]:
-            arg = cls.get_args(cmd, msg.text)
-            if arg is not None:
-                action(msg, arg)
-                break
-        else:
-            return False
-        return True
+        cls.commands = [
+            ('/toe/play', ['[email]'],
+             _('Invite a friend to play or accept an invitation to play.'), cls.play_cmd),
+            ('/toe/surrender', [],
+             _('End the game in the group it is sent.'), cls.surrender_cmd),
+            ('/toe/new', [], _('Start a new game in the current game group.'), cls.new_cmd),
+            ('/toe/move', ['<id>', '<cell>'],
+             _('Move to the given cell in the game with the given id.'), cls.move_cmd)]
+        cls.bot.add_commands(cls.commands)
 
     @classmethod
     def run_turn(cls, chat, game):
@@ -80,9 +73,8 @@ class TicTacToe(Plugin):
                 chat.send_text(_('Game over.\n{} Wins!!!\n\n{}').format(
                     winner, b.pretty_str()))
         else:
-            priv_chat = cls.ctx.acc.create_chat_by_contact(
-                cls.ctx.acc.create_contact(game[TURN]))
-            bot_addr = cls.ctx.acc.get_self_contact().addr
+            priv_chat = cls.bot.get_chat(game[TURN])
+            bot_addr = cls.bot.get_address()
             board = list(enumerate(b.board))
             board = [board[:3], board[3:6], board[6:]]
             html = cls.env.get_template('index.html').render(
@@ -99,29 +91,27 @@ class TicTacToe(Plugin):
             p1 = msg.get_sender_contact().addr
             p2 = arg
             if p1 == p2:
-                chat = cls.ctx.acc.create_chat_by_message(msg)
+                chat = cls.bot.get_chat(msg)
                 chat.send_text(_("You can't play with yourself"))
                 return
             players = ','.join(sorted([p1, p2]))
             game = cls.conn.execute(
                 'SELECT * FROM games WHERE players=?', (players,)).fetchone()
             if game is None:  # first time playing with p2
-                chat = cls.ctx.acc.create_group_chat(
-                    '❎ {} Vs {} [{}]'.format(p1, p2, cls.name))
-                chat.add_contact(msg.get_sender_contact())
-                chat.add_contact(cls.ctx.acc.create_contact(p2))
+                chat = cls.bot.create_group(
+                    '❎ {} Vs {} [{}]'.format(p1, p2, cls.name), [msg.get_sender_contact(), p2])
                 with cls.conn:
                     cls.conn.execute('INSERT INTO games VALUES (?,?,?,?,?,?)',
                                      (players, chat.id, cls.INVITED_STATUS, p1, str(Board()), p1))
-                chat.send_text(_('Hello {},\nYou had been invited by {} to play {}, to start playing send a message in this group with the command:\n!toe!play').format(
-                    p2, p1, cls.name))
+                chat.send_text(_('Hello {},\nYou had been invited by {} to play {}, to start playing send a message in this group with the command:\n{}').format(
+                    p2, p1, cls.name, cls.commands[0][0]))
             else:
-                chat = cls.ctx.acc.create_chat_by_message(msg)
+                chat = cls.bot.get_chat(msg)
                 chat.send_text(
-                    _('You already has a game group with {}, to start a new game just go to the game group and send:\n!toe!new').format(p2))
+                    _('You already has a game group with {}, to start a new game just go to the game group and send:\n{}').format(p2, cls.commands[2][0]))
         else:    # accepting a game
             p2 = msg.get_sender_contact().addr
-            chat = cls.ctx.acc.create_chat_by_message(msg)
+            chat = cls.bot.get_chat(msg)
             game = cls.conn.execute(
                 'SELECT * FROM games WHERE gid=?', (chat.id,)).fetchone()
             # this is not your game group
@@ -136,17 +126,17 @@ class TicTacToe(Plugin):
                 with cls.conn:
                     cls.conn.execute(
                         'REPLACE INTO games VALUES (?,?,?,?,?,?)', game)
-                chat = cls.ctx.acc.create_chat_by_message(msg)
+                chat = cls.bot.get_chat(msg)
                 chat.send_text(_('Game started!'))
                 cls.run_turn(chat, game)
             else:  # p2 already accepted the game
-                chat = cls.ctx.acc.create_chat_by_message(msg)
+                chat = cls.bot.get_chat(msg)
                 chat.send_text(
-                    _('You alredy accepted to play. To start a new game use !toe!new'))
+                    _('You alredy accepted to play. To start a new game use {}').format(cls.commands[2][0]))
 
     @classmethod
     def surrender_cmd(cls, msg, arg):
-        chat = cls.ctx.acc.create_chat_by_message(msg)
+        chat = cls.bot.get_chat(msg)
         loser = msg.get_sender_contact().addr
         game = cls.conn.execute(
             'SELECT * FROM games WHERE gid=?', (chat.id,)).fetchone()
@@ -165,11 +155,11 @@ class TicTacToe(Plugin):
             chat.send_text(_('Game Over.\n{} Wins!!!').format(game[TURN]))
         else:
             chat.send_text(
-                _('There are no game running. To start a new game use !toe!new'))
+                _('There are no game running. To start a new game use {}').format(cls.commands[2][0]))
 
     @classmethod
     def new_cmd(cls, msg, arg):
-        chat = cls.ctx.acc.create_chat_by_message(msg)
+        chat = cls.bot.get_chat(msg)
         sender = msg.get_sender_contact().addr
         game = cls.conn.execute(
             'SELECT * FROM games WHERE gid=?', (chat.id,)).fetchone()
@@ -186,7 +176,7 @@ class TicTacToe(Plugin):
             with cls.conn:
                 cls.conn.execute(
                     'REPLACE INTO games VALUES (?,?,?,?,?,?)', game)
-            chat = cls.ctx.acc.create_chat_by_message(msg)
+            chat = cls.bot.get_chat(msg)
             chat.send_text(_('Game started!'))
             cls.run_turn(chat, game)
         else:
@@ -211,21 +201,15 @@ class TicTacToe(Plugin):
                 with cls.conn:
                     cls.conn.execute(
                         'REPLACE INTO games VALUES (?,?,?,?,?,?)', game)
-                chat = Chat(cls.ctx.acc._dc_context, chat_id)
+                chat = cls.bot.get_chat(chat_id)
                 cls.run_turn(chat, game)
             except InvalidMove:
-                chat = cls.ctx.acc.create_chat_by_message(msg)
+                chat = cls.bot.get_chat(msg)
                 chat.send_text(_('Invalid move!'))
         else:
-            chat = cls.ctx.acc.create_chat_by_message(msg.get_sender_contact())
+            chat = cls.bot.get_chat(msg.get_sender_contact())
             chat.send_text(
                 _("It's NOT your turn, please wait the other player to move"))
-
-    @classmethod
-    def help_cmd(cls, msg, arg):
-        chat = cls.ctx.acc.create_chat_by_message(msg)
-        chat.send_text('{}\n\n{}'.format(
-            cls.description, cls.long_description))
 
 
 class Board:

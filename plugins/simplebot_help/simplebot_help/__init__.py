@@ -4,52 +4,64 @@ import os
 
 from simplebot import Plugin
 from jinja2 import Environment, PackageLoader, select_autoescape
+import deltachat as dc
 
 
 class Helper(Plugin):
 
     name = 'Help'
-    version = '0.2.0'
-    author = 'adbenitez'
-    author_email = 'adbenitez@nauta.cu'
-    cmd = '!help'
+    version = '0.3.0'
 
     @classmethod
-    def activate(cls, ctx):
-        super().activate(ctx)
-        cls.TEMP_FILE = os.path.join(cls.ctx.basedir, cls.name+'.html')
+    def activate(cls, bot):
+        super().activate(bot)
+        cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name+'.html')
         env = Environment(
             loader=PackageLoader(__name__, 'templates'),
             #autoescape=select_autoescape(['html', 'xml'])
         )
         cls.template = env.get_template('index.html')
         localedir = os.path.join(os.path.dirname(__file__), 'locale')
-        try:
-            lang = gettext.translation('simplebot_help', localedir=localedir,
-                                       languages=[ctx.locale])
-        except OSError:
-            lang = gettext.translation('simplebot_help', localedir=localedir,
-                                       languages=['en'])
+        lang = gettext.translation('simplebot_help', localedir=localedir,
+                                   languages=[bot.locale], fallback=True)
         lang.install()
-        cls.description = _('plugin.description')
-        cls.long_description = _('plugin.long_description')
-        cls.NOSCRIPT = _('noscript_msg')
-        cls.MORE = _('more_btn')
-        cls.LESS = _('less_btn')
-        cls.USE = _('use_btn')
-    
+        cls.description = _('Provides help.')
+        cls.commands = [
+            ('/help', [], _('Will send you a list of installed plugins and their help.'), cls.help_cmd)]
+        cls.bot.add_commands(cls.commands)
+        cls.bot.add_on_command_processed_listener(cls)
+        cls.bot.add_on_message_processed_listener(cls)
+        cls.NOSCRIPT = _(
+            'You need a browser with JavaScript support for this page to work correctly.')
+        cls.MORE = _('More')
+        cls.LESS = _('Less')
+        cls.USE = _('Use')
 
     @classmethod
-    def process(cls, msg):
-        if cls.get_args(cls.cmd, msg.text) is not None:
-            plugins = sorted(cls.ctx.plugins, key=lambda p: p.name)
-            plugins.remove(cls)
-            plugins.insert(0, cls)
-            bot_addr = cls.ctx.acc.get_self_contact().addr
-            html = cls.template.render(plugin=cls, plugins=plugins, bot_addr=bot_addr)
-            with open(cls.TEMP_FILE, 'w') as fd:
-                fd.write(html)
-            chat = cls.ctx.acc.create_chat_by_message(msg)
-            chat.send_file(cls.TEMP_FILE, mime_type='text/html')
-            return True
-        return False
+    def help_cmd(cls, msg, text):
+        chat = cls.bot.get_chat(msg)
+        cls.send_html_help(chat)
+
+    @classmethod
+    def on_command_processed(cls, msg, processed):
+        chat = cls.bot.get_chat(msg)
+        if not processed:
+            chat.send_text(
+                _('Unknow command. Please send /help to learn how to use me.'))
+
+    @classmethod
+    def on_message_processed(cls, msg, processed):
+        if chat.get_type() == dc.const.DC_CHAT_TYPE_SINGLE:
+            cls.on_command_processed(msg, processed)
+
+    @classmethod
+    def send_html_help(cls, chat):
+        plugins = sorted(cls.bot.plugins, key=lambda p: p.name)
+        plugins.remove(cls)
+        plugins.insert(0, cls)
+        bot_addr = cls.bot.get_address()
+        html = cls.template.render(
+            plugin=cls, plugins=plugins, bot_addr=bot_addr)
+        with open(cls.TEMP_FILE, 'w') as fd:
+            fd.write(html)
+        chat.send_file(cls.TEMP_FILE, mime_type='text/html')
