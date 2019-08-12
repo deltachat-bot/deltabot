@@ -52,7 +52,7 @@ class DeltaBot:
         if type(msg) is dc.message.Message:
             msg = msg.text
         if re.match(r'{}\b'.format(cmd), msg, re.IGNORECASE):
-            return text[len(cmd):].strip()
+            return msg[len(cmd):].strip()
         return None
 
     def on_message(self, msg):
