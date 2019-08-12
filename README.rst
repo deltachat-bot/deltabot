@@ -132,5 +132,5 @@ Bot API
 Games API
 ---------
 
-- TODO: talk here about an integrated webview in DC clients, and an API for intercommunication between the webview(JavaScript) and DCC
+- **TODO:** talk here about an integrated webview in DC clients, and an API for intercommunication between the webview(JavaScript) and DCC
 - messages sent in background with the game api should be differentiated from messages sent manually by the user
