@@ -1,5 +1,5 @@
-Delta Chat simple bot
-=====================
+ SimpleBot
+==========
 
 A simple "deltabot" that depends on plugins to add functionality.
 It works as part of a group or in 1:1 chats in https://delta.chat
