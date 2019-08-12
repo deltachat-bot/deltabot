@@ -12,7 +12,7 @@ class Echo(Plugin):
 
     @classmethod
     def activate(cls, bot):
-        self.bot = bot
+        cls.bot = bot
         localedir = os.path.join(os.path.dirname(__file__), 'locale')
         lang = gettext.translation('simplebot_echo', localedir=localedir,
                                    languages=[bot.locale], fallback=True)
