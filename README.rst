@@ -11,15 +11,13 @@ messages that are sent to it.
 Install
 -------
 
-To install make sure you have
-`the python deltachat-bindings <https://py.delta.chat>`_
-installed, at best in a ``virtualenv`` environment .
-Then install the bot:
+To install it run the following command (preferably in a ``virtualenv``):
 
 .. code-block:: bash
 
-   $ pip install simplebot
+   $ pip3 install simplebot
 
+Then install `some plugins <https://pypi.org/search/?q=simplebot&o=&c=Environment+%3A%3A+Plugins>`_
 
 Starting the bot
 ----------------
@@ -45,8 +43,7 @@ You can then let the bot listen continously:
 
 It will listen for incoming messages and handle them with plugins.
 
-To see some action, add `some plugins <https://pypi.org/search/?q=simplebot&o=&c=Environment+%3A%3A+Plugins>`_
-to the bot, install `Delta Chat  <https://delta.chat>`_ and add your bot's email address as a contact and
+Install `Delta Chat  <https://delta.chat>`_ and add your bot's email address as a contact and
 start chatting with it! You can also add the bot as a member to a group chat.
 
 Development
