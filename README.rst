@@ -14,9 +14,11 @@ Install
 To install make sure you have
 `the python deltachat-bindings <https://py.delta.chat>`_
 installed, at best in a ``virtualenv`` environment .
-Then install the bot::
+Then install the bot:
 
-    pip install simplebot
+.. code-block:: bash
+
+   $ pip install simplebot
 
 
 Starting the bot
@@ -24,18 +26,22 @@ Starting the bot
 
 First you need to provide an emailaddress and a password
 to allow the bot to receive and send messages for that
-address::
+address:
 
-    simplebot init email@example.org password123
+.. code-block:: bash
+
+   $ simplebot init email@example.org password123
 
 This command will try to contact the imap/smtp servers
 for ``example.org`` and logging in with the given e-mail
 address and password.  Once this successfully completes,
 initialization is done and tested.
 
-You can then let the bot listen continously::
+You can then let the bot listen continously:
 
-    simplebot serve
+.. code-block:: bash
+
+   $ simplebot serve
 
 It will listen for incoming messages and handle them with plugins.
 
