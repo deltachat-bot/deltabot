@@ -44,10 +44,10 @@ to the bot, install `Delta Chat  <https://delta.chat>`_ and add your bot's email
 start chatting with it! You can also add the bot as a member to a group chat.
 
 Development
------------
+===========
 
 Creating your own bot
-+++++++++++++++++++++
+---------------------
 
 This is an example of how to create your very own and functional "echo bot" in eight lines of code:
 
@@ -72,7 +72,7 @@ send a test message to the bot address: `/echo hello world`, the bot should repl
 message.
 
 Creating a SimpleBot plugin
-+++++++++++++++++++++++++++
+---------------------------
 
 This is an example of an "echo plugin":
 
