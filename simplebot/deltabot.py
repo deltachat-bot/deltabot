@@ -73,7 +73,7 @@ class DeltaBot:
         self.account.start_threads()
         try:
             while True:
-                ev = acc._evlogger.get()
+                ev = self.account._evlogger.get()
                 if ev[0] in ('DC_EVENT_MSGS_CHANGED', 'DC_EVENT_INCOMING_MSG') and ev[2] != 0:
                     msg = self.account.get_message_by_id(int(ev[2]))
                     if msg.get_sender_contact() == self.account.get_self_contact():
