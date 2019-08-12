@@ -30,7 +30,7 @@ address:
 
 .. code-block:: bash
 
-   $ simplebot init email@example.org password123
+   $ simplebot init "email@example.org" "password123"
 
 This command will try to contact the imap/smtp servers
 for ``example.org`` and logging in with the given e-mail
