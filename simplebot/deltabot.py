@@ -8,7 +8,7 @@ _CMD_PREFIX = '/'
 
 
 class DeltaBot:
-    def __init__(basedir):
+    def __init__(self, basedir):
         self.commands = dict()
         self.basedir = os.path.abspath(os.path.expanduser(basedir))
         self.account = _get_account(self.basedir)
