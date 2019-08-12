@@ -39,7 +39,7 @@ class GetDelta(Plugin):
         desktop = cls.get_info('desktop')
         chat = cls.bot.get_chat(msg)
         template = cls.env.get_template('index.html')
-        html = template.render(plugin=cls, platforms=[(
+        html = template.render(plugin=cls, locale=cls.bot.locale, platforms=[(
             'iOS', ios), ('Android', android), ('Desktop', desktop)])
         with open(cls.TEMP_FILE, 'w') as fd:
             fd.write(html)
