@@ -150,30 +150,27 @@ class SimpleBot(DeltaBot):
             try:
                 if not l.on_message_detected(msg):
                     self.logger.debug('Message rejected by '+plugin.name)
-                    accepted = False
+                    self.account.delete_messages((msg,))
+                    return
+            except Exception as ex:
+                self.logger.exception(ex)
+
+        for l in self._on_message_listeners:
+            try:
+                if l.on_message(msg):
+                    self.logger.debug('Message processed by '+plugin.name)
+                    processed = True
                     break
             except Exception as ex:
                 self.logger.exception(ex)
         else:
-            accepted = True
-
-        if accepted:
-            for l in self._on_message_listeners:
-                try:
-                    if l.on_message(msg):
-                        self.logger.debug('Message processed by '+plugin.name)
-                        processed = True
-                        break
-                except Exception as ex:
-                    self.logger.exception(ex)
-            else:
-                processed = False
-                self.logger.debug('Message was not processed.')
-            for l in self._on_message_processed_listeners:
-                try:
-                    l.on_message_processed(msg, processed)
-                except Exception as ex:
-                    self.logger.exception(ex)
+            processed = False
+            self.logger.debug('Message was not processed.')
+        for l in self._on_message_processed_listeners:
+            try:
+                l.on_message_processed(msg, processed)
+            except Exception as ex:
+                self.logger.exception(ex)
 
         self.account.mark_seen_messages([msg])
 
@@ -185,22 +182,19 @@ class SimpleBot(DeltaBot):
             try:
                 if not l.on_command_detected(msg):
                     self.logger.debug('Command rejected by '+plugin.name)
-                    accepted = False
-                    break
+                    self.account.delete_messages((msg,))
+                    return
             except Exception as ex:
                 self.logger.exception(ex)
-        else:
-            accepted = True
 
-        if accepted:
-            processed = super().on_command(msg)
-            if not processed:
-                self.logger.debug('Message was not processed.')
-            for l in self._on_command_processed_listeners:
-                try:
-                    l.on_command_processed(msg, processed)
-                except Exception as ex:
-                    self.logger.exception(ex)
+        processed = super().on_command(msg)
+        if not processed:
+            self.logger.debug('Message was not processed.')
+        for l in self._on_command_processed_listeners:
+            try:
+                l.on_command_processed(msg, processed)
+            except Exception as ex:
+                self.logger.exception(ex)
 
         self.account.mark_seen_messages([msg])
 
