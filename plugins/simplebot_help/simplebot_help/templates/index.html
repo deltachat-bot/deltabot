@@ -46,11 +46,11 @@
 	</header>
 	<div class="w3-container">
 	  <p>{{ p.description }}</p>
-	  <div id="more-section" class="w3-hide">
+	  <div class="w3-hide">
 	    <p>{{ p.long_description.replace('\n', '<br>') }}</p>
 	    <ul>
 	      {% for cmd, args, desc, action in p.commands %}
-	      <li><a href="mailto:{{ bot_addr }}?body={{ cmd }}">{{ cmd }} {{ args }}</a> <p>{{ desc }}</p></li>
+	      <li><a href="mailto:{{ bot_addr }}?body={{ cmd }}">{{ cmd }} {{ ' '.join(args) }}</a> <p>{{ desc }}</p></li>
 	      {% endfor %}
 	    </ul>
 	  </div>
@@ -63,8 +63,8 @@
   </body>
   <script>
     document.getElementById("content").style.display = "block";
-    var section = document.getElementById("more-section");
     function toogleMore(btn) {
+	var section = btn.previousSibling;
         if (section.className.indexOf("w3-show") == -1) {
             section.className += " w3-show";
             btn.innerHTML = "{{ plugin.LESS }}";
