@@ -6,51 +6,41 @@ import random
 from simplebot import Plugin
 import wikiquote as wq
 
+
 class Wikiquote(Plugin):
 
     name = 'Wikiquote'
-    version = '0.2.0'
-    author = 'adbenitez'
-    author_email = 'adbenitez@nauta.cu'
-    cmd = '!quote'
+    version = '0.3.0'
 
     @classmethod
-    def activate(cls, ctx):
-        super().activate(ctx)
-        if ctx.locale in wq.supported_languages():
-            cls.LANG = ctx.locale
+    def activate(cls, bot):
+        super().activate(bot)
+        if bot.locale in wq.supported_languages():
+            cls.LANG = bot.locale
         else:
             cls.LANG = None
         localedir = os.path.join(os.path.dirname(__file__), 'locale')
-        try:
-            lang = gettext.translation('simplebot_wikiquote', localedir=localedir,
-                                       languages=[ctx.locale])
-        except OSError:
-            lang = gettext.translation('simplebot_wikiquote', localedir=localedir,
-                                       languages=['en'])
+        lang = gettext.translation('simplebot_wikiquote', localedir=localedir,
+                                   languages=[bot.locale], fallback=True)
         lang.install()
-        cls.description = _('plugin.description')
-        cls.long_description = _('plugin.long_description')
+        cls.description = _('Access Wikiquote content on Delta Chat.')
+        cls.commands = [('/quote', ['[text]'], _(
+            'Search in Wikiquote or get the quote of the day if no text is given.'), cls.quote_cmd)]
+        cls.bot.add_commands(cls.commands)
 
     @classmethod
-    def process(cls, msg):
-        arg = cls.get_args('!quote', msg.text)
-        if arg is None:
-            return False
-        chat = cls.ctx.acc.create_chat_by_message(msg)
-        if cls.get_args('!today', arg):
+    def quote_cmd(cls, msg, text):
+        chat = cls.bot.get_chat(msg)
+        if text:
+            pages = wq.search(text, lang=cls.LANG)
+            if pages:
+                author = pages[0]
+                quote = '"%s"\n\n― %s' % (random.choice(
+                    wq.quotes(author, max_quotes=100, lang=cls.LANG)), author)
+            else:
+                quote = _('No quote found for: {}').format(text)
+            chat.send_text(quote)
+        else:
             quote, author = wq.quote_of_the_day(lang=cls.LANG)
             quote = '"{}"\n\n― {}'.format(quote, author)
             chat.send_text(quote)
-        elif arg:
-            pages = wq.search(arg, lang=cls.LANG)
-            if pages:
-                author = pages[0]
-                quote = '"%s"\n\n― %s' % (random.choice(wq.quotes(author, max_quotes=40, lang=cls.LANG)), author)
-            else:
-                quote = _('quote_not_found').format(arg)
-            chat.send_text(quote)
-        else:
-            chat.send_text(cls.description+'\n\n'+cls.long_description)
-        return True
-        
