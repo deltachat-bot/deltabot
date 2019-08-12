@@ -76,37 +76,35 @@ Creating a SimpleBot plugin
 
 This is an example of an "echo plugin":
 
-``` python
-# in a package called "echo"
-from simplebot import Plugin
+.. code-block:: python
 
-class Echo(Plugin):
-    @classmethod
-    def activate(cls, bot):
-        self.bot = bot
-        cls.commands = [('/echo', ['[text]'], 'Echoes back the given text', cls.on_echo)]
-	bot.add_commands(cls.commands)
-
-    @classmethod
-    def on_echo(cls, msg, text):
-        chat = cls.bot.get_chat(msg)
-        chat.send_text(text)
-
-```
+   # in a package called "echo"
+   from simplebot import Plugin
+   
+   class Echo(Plugin):
+       @classmethod
+       def activate(cls, bot):
+           self.bot = bot
+           cls.commands = [('/echo', ['[text]'], 'Echoes back the given text', cls.on_echo)]
+           cls.bot.add_commands(cls.commands)
+    
+       @classmethod
+       def on_echo(cls, msg, text):
+           chat = cls.bot.get_chat(msg)
+           chat.send_text(text)
 
 In the package is `setup.py` file add an entry point:
 
-``` python
-setup(
-# (...)
-install_requires=['simplebot'],
-entry_points={
-        'simplebot.plugins': 'Echo = echo:Echo')
-    }
-# (...)
-)
+.. code-block:: python
 
-```
+   setup(
+   # (...)
+   install_requires=['simplebot'],
+   entry_points={
+           'simplebot.plugins': 'Echo = echo:Echo')
+       }
+   # (...)
+   )
 
 Install the package and start the bot, the bot will load your plugin,
 send a message like '/echo hello world' to see if it works.
