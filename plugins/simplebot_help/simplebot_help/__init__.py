@@ -51,6 +51,7 @@ class Helper(Plugin):
 
     @classmethod
     def on_message_processed(cls, msg, processed):
+        chat = cls.bot.get_chat(msg)
         if chat.get_type() == dc.const.DC_CHAT_TYPE_SINGLE:
             cls.on_command_processed(msg, processed)
 
