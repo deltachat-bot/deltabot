@@ -5,10 +5,11 @@ import logging
 import os
 import re
 
+from .deltabot import DeltaBot
 import pkg_resources
 
 
-__version__ = "0.8.0"
+__version__ = '0.9.0'
 
 
 class Plugin(ABC):
