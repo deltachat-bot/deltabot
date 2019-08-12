@@ -95,8 +95,8 @@ class SimpleBot(DeltaBot):
         with open(cfg_path, 'w') as fd:
             cfg.write(fd)
         self.set_name(botcfg['displayname'])
-        self.account.configure(mdns_enabled=botcfg['mdns_enabled'],
-                               mvbox_move=botcfg['mvbox_move'])
+        self.account.set_config('mdns_enabled', botcfg['mdns_enabled'])
+        self.account.set_config('mvbox_move', botcfg['mvbox_move'])
 
     def _get_logger(self):
         logger = logging.Logger('SimpleBot')

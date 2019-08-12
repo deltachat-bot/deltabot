@@ -12,10 +12,10 @@ class DeltaBot:
         self.commands = dict()
         self.basedir = os.path.abspath(os.path.expanduser(basedir))
         self.account = _get_account(self.basedir)
-        self.account.configure(save_mime_headers='1',
-                               e2ee_enabled='1',
-                               sentbox_watch='0',
-                               mvbox_watch='0')
+        self.account.set_config('save_mime_headers', '1')
+        self.account.set_config('e2ee_enabled', '1')
+        self.account.set_config('sentbox_watch', '0')
+        self.account.set_config('mvbox_watch', '0')
 
     def is_configured(self):
         return bool(self.account.is_configured())
