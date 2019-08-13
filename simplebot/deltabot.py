@@ -51,7 +51,8 @@ class DeltaBot:
         """Return the args for the given command or None if the command does not match."""
         if type(msg) is dc.message.Message:
             msg = msg.text
-        if re.match(r'{}\b'.format(cmd), msg, re.IGNORECASE):
+        msg = msg.strip()
+        if msg.split()[0] == cmd:
             return msg[len(cmd):].strip()
         return None
 
