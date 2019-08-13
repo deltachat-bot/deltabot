@@ -146,6 +146,11 @@ class SimpleBot(DeltaBot):
         self.logger.debug('Received message from {}'.format(
             msg.get_sender_contact().addr,))
 
+        if msg.get_mime_headers()['chat-version'] is None:
+            self.logger.debug('Classic email rejected')
+            self.account.delete_messages((msg,))
+            return
+
         for l in self._on_message_detected_listeners:
             try:
                 if not l.on_message_detected(msg):
@@ -177,6 +182,11 @@ class SimpleBot(DeltaBot):
     def on_command(self, msg):
         self.logger.debug('Received command from {}'.format(
             msg.get_sender_contact().addr,))
+
+        if msg.get_mime_headers()['chat-version'] is None:
+            self.logger.debug('Classic email rejected')
+            self.account.delete_messages((msg,))
+            return
 
         for l in self._on_command_detected_listeners:
             try:

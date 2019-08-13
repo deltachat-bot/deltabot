@@ -61,7 +61,8 @@ class GroupMaster(Plugin):
                 'Will remove the member with the given address from the group with the give id.'), cls.remove_cmd),
             ('/group/msg', ['<id>', '<msg>'], _(
                 'Will send the given message to the group with the given id.'), cls.msg_cmd),
-            ('/group/html', [], _('Sends an html app to help you to use the plugin.'), cls.html_cmd)]
+            #('/group/html', [], _('Sends an html app to help you to use the plugin.'), cls.html_cmd),
+        ]
         cls.bot.add_commands(cls.commands)
         cls.LIST_BTN = _('Groups List')
         cls.JOIN_BTN = _('Join')
@@ -98,14 +99,14 @@ class GroupMaster(Plugin):
                     groups.append(chat)
         return groups
 
-    @classmethod
-    def html_cmd(cls, msg, arg):
-        template = cls.env.get_template('index.html')
-        with open(cls.TEMP_FILE, 'w') as fd:
-            fd.write(template.render(
-                plugin=cls, bot_addr=cls.bot.get_address()))
-        chat = cls.bot.get_chat(msg)
-        chat.send_file(cls.TEMP_FILE, mime_type='text/html')
+    # @classmethod
+    # def html_cmd(cls, msg, arg):
+    #     template = cls.env.get_template('index.html')
+    #     with open(cls.TEMP_FILE, 'w') as fd:
+    #         fd.write(template.render(
+    #             plugin=cls, bot_addr=cls.bot.get_address()))
+    #     chat = cls.bot.get_chat(msg)
+    #     chat.send_file(cls.TEMP_FILE, mime_type='text/html')
 
     @classmethod
     def id_cmd(cls, msg, arg):
