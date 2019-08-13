@@ -77,19 +77,23 @@ class DeltaBot:
         self.account.start_threads()
         try:
             while True:
-                ev = self.account._evlogger.get()
-                if ev[0] in ('DC_EVENT_MSGS_CHANGED', 'DC_EVENT_INCOMING_MSG') and ev[2] != 0:
-                    msg = self.account.get_message_by_id(int(ev[2]))
-                    if msg.get_sender_contact() == self.account.get_self_contact():
-                        continue
-                    msg.contact_request = (ev[0] == 'DC_EVENT_MSGS_CHANGED')
-                    if msg.text and msg.text.startswith(_CMD_PREFIX):
-                        self.on_command(msg)
-                    else:
-                        self.on_message(msg)
-                elif ev[0] == 'DC_EVENT_MSG_DELIVERED':
-                    msg = self.account.get_message_by_id(int(ev[2]))
-                    self.on_message_delivered(msg)
+                try:
+                    ev = self.account._evlogger.get()
+                    if ev[0] in ('DC_EVENT_MSGS_CHANGED', 'DC_EVENT_INCOMING_MSG') and ev[2] != 0:
+                        msg = self.account.get_message_by_id(int(ev[2]))
+                        if msg.get_sender_contact() == self.account.get_self_contact():
+                            continue
+                        msg.contact_request = (
+                            ev[0] == 'DC_EVENT_MSGS_CHANGED')
+                        if msg.text and msg.text.startswith(_CMD_PREFIX):
+                            self.on_command(msg)
+                        else:
+                            self.on_message(msg)
+                    elif ev[0] == 'DC_EVENT_MSG_DELIVERED':
+                        msg = self.account.get_message_by_id(int(ev[2]))
+                        self.on_message_delivered(msg)
+                except Exception as ex:
+                    self.logger.exception(ex)
         finally:
             self.account.stop_threads()
 
