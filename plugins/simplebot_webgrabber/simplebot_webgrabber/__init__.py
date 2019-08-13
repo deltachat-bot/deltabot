@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from urllib.parse import quote_plus
+from urllib.parse import quote_plus, unquote_plus
 import gettext
 import os
 import re
@@ -10,6 +10,7 @@ import requests
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 
+EQUAL_TOKEN = 'simplebot_e_token'
 HEADERS = {
     'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
 MAX_SIZE_MB = 5
@@ -69,10 +70,14 @@ class WebGrabber(Plugin):
                         else:
                             t.extract()
                     if r.url.startswith('https://www.startpage.com'):
-                        for a in soup(['a']):
-                            if a.has_attr('href'):
-                                a['href'] = a['href'].strip(
-                                    'https://s15-us2.startpage.com/cgi-bin/serveimage?url=')
+                        for a in soup('a', href=True):
+                            url = a['href'].split(
+                                'startpage.com/cgi-bin/serveimage?url=')
+                            if len(url) == 2:
+                                a['href'] = unquote_plus(url[1])
+                    for a in soup('a', href=True):
+                        if not a['href'].startswith('mailto:'):
+                            a['href'] = a['href'].replace('=', EQUAL_TOKEN)
                     styles = [str(s) for s in soup.find_all('style')]
                     for t in soup(lambda t: t.has_attr('class') or t.has_attr('id')):
                         classes = []
@@ -136,6 +141,7 @@ class WebGrabber(Plugin):
 
     @classmethod
     def web_cmd(cls, msg, url):
+        url = url.replace(EQUAL_TOKEN, '=')
         cls.send_page(cls.bot.get_chat(msg), url)
 
     @classmethod
