@@ -18,7 +18,7 @@ class Helper(Plugin):
         cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name+'.html')
         env = Environment(
             loader=PackageLoader(__name__, 'templates'),
-            #autoescape=select_autoescape(['html', 'xml'])
+            autoescape=select_autoescape(['html', 'xml'])
         )
         cls.template = env.get_template('index.html')
         localedir = os.path.join(os.path.dirname(__file__), 'locale')
