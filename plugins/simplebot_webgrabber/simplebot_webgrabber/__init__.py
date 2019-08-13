@@ -53,6 +53,8 @@ class WebGrabber(Plugin):
             with requests.get(url, headers=HEADERS, stream=True) as r:
                 r.raise_for_status()
                 r.encoding = 'utf-8'
+                cls.logger.debug(
+                    '** Content type: {}'.format(r.headers['content-type']))
                 if 'text/html' in r.headers['content-type']:
                     soup = bs4.BeautifulSoup(r.text, 'html.parser')
                     [t.extract() for t in soup(
