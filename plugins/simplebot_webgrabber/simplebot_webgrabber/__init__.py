@@ -123,7 +123,7 @@ class WebGrabber(Plugin):
                             if '.' not in fname:
                                 if 'image/png' in r.headers['content-type']:
                                     fname += '.png'
-                                elif 'image/jpg' in r.headers['content-type']:
+                                elif 'image/jpeg' in r.headers['content-type']:
                                     fname += '.jpg'
                         fpath = os.path.join(
                             cls.bot.basedir, 'account.db-blobs', fname)
