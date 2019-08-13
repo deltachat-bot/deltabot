@@ -66,6 +66,8 @@ class WebGrabber(Plugin):
                             t['href'] = src
                             t.string = '[{}]'.format(t.get('alt', 'IMAGE'))
                             del t['src'], t['alt']
+                        else:
+                            t.extract()
                     styles = [str(s) for s in soup.find_all('style')]
                     for t in soup(lambda t: t.has_attr('class') or t.has_attr('id')):
                         classes = []
