@@ -34,7 +34,7 @@ class GetDelta(Plugin):
 
     @classmethod
     def getdelta_cmd(cls, msg, text):
-        ios = '<a href="https://testflight.apple.com/join/WVoYFOZe">Delta Chat on TestFlight</a>'
+        ios = '<a href="https://testflight.apple.com/join/uEMc1NxS">Delta Chat on TestFlight</a>'
         android = cls.get_info('android')
         desktop = cls.get_info('desktop')
         chat = cls.bot.get_chat(msg)
