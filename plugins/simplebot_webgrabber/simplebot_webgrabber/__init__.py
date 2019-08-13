@@ -11,6 +11,7 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 
 
 EQUAL_TOKEN = 'simplebot_e_token'
+COLON_TOKEN = 'simplebot_c_token'
 HEADERS = {
     'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
 MAX_SIZE_MB = 5
@@ -80,6 +81,7 @@ class WebGrabber(Plugin):
                     for a in soup('a', href=True):
                         if not a['href'].startswith('mailto:'):
                             a['href'] = a['href'].replace('=', EQUAL_TOKEN)
+                            a['href'] = a['href'].replace(':', COLON_TOKEN)
                     styles = [str(s) for s in soup.find_all('style')]
                     for t in soup(lambda t: t.has_attr('class') or t.has_attr('id')):
                         classes = []
@@ -149,6 +151,7 @@ class WebGrabber(Plugin):
     @classmethod
     def web_cmd(cls, msg, url):
         url = url.replace(EQUAL_TOKEN, '=')
+        url = url.replace(COLON_TOKEN, ':')
         cls.send_page(cls.bot.get_chat(msg), url)
 
     @classmethod
