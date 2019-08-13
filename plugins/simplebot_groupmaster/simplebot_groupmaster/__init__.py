@@ -177,7 +177,8 @@ class GroupMaster(Plugin):
                             g.get_name(), g.id, topic))
                         return
                     raise ValueError
-        except ValueError:
+        except (ValueError, IndexError) as err:
+            cls.bot.logger.exception(err)
             gid = arg
         chat.send_text(_('Unknow group ID: {}').format(gid))
 
@@ -192,22 +193,24 @@ class GroupMaster(Plugin):
                     chat.send_text(
                         _('Removed from {} [ID:{}]').format(g.get_name(), g.id))
                     return
-        except ValueError:
+        except (ValueError, IndexError) as err:
+            cls.bot.logger.exception(err)
             gid = arg
         chat.send_text(_('Unknow group ID: {}').format(gid))
 
     @classmethod
     def add_cmd(cls, msg, arg):
-        i = arg.find(' ')
         try:
-            gid = int(arg[:i].strip(cls.DELTA_URL).split('-').pop())
-            addrs = arg[i:].strip().split(',')
-            if i < 0:
+            gid = arg.split()[0]
+            addrs = [addr.strip()
+                     for addr in arg[len(gid):].strip().split(',')]
+            gid = int(gid.strip(cls.DELTA_URL).split('-').pop())
+            if not addrs:
                 raise ValueError
-        except ValueError as err:
+        except (ValueError, IndexError) as err:
             cls.bot.logger.exception(err)
             chat = cls.bot.get_chat(msg)
-            chat.send_text(cls.description+'\n\n'+cls.long_description)
+            chat.send_text(_('Wrong syntax'))
             return
         for g in cls.get_groups():
             if g.id == gid and msg.get_sender_contact() in g.get_contacts():
@@ -223,16 +226,16 @@ class GroupMaster(Plugin):
 
     @classmethod
     def remove_cmd(cls, msg, arg):
-        i = arg.find(' ')
         try:
-            gid = int(arg[:i].strip(cls.DELTA_URL).split('-').pop())
-            addr = arg[i:].strip()
-            if i < 0:
+            gid = arg.split()[0]
+            addr = arg[len(gid):].strip()
+            gid = int(gid.strip(cls.DELTA_URL).split('-').pop())
+            if '@' not in addr:
                 raise ValueError
-        except ValueError as err:
+        except (ValueError, IndexError) as err:
             cls.bot.logger.exception(err)
             chat = cls.bot.get_chat(msg)
-            chat.send_text(cls.description+'\n\n'+cls.long_description)
+            chat.send_text(_('Wrong syntax'))
             return
         for g in cls.get_groups():
             if g.id == gid and msg.get_sender_contact() in g.get_contacts():
@@ -248,16 +251,16 @@ class GroupMaster(Plugin):
 
     @classmethod
     def msg_cmd(cls, msg, arg):
-        i = arg.find(' ')
         try:
-            group_id = int(arg[:i].strip(cls.DELTA_URL).split('-').pop())
-            text = arg[i:].strip()
-            if i < 0 or not msg:
+            group_id = arg.split()[0]
+            text = arg[len(group_id):].strip()
+            group_id = int(group_id.strip(cls.DELTA_URL).split('-').pop())
+            if not text:
                 raise ValueError
-        except ValueError as err:
+        except (ValueError, IndexError) as err:
             cls.bot.logger.exception(err)
             chat = cls.bot.get_chat(msg)
-            chat.send_text(cls.description+'\n\n'+cls.long_description)
+            chat.send_text(_('Wrong syntax'))
             return
         sender = msg.get_sender_contact()
         for g in cls.get_groups():
