@@ -68,6 +68,11 @@ class WebGrabber(Plugin):
                             del t['src'], t['alt']
                         else:
                             t.extract()
+                    if r.url.startswith('https://www.startpage.com'):
+                        for a in soup(['a']):
+                            if a.has_attr('href'):
+                                a['href'] = a['href'].strip(
+                                    'https://s15-us2.startpage.com/cgi-bin/serveimage?url=')
                     styles = [str(s) for s in soup.find_all('style')]
                     for t in soup(lambda t: t.has_attr('class') or t.has_attr('id')):
                         classes = []
