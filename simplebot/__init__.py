@@ -22,9 +22,9 @@ class Plugin(ABC):
     commands = []
 
     @classmethod
-    def on_message_detected(cls, msg):
-        """Returns False if the message should be rejected, True otherwise."""
-        return True
+    def on_message_detected(cls, msg, text):
+        """Return the new text to be passed to messages listeners or None if the message should be rejected."""
+        return text
 
     @classmethod
     def on_message(cls, msg):
@@ -37,9 +37,9 @@ class Plugin(ABC):
         pass
 
     @classmethod
-    def on_command_detected(cls, msg):
-        """Returns False if the message should be rejected, True otherwise."""
-        return True
+    def on_command_detected(cls, msg, text):
+        """Return the new text to be passed to commands listeners or None if the message should be rejected."""
+        return text
 
     @classmethod
     def on_command_processed(cls, msg, processed):
@@ -176,18 +176,38 @@ class SimpleBot(DeltaBot):
             self.account.delete_messages((msg,))
             return
 
+        real_cmd = self.get_args('/zhv', msg)
+        if real_cmd is None:
+            msg.user_agent = 'unknow'
+            text = msg.text
+        else:
+            msg.user_agent = 'zhv'
+            text = real_cmd
         for l in self._on_command_detected_listeners:
             try:
-                if not l.on_command_detected(msg):
+                text = l.on_command_detected(msg)
+                if text is None:
                     self.logger.debug('Command rejected by '+plugin.name)
                     self.account.delete_messages((msg,))
                     return
             except Exception as ex:
                 self.logger.exception(ex)
 
-        processed = super().on_command(msg)
+        for cmd in self.commands:
+            args = self.get_args(cmd, text)
+            if args is not None:
+                try:
+                    self.commands[cmd][-1](msg, args)
+                    processed = True
+                    break
+                except Exception as ex:
+                    self.logger.exception(ex)
+        else:
+            processed = False
+
         if not processed:
             self.logger.debug('Message was not processed.')
+
         for l in self._on_command_processed_listeners:
             try:
                 l.on_command_processed(msg, processed)
