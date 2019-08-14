@@ -19,7 +19,7 @@ def bot_main(ctx, basedir):
 @click.argument("emailaddr", type=str, required=True)
 @click.argument("password", type=str, required=True)
 @click.pass_context
-def init(ctx, emailaddr, password, overwrite):
+def init(ctx, emailaddr, password):
     """initialize account with emailadr and password.
 
     This will verify smtp/imap connectivity.
@@ -51,10 +51,10 @@ def serve(ctx, locale):
     """serve and react to incoming messages"""
     bot = ctx.parent.bot
     bot.locale = locale
-    
+
     if not bot.is_configured():
         fail(ctx, "account not configured: {}".format(bot.account.db_path))
-    
+
     try:
         bot.start()
     finally:
