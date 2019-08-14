@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 import os
 import re
 
@@ -12,6 +13,7 @@ class DeltaBot:
     def __init__(self, basedir):
         self.commands = dict()
         self.basedir = os.path.abspath(os.path.expanduser(basedir))
+        self.logger = _get_logger()
         self.account = _get_account(self.basedir)
         self.account.set_config('save_mime_headers', '1')
         self.account.set_config('e2ee_enabled', '1')
@@ -24,8 +26,9 @@ class DeltaBot:
     def configure(self, email, password):
         self.account.configure(addr=email, mail_pw=password)
         self.account.start_threads()
-        _wait_configuration_progress(self.account, 1000)
+        self._wait_configuration_progress(1000)
         self.account.stop_threads()
+        self.logger.info('Bot configured successfully!')
 
     def set_name(self, name):
         self.account.set_config('displayname', name)
@@ -126,14 +129,26 @@ class DeltaBot:
             group.add_contact(member)
         return group
 
+    def _wait_configuration_progress(self, target):
+        while 1:
+            evt_name, data1, data2 = \
+                self.account._evlogger.get_matching(
+                    "DC_EVENT_CONFIGURE_PROGRESS")
+            if data1 >= target:
+                self.logger.info("CONFIG PROGRESS {}".format(target))
+                return data1
 
-def _wait_configuration_progress(account, target):
-    while 1:
-        evt_name, data1, data2 = \
-            account._evlogger.get_matching("DC_EVENT_CONFIGURE_PROGRESS")
-        if data1 >= target:
-            print("** CONFIG PROGRESS {}".format(target), account)
-            return data1
+
+def _get_logger():
+    logger = logging.Logger('DeltaBot')
+    logger.parent = None
+    chandler = logging.StreamHandler()
+    chandler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    chandler.setFormatter(formatter)
+    logger.addHandler(chandler)
+    return logger
 
 
 def _get_account(basedir):
