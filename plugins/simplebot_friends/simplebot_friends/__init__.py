@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import gettext
+import gzip
 import os
 import re
 import sqlite3
@@ -11,14 +12,14 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 class DeltaFriends(Plugin):
 
     name = 'DeltaFriends'
-    version = '0.2.0'
+    version = '0.3.0'
 
     MAX_BIO_LEN = 250
 
     @classmethod
     def activate(cls, bot):
         super().activate(bot)
-        cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name+'.html')
+        cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name)
         cls.env = Environment(
             loader=PackageLoader(__name__, 'templates'),
             autoescape=select_autoescape(['html', 'xml'])
@@ -59,6 +60,19 @@ class DeltaFriends(Plugin):
         cls.conn.close()
 
     @classmethod
+    def send_html(cls, chat, html, user_agent):
+        if user_agent == 'zhv':
+            file_path = cls.TEMP_FILE+'.htmlzip'
+            with gzip.open(file_path, 'wt') as fd:
+                fd.write(html)
+            chat.send_file(file_path)
+        else:
+            file_path = cls.TEMP_FILE+'.html'
+            with open(file_path, 'w') as fd:
+                fd.write(html)
+            chat.send_file(file_path, mime_type='text/html')
+
+    @classmethod
     def html_cmd(cls, msg, text):
         addr = msg.get_sender_contact().addr
         bio = cls.conn.execute(
@@ -69,10 +83,8 @@ class DeltaFriends(Plugin):
             bio = bio[0]
         html = cls.env.get_template('index.html').render(
             plugin=cls, bot_addr=cls.bot.get_address(), bio=bio)
-        with open(cls.TEMP_FILE, 'w') as fd:
-            fd.write(html)
         chat = cls.bot.get_chat(msg)
-        chat.send_file(cls.TEMP_FILE, mime_type='text/html')
+        cls.send_html(chat, html, msg.user_agent)
 
     @classmethod
     def list_cmd(cls, msg, *args):
@@ -80,10 +92,8 @@ class DeltaFriends(Plugin):
                    for addr, bio in cls.conn.execute('SELECT * FROM deltafriends ORDER BY addr').fetchall()]
         html = cls.env.get_template('list.html').render(
             plugin=cls, friends=friends)
-        with open(cls.TEMP_FILE, 'w') as fd:
-            fd.write(html)
         chat = cls.bot.get_chat(msg)
-        chat.send_file(cls.TEMP_FILE, mime_type='text/html')
+        cls.send_html(chat, html, msg.user_agent)
 
     @classmethod
     def join_cmd(cls, msg, text):
