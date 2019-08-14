@@ -71,7 +71,6 @@ class SimpleBot(DeltaBot):
 
     def __init__(self, basedir):
         super().__init__(basedir)
-        self.logger = self._get_logger()
         self._load_config(os.path.join(self.basedir, 'simplebot.cfg'))
         self._on_message_detected_listeners = set()
         self._on_message_listeners = set()
@@ -97,17 +96,6 @@ class SimpleBot(DeltaBot):
         self.set_name(botcfg['displayname'])
         self.account.set_config('mdns_enabled', botcfg['mdns_enabled'])
         self.account.set_config('mvbox_move', botcfg['mvbox_move'])
-
-    def _get_logger(self):
-        logger = logging.Logger('SimpleBot')
-        logger.parent = None
-        chandler = logging.StreamHandler()
-        chandler.setLevel(logging.DEBUG)
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        chandler.setFormatter(formatter)
-        logger.addHandler(chandler)
-        return logger
 
     def add_on_message_detected_listener(self, listener):
         self._on_message_detected_listeners.add(listener)
