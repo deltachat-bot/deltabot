@@ -30,12 +30,8 @@ class DeltaFriends(Plugin):
                 '''CREATE TABLE IF NOT EXISTS deltafriends (addr TEXT NOT NULL, bio TEXT, PRIMARY KEY(addr))''')
 
         localedir = os.path.join(os.path.dirname(__file__), 'locale')
-        try:
-            lang = gettext.translation('simplebot_friends', localedir=localedir,
-                                       languages=[bot.locale])
-        except OSError:
-            lang = gettext.translation('simplebot_friends', localedir=localedir,
-                                       languages=['en'])
+        lang = gettext.translation('simplebot_friends', localedir=localedir,
+                                   languages=[bot.locale], fallback=True)
         lang.install()
         cls.description = _('Provides a directory of Delta Chat users.')
         cls.commands = [
