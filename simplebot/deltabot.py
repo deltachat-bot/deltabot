@@ -55,7 +55,7 @@ class DeltaBot:
         if type(msg) is dc.message.Message:
             msg = msg.text
         msg = msg.strip()
-        if msg.split()[0] == cmd:
+        if msg and msg.split()[0] == cmd:
             return msg[len(cmd):].strip()
         return None
 
