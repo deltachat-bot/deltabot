@@ -4,6 +4,8 @@ import configparser
 import logging
 import os
 import re
+import zipfile
+import zlib
 
 from .deltabot import DeltaBot
 import pkg_resources
@@ -64,7 +66,7 @@ class SimpleBot(DeltaBot):
     plugins = None
     # logging.Logger compatible instance
     logger = None
-    # locale to start the bot: es, en, etc.
+   # locale to start the bot: es, en, etc.
     locale = 'en'
     # base directory for the bot configuration and db files
     basedir = None
@@ -79,6 +81,19 @@ class SimpleBot(DeltaBot):
         self._on_command_processed_listeners = set()
         self.load_plugins()
         self.activate_plugins()
+
+    def send_html(self, chat, html, basename, user_agent):
+        if user_agent == 'zhv':
+            file_path = basename+'.htmlzip'
+            zlib.Z_DEFAULT_COMPRESSION = 9
+            with zipfile.ZipFile(file_path, 'w', compression=zipfile.ZIP_DEFLATED) as fd:
+                fd.writestr('index.html', html)
+            chat.send_file(file_path)
+        else:
+            file_path = basename+'.html'
+            with open(file_path, 'w') as fd:
+                fd.write(html)
+            chat.send_file(file_path, mime_type='text/html')
 
     def _load_config(self, cfg_path):
         cfg = configparser.ConfigParser(allow_no_value=True)

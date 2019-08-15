@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import gettext
-import gzip
 import os
 import re
 import sqlite3
@@ -44,7 +43,7 @@ class DeltaFriends(Plugin):
              cls.leave_cmd),
             ('/friends/list', [],
              _('Will return the list of users wanting to make new friends.'), cls.list_cmd),
-            ('/friends/html', [], _('Sends an html app to help you to use the plugin.'), cls.html_cmd)]
+            ('/friends/app', [], _('Sends an html app to help you to use the plugin.'), cls.html_cmd)]
         cls.bot.add_commands(cls.commands)
         cls.NOSCRIPT = _(
             'You need a browser with JavaScript support for this page to work correctly.')
@@ -60,19 +59,6 @@ class DeltaFriends(Plugin):
         cls.conn.close()
 
     @classmethod
-    def send_html(cls, chat, html, user_agent):
-        if user_agent == 'zhv':
-            file_path = cls.TEMP_FILE+'.htmlzip'
-            with gzip.open(file_path, 'wt') as fd:
-                fd.write(html)
-            chat.send_file(file_path)
-        else:
-            file_path = cls.TEMP_FILE+'.html'
-            with open(file_path, 'w') as fd:
-                fd.write(html)
-            chat.send_file(file_path, mime_type='text/html')
-
-    @classmethod
     def html_cmd(cls, msg, text):
         addr = msg.get_sender_contact().addr
         bio = cls.conn.execute(
@@ -84,7 +70,7 @@ class DeltaFriends(Plugin):
         html = cls.env.get_template('index.html').render(
             plugin=cls, bot_addr=cls.bot.get_address(), bio=bio)
         chat = cls.bot.get_chat(msg)
-        cls.send_html(chat, html, msg.user_agent)
+        cls.bot.send_html(chat, html, cls.TEMP_FILE, msg.user_agent)
 
     @classmethod
     def list_cmd(cls, msg, *args):
@@ -93,7 +79,7 @@ class DeltaFriends(Plugin):
         html = cls.env.get_template('list.html').render(
             plugin=cls, friends=friends)
         chat = cls.bot.get_chat(msg)
-        cls.send_html(chat, html, msg.user_agent)
+        cls.bot.send_html(chat, html, cls.TEMP_FILE, msg.user_agent)
 
     @classmethod
     def join_cmd(cls, msg, text):
