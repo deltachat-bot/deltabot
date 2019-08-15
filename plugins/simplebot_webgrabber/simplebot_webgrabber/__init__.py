@@ -76,7 +76,10 @@ class WebGrabber(Plugin):
                                 t.extract()
                                 parent.insert_before(t)
                                 if not parent.string:
-                                    parent.string = t.string+'(LINK)'
+                                    if t.string == '[IMAGE]':
+                                        parent.string = '(LINK)'
+                                    else:
+                                        parent.string = t.string+'(LINK)'
                         else:
                             t.extract()
                     if r.url.startswith('https://www.startpage.com'):
