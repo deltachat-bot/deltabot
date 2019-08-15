@@ -15,7 +15,7 @@ class Helper(Plugin):
     @classmethod
     def activate(cls, bot):
         super().activate(bot)
-        cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name+'.html')
+        cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name)
         env = Environment(
             loader=PackageLoader(__name__, 'templates'),
             autoescape=select_autoescape(['html', 'xml'])
@@ -40,7 +40,7 @@ class Helper(Plugin):
     @classmethod
     def help_cmd(cls, msg, text):
         chat = cls.bot.get_chat(msg)
-        cls.send_html_help(chat)
+        cls.send_html_help(chat, msg.user_agent)
 
     @classmethod
     def on_command_processed(cls, msg, processed):
@@ -56,13 +56,11 @@ class Helper(Plugin):
             cls.on_command_processed(msg, processed)
 
     @classmethod
-    def send_html_help(cls, chat):
+    def send_html_help(cls, chat, user_agent):
         plugins = sorted(cls.bot.plugins, key=lambda p: p.name)
         plugins.remove(cls)
         plugins.insert(0, cls)
         bot_addr = cls.bot.get_address()
         html = cls.template.render(
             plugin=cls, plugins=plugins, bot_addr=bot_addr)
-        with open(cls.TEMP_FILE, 'w') as fd:
-            fd.write(html)
-        chat.send_file(cls.TEMP_FILE, mime_type='text/html')
+        cls.bot.send_html(chat, html, cls.TEMP_FILE, user_agent)

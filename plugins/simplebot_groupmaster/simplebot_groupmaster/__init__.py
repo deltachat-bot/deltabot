@@ -26,7 +26,7 @@ class GroupMaster(Plugin):
     @classmethod
     def activate(cls, bot):
         super().activate(bot)
-        cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name+'.html')
+        cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name)
         cls.env = Environment(
             loader=PackageLoader(__name__, 'templates'),
             autoescape=select_autoescape(['html', 'xml'])
@@ -60,9 +60,7 @@ class GroupMaster(Plugin):
             ('/group/remove', ['<id>', '<addr>'], _(
                 'Will remove the member with the given address from the group with the give id.'), cls.remove_cmd),
             ('/group/msg', ['<id>', '<msg>'], _(
-                'Will send the given message to the group with the given id.'), cls.msg_cmd),
-            #('/group/html', [], _('Sends an html app to help you to use the plugin.'), cls.html_cmd),
-        ]
+                'Will send the given message to the group with the given id.'), cls.msg_cmd)]
         cls.bot.add_commands(cls.commands)
         cls.LIST_BTN = _('Groups List')
         cls.JOIN_BTN = _('Join')
@@ -98,15 +96,6 @@ class GroupMaster(Plugin):
                         continue
                     groups.append(chat)
         return groups
-
-    # @classmethod
-    # def html_cmd(cls, msg, arg):
-    #     template = cls.env.get_template('index.html')
-    #     with open(cls.TEMP_FILE, 'w') as fd:
-    #         fd.write(template.render(
-    #             plugin=cls, bot_addr=cls.bot.get_address()))
-    #     chat = cls.bot.get_chat(msg)
-    #     chat.send_file(cls.TEMP_FILE, mime_type='text/html')
 
     @classmethod
     def id_cmd(cls, msg, arg):
@@ -277,8 +266,7 @@ class GroupMaster(Plugin):
             gid = quote_plus('{}{}'.format(cls.DELTA_URL, g.id))
             groups[i] = (g.get_name(), topic, gid, len(g.get_contacts()))
         template = cls.env.get_template('list.html')
-        with open(cls.TEMP_FILE, 'w') as fd:
-            fd.write(template.render(
-                plugin=cls, bot_addr=cls.bot.get_address(), groups=groups))
+        html = template.render(
+            plugin=cls, bot_addr=cls.bot.get_address(), groups=groups)
         chat = cls.bot.get_chat(msg)
-        chat.send_file(cls.TEMP_FILE, mime_type='text/html')
+        cls.bot.send_html(chat, html, cls.TEMP_FILE, msg.user_agent)

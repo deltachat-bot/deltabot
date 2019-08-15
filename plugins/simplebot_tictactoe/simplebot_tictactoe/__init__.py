@@ -28,7 +28,7 @@ class TicTacToe(Plugin):
     @classmethod
     def activate(cls, bot):
         super().activate(bot)
-        cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name+'.html')
+        cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name)
         cls.env = Environment(
             loader=PackageLoader(__name__, 'templates'),
             autoescape=select_autoescape(['html', 'xml'])
@@ -50,10 +50,10 @@ class TicTacToe(Plugin):
              _('Invite a friend to play or accept an invitation to play.'), cls.play_cmd),
             ('/toe/surrender', [],
              _('End the game in the group it is sent.'), cls.surrender_cmd),
-            ('/toe/new', [], _('Start a new game in the current game group.'), cls.new_cmd),
-            ('/toe/move', ['<id>', '<cell>'],
-             _('Move to the given cell in the game with the given id.'), cls.move_cmd)]
+            ('/toe/new', [], _('Start a new game in the current game group.'), cls.new_cmd)]
         cls.bot.add_commands(cls.commands)
+        cls.bot.add_command('/toe/move', ['<id>', '<cell>'],
+                            _('Move to the given cell in the game with the given id.'), cls.move_cmd)
 
     @classmethod
     def run_turn(cls, chat, game):
@@ -79,9 +79,7 @@ class TicTacToe(Plugin):
             board = [board[:3], board[3:6], board[6:]]
             html = cls.env.get_template('index.html').render(
                 plugin=cls, bot_addr=bot_addr, gid=chat.id, board=board)
-            with open(cls.TEMP_FILE, 'w') as fd:
-                fd.write(html)
-            priv_chat.send_file(cls.TEMP_FILE, mime_type='text/html')
+            cls.bot.send_html(priv_chat, html, cls.TEMP_FILE, msg.user_agent)
             chat.send_text(
                 _('{} is your turn...\n\n{}').format(game[TURN], b.pretty_str()))
 
