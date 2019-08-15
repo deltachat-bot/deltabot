@@ -29,7 +29,7 @@ class WebGrabber(Plugin):
         cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name)
         cls.env = Environment(
             loader=PackageLoader(__name__, 'templates'),
-            #autoescape=select_autoescape(['html', 'xml'])
+            autoescape=select_autoescape(['html', 'xml'])
         )
         localedir = os.path.join(os.path.dirname(__file__), 'locale')
         lang = gettext.translation('simplebot_webgrabber', localedir=localedir,
@@ -57,7 +57,7 @@ class WebGrabber(Plugin):
                 cls.bot.logger.debug(
                     'Content type: {}'.format(r.headers['content-type']))
                 if 'text/html' in r.headers['content-type']:
-                    soup = bs4.BeautifulSoup(r.text, 'html.parser')
+                    soup = bs4.BeautifulSoup(r.text, 'html5lib')
                     [t.extract() for t in soup(
                         ['script', 'iframe', 'noscript', 'link', 'meta'])]
                     soup.head.append(soup.new_tag('meta', charset='utf-8'))
@@ -110,7 +110,7 @@ class WebGrabber(Plugin):
                             else:
                                 del t['id']
                     zhv_cmd = '/zhv ' if user_agent == 'zhv' else ''
-                    script = r'for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${simplebot_url}/$1`)}`);a.href=`mailto:${"' + WebGrabber.bot.get_address(
+                    script = r'for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${simplebot_url}/$1`)}`);a.href=`mailto:${"' + cls.bot.get_address(
                     ) + r'"}?body=' + zhv_cmd + r'/web%20${b}`}'
                     t = soup.new_tag('script')
                     index = r.url.find('/', 8)
