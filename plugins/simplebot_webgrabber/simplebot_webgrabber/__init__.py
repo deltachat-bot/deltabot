@@ -75,7 +75,7 @@ class WebGrabber(Plugin):
                             if parent:
                                 t.extract()
                                 parent.insert_before(t)
-                                if not parent.string:
+                                if not parent.contents:
                                     if t.string == '[IMAGE]':
                                         parent.string = '(LINK)'
                                     else:
