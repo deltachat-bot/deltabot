@@ -60,7 +60,7 @@ class WebGrabber(Plugin):
                     soup = bs4.BeautifulSoup(r.text, 'html.parser')
                     [t.extract() for t in soup(
                         ['script', 'iframe', 'noscript', 'link', 'meta'])]
-                    soup.body.append(soup.new_tag('meta', charset='utf-8'))
+                    soup.head.append(soup.new_tag('meta', charset='utf-8'))
                     [comment.extract() for comment in soup.find_all(
                         text=lambda text: isinstance(text, bs4.Comment))]
                     for t in soup(['img']):
@@ -70,6 +70,13 @@ class WebGrabber(Plugin):
                             t['href'] = src
                             t.string = '[{}]'.format(t.get('alt', 'IMAGE'))
                             del t['src'], t['alt']
+
+                            parent = t.find_parent('a')
+                            if parent:
+                                t.extract()
+                                parent.insert_before(t)
+                                if not parent.string:
+                                    parent.string = t.string+'(LINK)'
                         else:
                             t.extract()
                     if r.url.startswith('https://www.startpage.com'):
