@@ -26,7 +26,7 @@ class WebGrabber(Plugin):
     @classmethod
     def activate(cls, bot):
         super().activate(bot)
-        cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name+'.html')
+        cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name)
         cls.env = Environment(
             loader=PackageLoader(__name__, 'templates'),
             #autoescape=select_autoescape(['html', 'xml'])
@@ -47,7 +47,7 @@ class WebGrabber(Plugin):
             'You need a browser with JavaScript support for this page to work correctly.')
 
     @classmethod
-    def send_page(cls, chat, url):
+    def send_page(cls, chat, url, user_agent):
         if not url.startswith('http'):
             url = 'http://'+url
         try:
@@ -109,9 +109,8 @@ class WebGrabber(Plugin):
                         url = r.url
                     t.string = 'var simplebot_url = "{}";'.format(url)+script
                     soup.body.append(t)
-                    with open(cls.TEMP_FILE, 'w') as fd:
-                        fd.write(str(soup))
-                    chat.send_file(cls.TEMP_FILE, mime_type='text/html')
+                    cls.bot.send_html(
+                        chat, str(soup), cls.TEMP_FILE, user_agent)
                 else:
                     chunks = r.iter_content(chunk_size=MAX_SIZE)
                     chunk = chunks.__next__()
@@ -127,6 +126,8 @@ class WebGrabber(Plugin):
                                     fname += '.png'
                                 elif 'image/jpeg' in r.headers['content-type']:
                                     fname += '.jpg'
+                                elif 'image/gif' in r.headers['content-type']:
+                                    fname += '.gif'
                         fpath = os.path.join(
                             cls.bot.basedir, 'account.db-blobs', fname)
                         with open(fpath, 'wb') as fd:
@@ -143,28 +144,26 @@ class WebGrabber(Plugin):
     def app_cmd(cls, msg, arg):
         chat = cls.bot.get_chat(msg)
         template = cls.env.get_template('index.html')
-        with open(cls.TEMP_FILE, 'w') as fd:
-            fd.write(template.render(
-                plugin=cls, bot_addr=cls.bot.get_address()))
-        chat.send_file(cls.TEMP_FILE, mime_type='text/html')
+        html = template.render(plugin=cls, bot_addr=cls.bot.get_address())
+        cls.bot.send_html(chat, html, cls.TEMP_FILE, msg.user_agent)
 
     @classmethod
     def web_cmd(cls, msg, url):
         url = url.replace(EQUAL_TOKEN, '=')
         url = url.replace(AMP_TOKEN, '&')
-        cls.send_page(cls.bot.get_chat(msg), url)
+        cls.send_page(cls.bot.get_chat(msg), url, msg.user_agent)
 
     @classmethod
     def ddg_cmd(cls, msg, arg):
         cls.send_page(cls.bot.get_chat(msg),
-                      "https://duckduckgo.com/lite?q={}".format(quote_plus(arg)))
+                      "https://duckduckgo.com/lite?q={}".format(quote_plus(arg)), msg.user_agent)
 
     @classmethod
     def w_cmd(cls, msg, arg):
         cls.send_page(cls.bot.get_chat(
-            msg), "https://{}.m.wikipedia.org/wiki/?search={}".format(cls.bot.locale, quote_plus(arg)))
+            msg), "https://{}.m.wikipedia.org/wiki/?search={}".format(cls.bot.locale, quote_plus(arg)), msg.user_agent)
 
     @classmethod
     def wt_cmd(cls, msg, arg):
         cls.send_page(cls.bot.get_chat(
-            msg), "https://{}.m.wiktionary.org/wiki/?search={}".format(cls.bot.locale, quote_plus(arg)))
+            msg), "https://{}.m.wiktionary.org/wiki/?search={}".format(cls.bot.locale, quote_plus(arg)), msg.user_agent)

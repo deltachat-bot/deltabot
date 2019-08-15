@@ -16,7 +16,7 @@ class GetDelta(Plugin):
     @classmethod
     def activate(cls, bot):
         super().activate(bot)
-        cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name+'.html')
+        cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name)
         cls.env = Environment(
             loader=PackageLoader(__name__, 'templates'),
         )
@@ -41,10 +41,8 @@ class GetDelta(Plugin):
         template = cls.env.get_template('index.html')
         html = template.render(plugin=cls, locale=cls.bot.locale, platforms=[(
             'iOS', ios), ('Android', android), ('Desktop', desktop)])
-        with open(cls.TEMP_FILE, 'w') as fd:
-            fd.write(html)
         chat = cls.bot.get_chat(msg)
-        chat.send_file(cls.TEMP_FILE, mime_type='text/html')
+        cls.bot.send_html(chat, html, cls.TEMP_FILE, msg.user_agent)
 
     @staticmethod
     def get_info(platform):

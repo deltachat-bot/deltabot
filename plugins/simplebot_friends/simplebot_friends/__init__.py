@@ -11,14 +11,14 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 class DeltaFriends(Plugin):
 
     name = 'DeltaFriends'
-    version = '0.2.0'
+    version = '0.3.0'
 
     MAX_BIO_LEN = 250
 
     @classmethod
     def activate(cls, bot):
         super().activate(bot)
-        cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name+'.html')
+        cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name)
         cls.env = Environment(
             loader=PackageLoader(__name__, 'templates'),
             autoescape=select_autoescape(['html', 'xml'])
@@ -43,7 +43,7 @@ class DeltaFriends(Plugin):
              cls.leave_cmd),
             ('/friends/list', [],
              _('Will return the list of users wanting to make new friends.'), cls.list_cmd),
-            ('/friends/html', [], _('Sends an html app to help you to use the plugin.'), cls.html_cmd)]
+            ('/friends/app', [], _('Sends an html app to help you to use the plugin.'), cls.html_cmd)]
         cls.bot.add_commands(cls.commands)
         cls.NOSCRIPT = _(
             'You need a browser with JavaScript support for this page to work correctly.')
@@ -69,10 +69,8 @@ class DeltaFriends(Plugin):
             bio = bio[0]
         html = cls.env.get_template('index.html').render(
             plugin=cls, bot_addr=cls.bot.get_address(), bio=bio)
-        with open(cls.TEMP_FILE, 'w') as fd:
-            fd.write(html)
         chat = cls.bot.get_chat(msg)
-        chat.send_file(cls.TEMP_FILE, mime_type='text/html')
+        cls.bot.send_html(chat, html, cls.TEMP_FILE, msg.user_agent)
 
     @classmethod
     def list_cmd(cls, msg, *args):
@@ -80,10 +78,8 @@ class DeltaFriends(Plugin):
                    for addr, bio in cls.conn.execute('SELECT * FROM deltafriends ORDER BY addr').fetchall()]
         html = cls.env.get_template('list.html').render(
             plugin=cls, friends=friends)
-        with open(cls.TEMP_FILE, 'w') as fd:
-            fd.write(html)
         chat = cls.bot.get_chat(msg)
-        chat.send_file(cls.TEMP_FILE, mime_type='text/html')
+        cls.bot.send_html(chat, html, cls.TEMP_FILE, msg.user_agent)
 
     @classmethod
     def join_cmd(cls, msg, text):

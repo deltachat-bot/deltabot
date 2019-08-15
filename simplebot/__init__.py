@@ -4,6 +4,8 @@ import configparser
 import logging
 import os
 import re
+import zipfile
+import zlib
 
 from .deltabot import DeltaBot
 import pkg_resources
@@ -22,9 +24,9 @@ class Plugin(ABC):
     commands = []
 
     @classmethod
-    def on_message_detected(cls, msg):
-        """Returns False if the message should be rejected, True otherwise."""
-        return True
+    def on_message_detected(cls, msg, text):
+        """Return the new text to be passed to messages listeners or None if the message should be rejected."""
+        return text
 
     @classmethod
     def on_message(cls, msg):
@@ -37,9 +39,9 @@ class Plugin(ABC):
         pass
 
     @classmethod
-    def on_command_detected(cls, msg):
-        """Returns False if the message should be rejected, True otherwise."""
-        return True
+    def on_command_detected(cls, msg, text):
+        """Return the new text to be passed to commands listeners or None if the message should be rejected."""
+        return text
 
     @classmethod
     def on_command_processed(cls, msg, processed):
@@ -64,7 +66,7 @@ class SimpleBot(DeltaBot):
     plugins = None
     # logging.Logger compatible instance
     logger = None
-    # locale to start the bot: es, en, etc.
+   # locale to start the bot: es, en, etc.
     locale = 'en'
     # base directory for the bot configuration and db files
     basedir = None
@@ -79,6 +81,19 @@ class SimpleBot(DeltaBot):
         self._on_command_processed_listeners = set()
         self.load_plugins()
         self.activate_plugins()
+
+    def send_html(self, chat, html, basename, user_agent):
+        if user_agent == 'zhv':
+            file_path = basename+'.htmlzip'
+            zlib.Z_DEFAULT_COMPRESSION = 9
+            with zipfile.ZipFile(file_path, 'w', compression=zipfile.ZIP_DEFLATED) as fd:
+                fd.writestr('index.html', html)
+            chat.send_file(file_path)
+        else:
+            file_path = basename+'.html'
+            with open(file_path, 'w') as fd:
+                fd.write(html)
+            chat.send_file(file_path, mime_type='text/html')
 
     def _load_config(self, cfg_path):
         cfg = configparser.ConfigParser(allow_no_value=True)
@@ -176,18 +191,38 @@ class SimpleBot(DeltaBot):
             self.account.delete_messages((msg,))
             return
 
+        real_cmd = self.get_args('/zhv', msg)
+        if real_cmd is None:
+            msg.user_agent = 'unknow'
+            text = msg.text
+        else:
+            msg.user_agent = 'zhv'
+            text = real_cmd
         for l in self._on_command_detected_listeners:
             try:
-                if not l.on_command_detected(msg):
+                text = l.on_command_detected(msg)
+                if text is None:
                     self.logger.debug('Command rejected by '+plugin.name)
                     self.account.delete_messages((msg,))
                     return
             except Exception as ex:
                 self.logger.exception(ex)
 
-        processed = super().on_command(msg)
+        for cmd in self.commands:
+            args = self.get_args(cmd, text)
+            if args is not None:
+                try:
+                    self.commands[cmd][-1](msg, args)
+                    processed = True
+                    break
+                except Exception as ex:
+                    self.logger.exception(ex)
+        else:
+            processed = False
+
         if not processed:
             self.logger.debug('Message was not processed.')
+
         for l in self._on_command_processed_listeners:
             try:
                 l.on_command_processed(msg, processed)
