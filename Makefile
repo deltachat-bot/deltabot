@@ -1,5 +1,5 @@
 .PHONY: all
-all: simplebot friends getdelta groupmaster help tictactoe webgrabber wikiquote
+all: simplebot friends getdelta groupmaster help tictactoe webgrabber wikiquote xkcd
 
 .PHONY: simplebot
 simplebot:
@@ -36,3 +36,7 @@ webgrabber:
 .PHONY: wikiquote
 wikiquote:
 	echo y | pip uninstall simplebot_wikiquote; pip install plugins/simplebot_wikiquote
+
+.PHONY: xkcd
+xkcd:
+	echo y | pip uninstall simplebot_xkcd; pip install plugins/simplebot_xkcd
