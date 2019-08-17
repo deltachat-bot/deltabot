@@ -84,8 +84,7 @@ class GroupMaster(Plugin):
         me = cls.bot.get_contact()
         groups = []
         for chat in cls.bot.get_chats():
-            if chat.get_type() in (dc.const.DC_CHAT_TYPE_GROUP,
-                                   dc.const.DC_CHAT_TYPE_VERIFIED_GROUP):
+            if cls.bot.is_group(chat):
                 if me in chat.get_contacts():
                     if public_only and cls.get_info(chat.id)[2] != PUBLIC:
                         continue
@@ -95,8 +94,7 @@ class GroupMaster(Plugin):
     @classmethod
     def id_cmd(cls, msg, arg):
         chat = cls.bot.get_chat(msg)
-        if msg.chat.get_type() not in (dc.const.DC_CHAT_TYPE_GROUP,
-                                       dc.const.DC_CHAT_TYPE_VERIFIED_GROUP):
+        if cls.bot.is_group(msg.chat):
             text = _('Not a group.')
         else:
             pid, topic, status = cls.get_info(msg.chat.id)
