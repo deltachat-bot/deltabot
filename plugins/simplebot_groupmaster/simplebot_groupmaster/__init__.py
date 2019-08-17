@@ -86,12 +86,7 @@ class GroupMaster(Plugin):
         for chat in cls.bot.get_chats():
             if chat.get_type() in (dc.const.DC_CHAT_TYPE_GROUP,
                                    dc.const.DC_CHAT_TYPE_VERIFIED_GROUP):
-                if me not in chat.get_contacts():
-                    with cls.conn:
-                        cls.conn.execute(
-                            'DELETE FROM groups WHERE id=?', (chat.id,))
-                    chat.delete()
-                else:
+                if me in chat.get_contacts():
                     if public_only and cls.get_info(chat.id)[2] != PUBLIC:
                         continue
                     groups.append(chat)
