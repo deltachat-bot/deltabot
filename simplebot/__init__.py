@@ -22,16 +22,12 @@ class Plugin(ABC):
     long_description = ''
     version = ''
     commands = []
+    filters = []
 
     @classmethod
     def on_message_detected(cls, msg, text):
         """Return the new text to be passed to messages listeners or None if the message should be rejected."""
         return text
-
-    @classmethod
-    def on_message(cls, msg):
-        """Returns True if the message was processed, False otherwise."""
-        return False
 
     @classmethod
     def on_message_processed(cls, msg, processed):
@@ -44,7 +40,7 @@ class Plugin(ABC):
         return text
 
     @classmethod
-    def on_command_processed(cls, msg, processed):
+    def on_command_processed(cls, msg):
         """processed is True if the message was processed, False otherwise."""
         pass
 
@@ -75,7 +71,6 @@ class SimpleBot(DeltaBot):
         super().__init__(basedir)
         self._load_config(os.path.join(self.basedir, 'simplebot.cfg'))
         self._on_message_detected_listeners = set()
-        self._on_message_listeners = set()
         self._on_message_processed_listeners = set()
         self._on_command_detected_listeners = set()
         self._on_command_processed_listeners = set()
@@ -115,20 +110,14 @@ class SimpleBot(DeltaBot):
     def add_on_message_detected_listener(self, listener):
         self._on_message_detected_listeners.add(listener)
 
-    def add_on_message_listener(self, listener):
-        self._on_message_listeners.add(listener)
-
     def add_on_message_processed_listener(self, listener):
         self._on_message_processed_listeners.add(listener)
 
     def remove_on_message_detected_listener(self, listener):
-        self._on_message_detected_listeners.remove(listener)
-
-    def remove_on_message_listener(self, listener):
-        self._on_message_listeners.remove(listener)
+        self._on_message_detected_listeners.discard(listener)
 
     def remove_on_message_processed_listener(self, listener):
-        self._on_message_processed_listeners.remove(listener)
+        self._on_message_processed_listeners.discard(listener)
 
     def add_on_command_detected_listener(self, listener):
         self._on_command_detected_listeners.add(listener)
@@ -137,10 +126,10 @@ class SimpleBot(DeltaBot):
         self._on_command_processed_listeners.add(listener)
 
     def remove_on_command_detected_listener(self, listener):
-        self._on_command_detected_listeners.remove(listener)
+        self._on_command_detected_listeners.discard(listener)
 
     def remove_on_command_processed_listener(self, listener):
-        self._on_command_processed_listeners.remove(listener)
+        self._on_command_processed_listeners.discard(listener)
 
     def on_message_delivered(self, msg):
         self.account.delete_messages((msg,))
@@ -163,17 +152,8 @@ class SimpleBot(DeltaBot):
             except Exception as ex:
                 self.logger.exception(ex)
 
-        for l in self._on_message_listeners:
-            try:
-                if l.on_message(msg):
-                    self.logger.debug('Message processed by '+plugin.name)
-                    processed = True
-                    break
-            except Exception as ex:
-                self.logger.exception(ex)
-        else:
-            processed = False
-            self.logger.debug('Message was not processed.')
+        processed = super().on_message(msg)
+
         for l in self._on_message_processed_listeners:
             try:
                 l.on_message_processed(msg, processed)
