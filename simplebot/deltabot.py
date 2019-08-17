@@ -85,7 +85,7 @@ class DeltaBot:
                     ev = self.account._evlogger.get()
                     if ev[0] in ('DC_EVENT_MSGS_CHANGED', 'DC_EVENT_INCOMING_MSG') and ev[2] != 0:
                         msg = self.account.get_message_by_id(int(ev[2]))
-                        if msg.get_sender_contact() == self.account.get_self_contact():
+                        if msg.get_sender_contact() == self.get_contact():
                             continue
                         msg.contact_request = (
                             ev[0] == 'DC_EVENT_MSGS_CHANGED')
@@ -122,7 +122,7 @@ class DeltaBot:
         return self.account.get_chats()
 
     def get_address(self):
-        return self.account.get_self_contact().addr
+        return self.get_contact().addr
 
     def create_group(self, name, members=[]):
         group = self.account.create_group_chat(name)

@@ -81,7 +81,7 @@ class GroupMaster(Plugin):
 
     @classmethod
     def get_groups(cls, public_only=False):
-        me = cls.bot.account.get_self_contact()
+        me = cls.bot.get_contact()
         groups = []
         for chat in cls.bot.get_chats():
             if chat.get_type() in (dc.const.DC_CHAT_TYPE_GROUP,
