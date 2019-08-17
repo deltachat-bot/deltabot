@@ -47,8 +47,8 @@ class GroupMaster(Plugin):
             ('/group/list', [], _('Will show the list of public groups.'), cls.list_cmd),
             ('/group/join',
              ['<id>'], _('Will join you to the public group with the given id.'), cls.join_cmd),
-            ('/group/leave',
-             ['<id>'], _('Will remove you from the group with the given id.'), cls.leave_cmd),
+            ('/group/leave', ['[id]'], _(
+                'Will remove you from the group with the given id or the group where it is sent if no id was passed.'), cls.leave_cmd),
             ('/group/public', [],
              _('Send it in a group to make it public.'), cls.public_cmd),
             ('/group/private', [],
@@ -173,7 +173,10 @@ class GroupMaster(Plugin):
     def leave_cmd(cls, msg, arg):
         chat = cls.bot.get_chat(msg)
         try:
-            gid = int(arg.strip(cls.DELTA_URL).split('-').pop())
+            if arg:
+                gid = int(arg.strip(cls.DELTA_URL).split('-').pop())
+            else:
+                gid = msg.chat.id
             for g in cls.get_groups():
                 if g.id == gid and msg.get_sender_contact() in g.get_contacts():
                     g.remove_contact(msg.get_sender_contact())
