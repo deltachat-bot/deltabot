@@ -23,10 +23,10 @@ class DeltaFriends(Plugin):
             loader=PackageLoader(__name__, 'templates'),
             autoescape=select_autoescape(['html', 'xml'])
         )
-        cls.conn = sqlite3.connect(os.path.join(
+        cls.db = sqlite3.connect(os.path.join(
             cls.bot.basedir, 'deltafriends.db'))
-        with cls.conn:
-            cls.conn.execute(
+        with cls.db:
+            cls.db.execute(
                 '''CREATE TABLE IF NOT EXISTS deltafriends (addr TEXT NOT NULL, bio TEXT, PRIMARY KEY(addr))''')
 
         localedir = os.path.join(os.path.dirname(__file__), 'locale')
@@ -55,13 +55,14 @@ class DeltaFriends(Plugin):
         cls.WRITE_BTN = _('Write')
 
     @classmethod
-    def deactivate(cls, bot):
-        cls.conn.close()
+    def deactivate(cls):
+        super().deactivate()
+        cls.db.close()
 
     @classmethod
     def html_cmd(cls, msg, text):
         addr = msg.get_sender_contact().addr
-        bio = cls.conn.execute(
+        bio = cls.db.execute(
             'SELECT bio FROM deltafriends WHERE addr=?', (addr,)).fetchone()
         if bio is None:
             bio = ""
@@ -75,7 +76,7 @@ class DeltaFriends(Plugin):
     @classmethod
     def list_cmd(cls, msg, *args):
         friends = [{'addr': addr, 'bio': bio}
-                   for addr, bio in cls.conn.execute('SELECT * FROM deltafriends ORDER BY addr').fetchall()]
+                   for addr, bio in cls.db.execute('SELECT * FROM deltafriends ORDER BY addr').fetchall()]
         html = cls.env.get_template('list.html').render(
             plugin=cls, friends=friends)
         chat = cls.bot.get_chat(msg)
@@ -87,8 +88,8 @@ class DeltaFriends(Plugin):
         text = ' '.join(text.split())
         if len(text) > cls.MAX_BIO_LEN:
             text = text[:cls.MAX_BIO_LEN] + '...'
-        with cls.conn:
-            cls.conn.execute(
+        with cls.db:
+            cls.db.execute(
                 'INSERT OR REPLACE INTO deltafriends VALUES (?, ?)', (addr, text))
         chat = cls.bot.get_chat(msg)
         chat.send_text(_('You are now in the DeltaFriends list'))
@@ -96,8 +97,8 @@ class DeltaFriends(Plugin):
     @classmethod
     def leave_cmd(cls, msg, *args):
         addr = msg.get_sender_contact().addr
-        with cls.conn:
-            rowcount = cls.conn.execute(
+        with cls.db:
+            rowcount = cls.db.execute(
                 'DELETE FROM deltafriends WHERE addr=?', (addr,)).rowcount
         chat = cls.bot.get_chat(msg)
         if rowcount == 1:

@@ -31,10 +31,10 @@ class GroupMaster(Plugin):
             loader=PackageLoader(__name__, 'templates'),
             autoescape=select_autoescape(['html', 'xml'])
         )
-        cls.conn = sqlite3.connect(os.path.join(
+        cls.db = sqlite3.connect(os.path.join(
             cls.bot.basedir, 'groupmaster.db'))
-        with cls.conn:
-            cls.conn.execute(
+        with cls.db:
+            cls.db.execute(
                 '''CREATE TABLE IF NOT EXISTS groups (id INTEGER NOT NULL, pid TEXT NOT NULL, topic TEXT, status INTEGER,  PRIMARY KEY(id))''')
         localedir = os.path.join(os.path.dirname(__file__), 'locale')
         lang = gettext.translation('simplebot_groupmaster', localedir=localedir,
@@ -67,15 +67,20 @@ class GroupMaster(Plugin):
         cls.LEAVE_BTN = _('Leave')
 
     @classmethod
+    def deactivate(cls):
+        super().deactivate()
+        cls.db.close()
+
+    @classmethod
     def get_info(cls, gid):
-        info = cls.conn.execute(
+        info = cls.db.execute(
             'SELECT pid,topic,status FROM groups WHERE id=?', (gid,)).fetchone()
         if info is None:
             pid = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits)
                           for i in range(10))
             info = (pid, '', PRIVATE)
-            with cls.conn:
-                cls.conn.execute(
+            with cls.db:
+                cls.db.execute(
                     'INSERT INTO groups VALUES (?,?,?,?)', (gid, info[0], info[1], info[2]))
         return info
 
@@ -111,8 +116,8 @@ class GroupMaster(Plugin):
     def public_cmd(cls, msg, arg):
         pid, topic, status = cls.get_info(msg.chat.id)
         if status != PUBLIC:
-            with cls.conn:
-                cls.conn.execute(
+            with cls.db:
+                cls.db.execute(
                     'REPLACE INTO groups VALUES (?,?,?,?)', (msg.chat.id, pid, topic, PUBLIC))
         chat = cls.bot.get_chat(msg)
         chat.send_text(_('Group status: {}').format(_('Public')))
@@ -121,8 +126,8 @@ class GroupMaster(Plugin):
     def private_cmd(cls, msg, arg):
         pid, topic, status = cls.get_info(msg.chat.id)
         if status != PRIVATE:
-            with cls.conn:
-                cls.conn.execute(
+            with cls.db:
+                cls.db.execute(
                     'REPLACE INTO groups VALUES (?,?,?,?)', (msg.chat.id, pid, topic, PRIVATE))
         chat = cls.bot.get_chat(msg)
         chat.send_text(_('Group status: {}').format(_('Private')))
@@ -135,8 +140,8 @@ class GroupMaster(Plugin):
             if len(new_topic) > 250:
                 new_topic = new_topic[:250]+'...'
             topic = new_topic
-            with cls.conn:
-                cls.conn.execute(
+            with cls.db:
+                cls.db.execute(
                     'REPLACE INTO groups VALUES (?,?,?,?)', (msg.chat.id, pid, topic, status))
         chat = cls.bot.get_chat(msg)
         chat.send_text(_('Topic:\n{}').format(topic))
