@@ -109,7 +109,7 @@ class WebGrabber(Plugin):
                                     break
                             else:
                                 del t['id']
-                    zhv_cmd = '/zhv ' if user_agent == 'zhv' else ''
+                    zhv_cmd = '/z ' if user_agent == 'zhv' else ''
                     script = r'for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${simplebot_url}/$1`)}`);a.href=`mailto:${"' + cls.bot.get_address(
                     ) + r'"}?body=' + zhv_cmd + r'/web%20${b}`}'
                     t = soup.new_tag('script')
