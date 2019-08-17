@@ -101,8 +101,11 @@ class DeltaBot:
         finally:
             self.account.stop_threads()
 
-    def get_contact(self, addr):
-        return self.account.create_contact(addr.strip())
+    def get_contact(self, addr=None):
+        if addr is None:
+            return self.account.get_self_contact()
+        else:
+            return self.account.create_contact(addr.strip())
 
     def get_chat(self, ref):
         if type(ref) is dc.message.Message:
