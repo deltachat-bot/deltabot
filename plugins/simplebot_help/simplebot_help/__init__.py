@@ -4,7 +4,6 @@ import os
 
 from simplebot import Plugin
 from jinja2 import Environment, PackageLoader, select_autoescape
-import deltachat as dc
 
 
 class Helper(Plugin):
@@ -51,8 +50,7 @@ class Helper(Plugin):
 
     @classmethod
     def on_message_processed(cls, msg, processed):
-        chat = cls.bot.get_chat(msg)
-        if chat.get_type() == dc.const.DC_CHAT_TYPE_SINGLE:
+        if not cls.bot.is_group(cls.bot.get_chat(msg)):
             cls.on_command_processed(msg, processed)
 
     @classmethod
