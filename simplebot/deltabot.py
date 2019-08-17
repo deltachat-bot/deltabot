@@ -12,6 +12,7 @@ _CMD_PREFIX = '/'
 class DeltaBot:
     def __init__(self, basedir):
         self.commands = dict()
+        self.filters = set()
         self.basedir = os.path.abspath(os.path.expanduser(basedir))
         self.logger = _get_logger()
         self.account = _get_account(self.basedir)
@@ -49,6 +50,18 @@ class DeltaBot:
     def remove_command(self, cmd):
         del self.commands[cmd]
 
+    def add_filters(self, filters):
+        self.filters.update(filters)
+
+    def remove_filters(self, filters):
+        self.filters.difference_update(filters)
+
+    def add_filter(self, f):
+        self.filters.add(f)
+
+    def remove_filter(self, f):
+        self.filters.discard(f)
+
     @staticmethod
     def get_args(cmd, msg):
         """Return the args for the given command or None if the command does not match."""
@@ -59,11 +72,18 @@ class DeltaBot:
             return msg[len(cmd):].strip()
         return None
 
-    def on_message(self, msg):
-        pass
-
     def on_message_delivered(self, msg):
         pass
+
+    def on_message(self, msg):
+        processed = False
+        for f in self.filters:
+            try:
+                if f(msg):
+                    processed = True
+            except Exception as ex:
+                self.logger.exception(ex)
+        return processed
 
     def on_command(self, msg):
         for cmd in self.commands:
