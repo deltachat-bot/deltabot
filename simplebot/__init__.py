@@ -191,7 +191,7 @@ class SimpleBot(DeltaBot):
             self.account.delete_messages((msg,))
             return
 
-        real_cmd = self.get_args('/zhv', msg)
+        real_cmd = self.get_args('/z', msg)
         if real_cmd is None:
             msg.user_agent = 'unknow'
             text = msg.text
