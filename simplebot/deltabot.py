@@ -132,6 +132,9 @@ class DeltaBot:
             group.add_contact(member)
         return group
 
+    def is_group(self, chat):
+        return chat.get_type() in (dc.const.DC_CHAT_TYPE_GROUP, dc.const.DC_CHAT_TYPE_VERIFIED_GROUP)
+
     def _wait_configuration_progress(self, target):
         while 1:
             evt_name, data1, data2 = \
