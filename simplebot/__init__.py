@@ -50,9 +50,10 @@ class Plugin(ABC):
         cls.bot = bot
 
     @classmethod
-    def deactivate(cls, ctx):
+    def deactivate(cls):
         """Deactivate the plugin, this method is called before the plugin is disabled/removed, do clean up here."""
-        pass
+        cls.bot.remove_commands(cls.commands)
+        cls.bot.remove_filters(cls.filters)
 
 
 class SimpleBot(DeltaBot):

@@ -33,10 +33,10 @@ class TicTacToe(Plugin):
             loader=PackageLoader(__name__, 'templates'),
             autoescape=select_autoescape(['html', 'xml'])
         )
-        cls.conn = sqlite3.connect(
+        cls.db = sqlite3.connect(
             os.path.join(cls.bot.basedir, 'tictactoe.db'))
-        with cls.conn:
-            cls.conn.execute('''CREATE TABLE IF NOT EXISTS games
+        with cls.db:
+            cls.db.execute('''CREATE TABLE IF NOT EXISTS games
                                 (players TEXT NOT NULL, gid INTEGER NOT NULL, status INTEGER NOT NULL,
                                  turn TEXT NOT NULL,  board TEXT NOT NULL, x TEXT NOT NULL, PRIMARY KEY(players))''')
 
@@ -56,14 +56,19 @@ class TicTacToe(Plugin):
                             _('Move to the given cell in the game with the given id.'), cls.move_cmd)
 
     @classmethod
+    def deactivate(cls):
+        super().deactivate()
+        cls.db.close()
+
+    @classmethod
     def run_turn(cls, chat, game):
         b = Board(game[BOARD])
         p1, p2 = game[PLAYERS].split(',')
         winner = b.get_winner()
         if winner is not None:
             game[STATUS] = cls.FINISHED_STATUS
-            with cls.conn:
-                cls.conn.execute(
+            with cls.db:
+                cls.db.execute(
                     'REPLACE INTO games VALUES (?,?,?,?,?,?)', game)
             if winner == '-':
                 chat.send_text(
@@ -93,14 +98,14 @@ class TicTacToe(Plugin):
                 chat.send_text(_("You can't play with yourself"))
                 return
             players = ','.join(sorted([p1, p2]))
-            game = cls.conn.execute(
+            game = cls.db.execute(
                 'SELECT * FROM games WHERE players=?', (players,)).fetchone()
             if game is None:  # first time playing with p2
                 chat = cls.bot.create_group(
                     '❎ {} Vs {} [{}]'.format(p1, p2, cls.name), [msg.get_sender_contact(), p2])
-                with cls.conn:
-                    cls.conn.execute('INSERT INTO games VALUES (?,?,?,?,?,?)',
-                                     (players, chat.id, cls.INVITED_STATUS, p1, str(Board()), p1))
+                with cls.db:
+                    cls.db.execute('INSERT INTO games VALUES (?,?,?,?,?,?)',
+                                   (players, chat.id, cls.INVITED_STATUS, p1, str(Board()), p1))
                 chat.send_text(_('Hello {},\nYou had been invited by {} to play {}, to start playing send a message in this group with the command:\n{}').format(
                     p2, p1, cls.name, cls.commands[0][0]))
             else:
@@ -110,7 +115,7 @@ class TicTacToe(Plugin):
         else:    # accepting a game
             p2 = msg.get_sender_contact().addr
             chat = cls.bot.get_chat(msg)
-            game = cls.conn.execute(
+            game = cls.db.execute(
                 'SELECT * FROM games WHERE gid=?', (chat.id,)).fetchone()
             # this is not your game group
             orig_p2 = [p for p in game[PLAYERS].split(',') if p != game[X]][0]
@@ -121,8 +126,8 @@ class TicTacToe(Plugin):
             elif game[STATUS] == cls.INVITED_STATUS:
                 game = list(game)
                 game[STATUS] = cls.PLAYING_STATUS
-                with cls.conn:
-                    cls.conn.execute(
+                with cls.db:
+                    cls.db.execute(
                         'REPLACE INTO games VALUES (?,?,?,?,?,?)', game)
                 chat = cls.bot.get_chat(msg)
                 chat.send_text(_('Game started!'))
@@ -136,7 +141,7 @@ class TicTacToe(Plugin):
     def surrender_cmd(cls, msg, arg):
         chat = cls.bot.get_chat(msg)
         loser = msg.get_sender_contact().addr
-        game = cls.conn.execute(
+        game = cls.db.execute(
             'SELECT * FROM games WHERE gid=?', (chat.id,)).fetchone()
         # this is not your game group
         if game is None or loser not in game[PLAYERS].split(','):
@@ -147,8 +152,8 @@ class TicTacToe(Plugin):
             p1, p2 = game[PLAYERS].split(',')
             game[STATUS] = cls.FINISHED_STATUS
             game[TURN] = game[X] = p1 if p1 != loser else p2
-            with cls.conn:
-                cls.conn.execute(
+            with cls.db:
+                cls.db.execute(
                     'REPLACE INTO games VALUES (?,?,?,?,?,?)', game)
             chat.send_text(_('Game Over.\n{} Wins!!!').format(game[TURN]))
         else:
@@ -159,7 +164,7 @@ class TicTacToe(Plugin):
     def new_cmd(cls, msg, arg):
         chat = cls.bot.get_chat(msg)
         sender = msg.get_sender_contact().addr
-        game = cls.conn.execute(
+        game = cls.db.execute(
             'SELECT * FROM games WHERE gid=?', (chat.id,)).fetchone()
         # this is not your game group
         if game is None or sender not in game[PLAYERS].split(','):
@@ -171,8 +176,8 @@ class TicTacToe(Plugin):
             game[STATUS] = cls.PLAYING_STATUS
             game[TURN] = game[X] = p1 if p1 != game[X] else p2
             game[BOARD] = str(Board())
-            with cls.conn:
-                cls.conn.execute(
+            with cls.db:
+                cls.db.execute(
                     'REPLACE INTO games VALUES (?,?,?,?,?,?)', game)
             chat = cls.bot.get_chat(msg)
             chat.send_text(_('Game started!'))
@@ -185,7 +190,7 @@ class TicTacToe(Plugin):
     def move_cmd(cls, msg, arg):
         chat_id, pos = map(int, arg.split())
         player = msg.get_sender_contact().addr
-        game = cls.conn.execute(
+        game = cls.db.execute(
             'SELECT * FROM games WHERE gid=?', (chat_id,)).fetchone()
         if game is not None and player == game[TURN]:
             game = list(game)
@@ -196,8 +201,8 @@ class TicTacToe(Plugin):
                 board.move(sign, pos)
                 game[TURN] = p1 if p1 != player else p2
                 game[BOARD] = str(board)
-                with cls.conn:
-                    cls.conn.execute(
+                with cls.db:
+                    cls.db.execute(
                         'REPLACE INTO games VALUES (?,?,?,?,?,?)', game)
                 chat = cls.bot.get_chat(chat_id)
                 cls.run_turn(chat, game)

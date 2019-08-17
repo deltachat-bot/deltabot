@@ -13,12 +13,14 @@ class XKCD(Plugin):
 
     @classmethod
     def activate(cls, bot):
-        cls.bot = bot
+        super().activate(bot)
         cls.blobsdir = os.path.join(cls.bot.basedir, 'account.db-blobs')
+
         localedir = os.path.join(os.path.dirname(__file__), 'locale')
         lang = gettext.translation('simplebot_xkcd', localedir=localedir,
                                    languages=[bot.locale], fallback=True)
         lang.install()
+
         cls.description = _('See xkcd.com comics in Delta Chat.')
         cls.commands = [
             ('/xkcd', ['[num]'], _('Sends the comic with the give number or a ramdom comic if no number is provided.'), cls.xkcd_cmd),
