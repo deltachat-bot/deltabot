@@ -163,7 +163,7 @@ class SimpleBot(DeltaBot):
 
         self.account.mark_seen_messages([msg])
 
-    def on_command(self, msg):
+    def on_command(self, msg, text=None):
         self.logger.debug('Received command from {}'.format(
             msg.get_sender_contact().addr,))
 
@@ -172,10 +172,11 @@ class SimpleBot(DeltaBot):
             self.account.delete_messages((msg,))
             return
 
-        real_cmd = self.get_args('/z', msg)
+        if text is None:
+            text = msg.text
+        real_cmd = self.get_args('/z', text)
         if real_cmd is None:
             msg.user_agent = 'unknow'
-            text = msg.text
         else:
             msg.user_agent = 'zhv'
             text = real_cmd
