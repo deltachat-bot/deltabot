@@ -25,26 +25,6 @@ class Plugin(ABC):
     filters = []
 
     @classmethod
-    def on_message_detected(cls, msg, text):
-        """Return the new text to be passed to messages listeners or None if the message should be rejected."""
-        return text
-
-    @classmethod
-    def on_message_processed(cls, msg, processed):
-        """processed is True if the message was processed, False otherwise."""
-        pass
-
-    @classmethod
-    def on_command_detected(cls, msg, text):
-        """Return the new text to be passed to commands listeners or None if the message should be rejected."""
-        return text
-
-    @classmethod
-    def on_command_processed(cls, msg):
-        """processed is True if the message was processed, False otherwise."""
-        pass
-
-    @classmethod
     def activate(cls, bot):
         """Activate the plugin, this method is called when the bot starts."""
         cls.bot = bot
@@ -75,10 +55,10 @@ class SimpleBot(DeltaBot):
         self._cfg.path = os.path.join(self.basedir, 'simplebot.cfg')
         self._load_config()
 
-        self._on_message_detected_listeners = set()
-        self._on_message_processed_listeners = set()
-        self._on_command_detected_listeners = set()
-        self._on_command_processed_listeners = set()
+        self._mdl = set()
+        self._mpl = set()
+        self._cdl = set()
+        self._cpl = set()
         self.load_plugins()
         self.activate_plugins()
 
@@ -118,29 +98,29 @@ class SimpleBot(DeltaBot):
         with open(self._cfg.path, 'w') as fd:
             self._cfg.write(fd)
 
-    def add_on_message_detected_listener(self, listener):
-        self._on_message_detected_listeners.add(listener)
+    def add_on_msg_detected_listener(self, listener):
+        self._mdl.add(listener)
 
-    def add_on_message_processed_listener(self, listener):
-        self._on_message_processed_listeners.add(listener)
+    def add_on_msg_processed_listener(self, listener):
+        self._mpl.add(listener)
 
-    def remove_on_message_detected_listener(self, listener):
-        self._on_message_detected_listeners.discard(listener)
+    def remove_on_msg_detected_listener(self, listener):
+        self._mdl.discard(listener)
 
-    def remove_on_message_processed_listener(self, listener):
-        self._on_message_processed_listeners.discard(listener)
+    def remove_on_msg_processed_listener(self, listener):
+        self._mpl.discard(listener)
 
-    def add_on_command_detected_listener(self, listener):
-        self._on_command_detected_listeners.add(listener)
+    def add_on_cmd_detected_listener(self, listener):
+        self._cdl.add(listener)
 
-    def add_on_command_processed_listener(self, listener):
-        self._on_command_processed_listeners.add(listener)
+    def add_on_cmd_processed_listener(self, listener):
+        self._cpl.add(listener)
 
-    def remove_on_command_detected_listener(self, listener):
-        self._on_command_detected_listeners.discard(listener)
+    def remove_on_cmd_detected_listener(self, listener):
+        self._cdl.discard(listener)
 
-    def remove_on_command_processed_listener(self, listener):
-        self._on_command_processed_listeners.discard(listener)
+    def remove_on_cmd_processed_listener(self, listener):
+        self._cpl.discard(listener)
 
     def on_message_delivered(self, msg):
         self.account.delete_messages((msg,))
@@ -157,9 +137,9 @@ class SimpleBot(DeltaBot):
         if text is None:
             text = msg.text
 
-        for l in self._on_message_detected_listeners:
+        for listener in self._mdl:
             try:
-                text = l.on_message_detected(msg, text)
+                text = listener(msg, text)
                 if text is None:
                     self.logger.debug('Message rejected')
                     self.account.delete_messages((msg,))
@@ -175,9 +155,9 @@ class SimpleBot(DeltaBot):
             except Exception as ex:
                 self.logger.exception(ex)
 
-        for l in self._on_message_processed_listeners:
+        for listener in self._mpl:
             try:
-                l.on_message_processed(msg, processed)
+                listener(msg, processed)
             except Exception as ex:
                 self.logger.exception(ex)
 
@@ -201,9 +181,9 @@ class SimpleBot(DeltaBot):
             msg.user_agent = 'zhv'
             text = real_cmd
 
-        for l in self._on_command_detected_listeners:
+        for listener in self._cdl:
             try:
-                text = l.on_command_detected(msg, text)
+                text = listener(msg, text)
                 if text is None:
                     self.logger.debug('Command rejected')
                     self.account.delete_messages((msg,))
@@ -226,9 +206,9 @@ class SimpleBot(DeltaBot):
         if not processed:
             self.logger.debug('Message was not processed.')
 
-        for l in self._on_command_processed_listeners:
+        for listener in self._cpl:
             try:
-                l.on_command_processed(msg, processed)
+                listener(msg, processed)
             except Exception as ex:
                 self.logger.exception(ex)
 
