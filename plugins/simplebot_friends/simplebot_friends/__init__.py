@@ -36,14 +36,15 @@ class DeltaFriends(Plugin):
         cls.description = _('Provides a directory of Delta Chat users.')
         cls.commands = [
             ('/friends/join', ['<bio>'],
-             _('Will add you to the list or update your bio, <bio> is up to {} characters of text describing yourself.').format(
+             _('Will add you to the list or update your bio, <bio> is up to {} characters of text describing yourself').format(
                  cls.MAX_BIO_LEN),
              cls.join_cmd),
-            ('/friends/leave', [], _('Will remove you from the DeltaFriends list.'),
+            ('/friends/leave', [], _('Will remove you from the DeltaFriends list'),
              cls.leave_cmd),
             ('/friends/list', [],
-             _('Will return the list of users wanting to make new friends.'), cls.list_cmd),
-            ('/friends/app', [], _('Sends an html app to help you to use the plugin.'), cls.html_cmd)]
+             _('Will return the list of users wanting to make new friends'), cls.list_cmd),
+            ('/friends/me', [], _('Sends your biography'), cls.me_cmd),
+            ('/friends/app', [], _('Sends an html app to help you to use the plugin'), cls.html_cmd)]
         cls.bot.add_commands(cls.commands)
         cls.NOSCRIPT = _(
             'You need a browser with JavaScript support for this page to work correctly.')
@@ -105,3 +106,14 @@ class DeltaFriends(Plugin):
             chat.send_text(_('You was removed from the DeltaFriends list'))
         else:
             chat.send_text(_('You are NOT in the DeltaFriends list'))
+
+    @classmethod
+    def me_cmd(cls, msg, *args):
+        addr = msg.get_sender_contact().addr
+        bio = cls.db.execute(
+            'SELECT bio FROM deltafriends WHERE addr=?', (addr,)).fetchone()
+        if bio is None:
+            bio = _('You have not set a biography')
+        else:
+            bio = '{}:\n{}'.format(addr, bio[0])
+        cls.bot.get_chat(msg).send_text(bio)
