@@ -135,7 +135,7 @@ class SimpleBot(DeltaBot):
     def on_message_delivered(self, msg):
         self.account.delete_messages((msg,))
 
-    def on_message(self, msg):
+    def on_message(self, msg, text=None):
         self.logger.debug('Received message from {}'.format(
             msg.get_sender_contact().addr,))
 
@@ -144,16 +144,25 @@ class SimpleBot(DeltaBot):
             self.account.delete_messages((msg,))
             return
 
+        if text is None:
+            text = msg.text
+
         for l in self._on_message_detected_listeners:
             try:
-                if not l.on_message_detected(msg):
+                if not l.on_message_detected(msg, text):
                     self.logger.debug('Message rejected by '+plugin.name)
                     self.account.delete_messages((msg,))
                     return
             except Exception as ex:
                 self.logger.exception(ex)
 
-        processed = super().on_message(msg)
+        processed = False
+        for f in self.filters:
+            try:
+                if f(msg, text):
+                    processed = True
+            except Exception as ex:
+                self.logger.exception(ex)
 
         for l in self._on_message_processed_listeners:
             try:
@@ -180,9 +189,10 @@ class SimpleBot(DeltaBot):
         else:
             msg.user_agent = 'zhv'
             text = real_cmd
+
         for l in self._on_command_detected_listeners:
             try:
-                text = l.on_command_detected(msg)
+                text = l.on_command_detected(msg, text)
                 if text is None:
                     self.logger.debug('Command rejected by '+plugin.name)
                     self.account.delete_messages((msg,))
