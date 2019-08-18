@@ -70,7 +70,11 @@ class SimpleBot(DeltaBot):
 
     def __init__(self, basedir):
         super().__init__(basedir)
-        self._load_config(os.path.join(self.basedir, 'simplebot.cfg'))
+
+        self._cfg = configparser.ConfigParser(allow_no_value=True)
+        self._cfg.path = os.path.join(self.basedir, 'simplebot.cfg')
+        self._load_config()
+
         self._on_message_detected_listeners = set()
         self._on_message_processed_listeners = set()
         self._on_command_detected_listeners = set()
@@ -91,22 +95,28 @@ class SimpleBot(DeltaBot):
                 fd.write(html)
             chat.send_file(file_path, mime_type='text/html')
 
-    def _load_config(self, cfg_path):
-        cfg = configparser.ConfigParser(allow_no_value=True)
-        if os.path.exists(cfg_path):
-            cfg.read(cfg_path)
-            botcfg = cfg['simplebot']
-        else:
-            cfg.add_section('simplebot')
-            botcfg = cfg['simplebot']
-        cfg['DEFAULT']['displayname'] = 'SimpleBot🤖'
-        cfg['DEFAULT']['mdns_enabled'] = '0'
-        cfg['DEFAULT']['mvbox_move'] = '1'
-        with open(cfg_path, 'w') as fd:
-            cfg.write(fd)
+    def _load_config(self):
+        if os.path.exists(self._cfg.path):
+            self._cfg.read(self._cfg.path)
+
+        botcfg = self.get_config(__name__)
+        botcfg.setdefault('displayname', 'SimpleBot🤖')
+        botcfg.setdefault('mdns_enabled', '0')
+        botcfg.setdefault('mvbox_move', '1')
+        self.save_config()
+
         self.set_name(botcfg['displayname'])
         self.account.set_config('mdns_enabled', botcfg['mdns_enabled'])
         self.account.set_config('mvbox_move', botcfg['mvbox_move'])
+
+    def get_config(self, section):
+        if not self._cfg.has_section(section):
+            self._cfg.add_section(section)
+        return self._cfg[section]
+
+    def save_config(self):
+        with open(self._cfg.path, 'w') as fd:
+            self._cfg.write(fd)
 
     def add_on_message_detected_listener(self, listener):
         self._on_message_detected_listeners.add(listener)
