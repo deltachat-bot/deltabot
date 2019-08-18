@@ -30,8 +30,8 @@ class Helper(Plugin):
         cls.commands = [
             ('/help', [], _('Will send you a list of installed plugins and their help.'), cls.help_cmd)]
         cls.bot.add_commands(cls.commands)
-        cls.bot.add_on_command_processed_listener(cls)
-        cls.bot.add_on_message_processed_listener(cls)
+        cls.bot.add_on_cmd_processed_listener(cls.on_cmd_processed)
+        cls.bot.add_on_msg_processed_listener(cls.on_msg_processed)
 
         cls.NOSCRIPT = _(
             'You need a browser with JavaScript support for this page to work correctly.')
@@ -42,8 +42,8 @@ class Helper(Plugin):
     @classmethod
     def deactivate(cls):
         super().deactivate()
-        cls.bot.remove_on_command_processed_listener(cls)
-        cls.bot.remove_on_message_processed_listener(cls)
+        cls.bot.remove_on_cmd_processed_listener(cls.on_cmd_processed)
+        cls.bot.remove_on_msg_processed_listener(cls.on_msg_processed)
 
     @classmethod
     def help_cmd(cls, msg, text):
@@ -51,16 +51,16 @@ class Helper(Plugin):
         cls.send_html_help(chat, msg.user_agent)
 
     @classmethod
-    def on_command_processed(cls, msg, processed):
+    def on_cmd_processed(cls, msg, processed):
         chat = cls.bot.get_chat(msg)
         if not processed:
             chat.send_text(
                 _('Unknow command. Please send /help to learn how to use me.'))
 
     @classmethod
-    def on_message_processed(cls, msg, processed):
+    def on_msg_processed(cls, msg, processed):
         if not cls.bot.is_group(cls.bot.get_chat(msg)):
-            cls.on_command_processed(msg, processed)
+            cls.on_msg_processed(msg, processed)
 
     @classmethod
     def send_html_help(cls, chat, user_agent):
