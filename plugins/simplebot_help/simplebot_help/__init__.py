@@ -15,6 +15,7 @@ class Helper(Plugin):
     def activate(cls, bot):
         super().activate(bot)
         cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name)
+
         env = Environment(
             loader=PackageLoader(__name__, 'templates'),
             autoescape=select_autoescape(['html', 'xml'])
@@ -24,17 +25,25 @@ class Helper(Plugin):
         lang = gettext.translation('simplebot_help', localedir=localedir,
                                    languages=[bot.locale], fallback=True)
         lang.install()
+
         cls.description = _('Provides help.')
         cls.commands = [
             ('/help', [], _('Will send you a list of installed plugins and their help.'), cls.help_cmd)]
         cls.bot.add_commands(cls.commands)
         cls.bot.add_on_command_processed_listener(cls)
         cls.bot.add_on_message_processed_listener(cls)
+
         cls.NOSCRIPT = _(
             'You need a browser with JavaScript support for this page to work correctly.')
         cls.MORE = _('More')
         cls.LESS = _('Less')
         cls.USE = _('Use')
+
+    @classmethod
+    def deactivate(cls):
+        super().deactivate()
+        cls.bot.remove_on_command_processed_listener(cls)
+        cls.bot.remove_on_message_processed_listener(cls)
 
     @classmethod
     def help_cmd(cls, msg, text):
