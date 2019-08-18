@@ -14,8 +14,6 @@ EQUAL_TOKEN = 'simplebot_e_token'
 AMP_TOKEN = 'simplebot_a_token'
 HEADERS = {
     'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
-MAX_SIZE_MB = 5
-MAX_SIZE = MAX_SIZE_MB*1024**2
 
 
 class WebGrabber(Plugin):
@@ -26,15 +24,23 @@ class WebGrabber(Plugin):
     @classmethod
     def activate(cls, bot):
         super().activate(bot)
+
+        cls.cfg = cls.bot.get_config(__name__)
+        if not cls.cfg.get('max-size'):
+            cls.cfg['max-size'] = '5242880'
+            cls.bot.save_config()
+
         cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name)
         cls.env = Environment(
             loader=PackageLoader(__name__, 'templates'),
             autoescape=select_autoescape(['html', 'xml'])
         )
+
         localedir = os.path.join(os.path.dirname(__file__), 'locale')
         lang = gettext.translation('simplebot_webgrabber', localedir=localedir,
                                    languages=[bot.locale], fallback=True)
         lang.install()
+
         cls.description = _('Access the web using DeltaChat.')
         cls.commands = [
             ('/ddg', ['<text>'], _('Search in DuckDuckGo'), cls.ddg_cmd),
@@ -43,6 +49,7 @@ class WebGrabber(Plugin):
             ('/web', ['<url>'], _('Get a webpage or file'), cls.web_cmd),
             ('/web/app', [], _('Sends an html app to help you to use the plugin.'), cls.app_cmd)]
         cls.bot.add_commands(cls.commands)
+
         cls.NOSCRIPT = _(
             'You need a browser with JavaScript support for this page to work correctly.')
 
@@ -123,9 +130,10 @@ class WebGrabber(Plugin):
                     cls.bot.send_html(
                         chat, str(soup), cls.TEMP_FILE, user_agent)
                 else:
-                    chunks = r.iter_content(chunk_size=MAX_SIZE)
+                    max_size = cls.cfg.getint('max-size')
+                    chunks = r.iter_content(chunk_size=max_size)
                     chunk = chunks.__next__()
-                    if len(chunk) < MAX_SIZE:
+                    if len(chunk) < max_size:
                         d = r.headers.get('content-disposition', None)
                         if d is not None:
                             fname = re.findall(
@@ -146,8 +154,8 @@ class WebGrabber(Plugin):
                         chat.send_file(fpath)
                     else:
                         chat.send_text(
-                            _('Only files smaller than {}MB are allowed').format(MAX_SIZE_MB))
-        except Exception as ex:      # TODO: too much generic
+                            _('Only files smaller than {} Bytes are allowed').format(max_size))
+        except Exception as ex:      # TODO: too much generic, change this
             cls.bot.logger.exception(ex)
             chat.send_text(_('Falied to get url:\n{}').format(url))
 
