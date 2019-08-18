@@ -149,8 +149,9 @@ class SimpleBot(DeltaBot):
 
         for l in self._on_message_detected_listeners:
             try:
-                if not l.on_message_detected(msg, text):
-                    self.logger.debug('Message rejected by '+plugin.name)
+                text = l.on_message_detected(msg, text)
+                if text is None:
+                    self.logger.debug('Message rejected')
                     self.account.delete_messages((msg,))
                     return
             except Exception as ex:
@@ -194,7 +195,7 @@ class SimpleBot(DeltaBot):
             try:
                 text = l.on_command_detected(msg, text)
                 if text is None:
-                    self.logger.debug('Command rejected by '+plugin.name)
+                    self.logger.debug('Command rejected')
                     self.account.delete_messages((msg,))
                     return
             except Exception as ex:
