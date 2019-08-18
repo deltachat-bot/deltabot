@@ -244,9 +244,9 @@ class GroupMaster(Plugin):
         try:
             group_id = arg.split()[0]
             text = arg[len(group_id):].strip()
-            group_id = int(group_id.strip(cls.DELTA_URL).split('-').pop())
             if not text:
-                raise ValueError
+                raise ValueError('Missing text argument')
+            group_id = int(group_id.strip(cls.DELTA_URL).split('-').pop())
         except (ValueError, IndexError) as err:
             cls.bot.logger.exception(err)
             chat = cls.bot.get_chat(msg)
@@ -256,6 +256,8 @@ class GroupMaster(Plugin):
         for g in cls.get_groups():
             if g.id == group_id and sender in g.get_contacts():
                 g.send_text('{}:\n{}'.format(sender.addr, text))
+                if text.startswith('/'):
+                    cls.bot.on_command(msg, text)
                 break
 
     @classmethod
