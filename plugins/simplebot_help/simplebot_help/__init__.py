@@ -60,7 +60,7 @@ class Helper(Plugin):
     @classmethod
     def on_msg_processed(cls, msg, processed):
         if not cls.bot.is_group(cls.bot.get_chat(msg)):
-            cls.on_msg_processed(msg, processed)
+            cls.on_cmd_processed(msg, processed)
 
     @classmethod
     def send_html_help(cls, chat, user_agent):
