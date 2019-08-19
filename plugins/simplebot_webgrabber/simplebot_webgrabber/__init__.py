@@ -154,8 +154,7 @@ class WebGrabber(Plugin):
                                     fname += '.jpg'
                                 elif 'image/gif' in r.headers['content-type']:
                                     fname += '.gif'
-                        fpath = os.path.join(
-                            cls.bot.basedir, 'account.db-blobs', fname)
+                        fpath = os.path.join(cls.bot.get_blobdir(), fname)
                         with open(fpath, 'wb') as fd:
                             fd.write(chunks)
                         chat.send_file(fpath)

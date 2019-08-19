@@ -14,7 +14,6 @@ class XKCD(Plugin):
     @classmethod
     def activate(cls, bot):
         super().activate(bot)
-        cls.blobsdir = os.path.join(cls.bot.basedir, 'account.db-blobs')
 
         localedir = os.path.join(os.path.dirname(__file__), 'locale')
         lang = gettext.translation('simplebot_xkcd', localedir=localedir,
@@ -30,9 +29,9 @@ class XKCD(Plugin):
     @classmethod
     def xkcd_cmd(cls, msg, num):
         comic = xkcd.getComic(int(num)) if num else xkcd.getRandomComic()
-        cls.bot.get_chat(msg).send_image(comic.download(cls.blobsdir))
+        cls.bot.get_chat(msg).send_image(comic.download(cls.bot.get_blobdir()))
 
     @classmethod
     def latest_cmd(cls, msg, args):
         comic = xkcd.getLatestComic()
-        cls.bot.get_chat(msg).send_image(comic.download(cls.blobsdir))
+        cls.bot.get_chat(msg).send_image(comic.download(cls.bot.get_blobdir()))

@@ -31,6 +31,9 @@ class DeltaBot:
         self.account.stop_threads()
         self.logger.info('Bot configured successfully!')
 
+    def get_blobdir(self):
+        return self.account.get_blobdir()
+
     def set_name(self, name):
         self.account.set_config('displayname', name)
 
