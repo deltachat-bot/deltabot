@@ -152,8 +152,12 @@ class SimpleBot(DeltaBot):
             try:
                 if f(msg, text):
                     processed = True
+                    self.logger.debug('Message processed')
             except Exception as ex:
                 self.logger.exception(ex)
+
+        if not processed:
+            self.logger.debug('Message was not processed')
 
         for listener in self._mpl:
             try:
@@ -197,6 +201,7 @@ class SimpleBot(DeltaBot):
                 try:
                     self.commands[cmd][-1](msg, args)
                     processed = True
+                    self.logger.debug('Command processed: {}'.format(cmd))
                     break
                 except Exception as ex:
                     self.logger.exception(ex)
@@ -204,7 +209,7 @@ class SimpleBot(DeltaBot):
             processed = False
 
         if not processed:
-            self.logger.debug('Message was not processed.')
+            self.logger.debug('Command was not processed')
 
         for listener in self._cpl:
             try:
