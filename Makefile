@@ -1,5 +1,5 @@
 .PHONY: all
-all: simplebot friends getdelta groupmaster help tictactoe webgrabber wikiquote xkcd admin
+all: simplebot friends getdelta groupmaster help tictactoe webgrabber wikiquote xkcd admin shortcuts
 
 .PHONY: simplebot
 simplebot:
@@ -44,3 +44,7 @@ xkcd:
 .PHONY: admin
 admin:
 	echo y | pip uninstall simplebot_admin; pip install plugins/simplebot_admin
+
+.PHONY: shortcuts
+shortcuts:
+	echo y | pip uninstall simplebot_shortcuts; pip install plugins/simplebot_shortcuts
