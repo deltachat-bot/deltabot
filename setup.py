@@ -35,7 +35,7 @@ setup(
         simplebot=simplebot.cmdline:bot_main
     ''',
     python_requires='>=3.5',
-    install_requires=['click>=6.0', 'deltachat>=0.600.0'],
+    install_requires=['click>=6.0', 'deltachat'],
     include_package_data=True,
     zip_safe=False,
 )
