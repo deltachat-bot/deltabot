@@ -123,7 +123,7 @@ class Admin(Plugin):
             messages += len(c.get_messages())
         contacts = len(cls.bot.account.get_contacts())
         # TODO: get basedir size
-        chat.send_text(_('Bot stats:\nGroups: {}\nPrivate Chats: {}\nContacts: {}\nMessages: {}').format(
+        chat.send_text(_('Bot stats:\n\nGroups: {}\nPrivate Chats: {}\nContacts: {}\nMessages: {}').format(
             groups, private, contacts, messages))
 
     @classmethod
