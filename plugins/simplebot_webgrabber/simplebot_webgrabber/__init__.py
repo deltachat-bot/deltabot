@@ -131,10 +131,17 @@ class WebGrabber(Plugin):
                         chat, str(soup), cls.TEMP_FILE, user_agent)
                 else:
                     max_size = cls.cfg.getint('max-size')
-                    chunks = r.iter_content(chunk_size=max_size)
-                    chunk = chunks.__next__()
-                    if len(chunk) < max_size:
-                        d = r.headers.get('content-disposition', None)
+                    chunks = b''
+                    size = 0
+                    for chunk in r.iter_content(chunk_size=10240):
+                        chunks += chunk
+                        size += len(chunk)
+                        if size > max_size:
+                            chat.send_text(
+                                _('Only files smaller than {} Bytes are allowed').format(max_size))
+                            return
+                    else:
+                        d = r.headers.get('content-disposition')
                         if d is not None:
                             fname = re.findall(
                                 "filename=(.+)", d)[0].strip('"')
@@ -150,11 +157,8 @@ class WebGrabber(Plugin):
                         fpath = os.path.join(
                             cls.bot.basedir, 'account.db-blobs', fname)
                         with open(fpath, 'wb') as fd:
-                            fd.write(chunk)
+                            fd.write(chunks)
                         chat.send_file(fpath)
-                    else:
-                        chat.send_text(
-                            _('Only files smaller than {} Bytes are allowed').format(max_size))
         except Exception as ex:      # TODO: too much generic, change this
             cls.bot.logger.exception(ex)
             chat.send_text(_('Falied to get url:\n{}').format(url))
