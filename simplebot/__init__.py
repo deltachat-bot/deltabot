@@ -229,6 +229,6 @@ class SimpleBot(DeltaBot):
     def deactivate_plugins(self):
         for plugin in self.plugins:
             try:
-                plugin.deactivate(self)
+                plugin.deactivate()
             except Exception as ex:
                 self.logger.exception(ex)
