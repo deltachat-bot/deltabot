@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block css %}
+<style>
+  .w3-large{font-size:18px!important}
+  .w3-left{float:left!important}
+  .w3-right{float:right!important}
+  .w3-center{text-align:center !important}
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="feeds">
+  {% for f in feeds %}
+  <div class="rss-card w3-card-2">
+    <header class="w3-container main-color">
+      <h3>{{ f[1] }}</h3>
+    </header>
+    <div class="w3-container">
+      <ul>
+	<li>{{ f[5].split()|length }} 👤</li>
+      </ul>
+      <p>{{ f[2] }}</p>
+      <a class="w3-btn w3-right w3-large main-color" href="mailto:{{ bot_addr }}?body=/rss/subscribe {{ f[0] }}">Subscribe ❯</a>
+    </div>
+    <br>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

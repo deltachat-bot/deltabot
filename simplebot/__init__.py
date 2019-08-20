@@ -122,8 +122,8 @@ class SimpleBot(DeltaBot):
     def remove_on_cmd_processed_listener(self, listener):
         self._cpl.discard(listener)
 
-    def on_message_delivered(self, msg):
-        self.account.delete_messages((msg,))
+    # def on_message_delivered(self, msg):
+    #     self.account.delete_messages((msg,))
 
     def on_message(self, msg, text=None):
         self.logger.debug('Received message from {}'.format(
