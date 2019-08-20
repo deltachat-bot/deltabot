@@ -1,5 +1,5 @@
 .PHONY: all
-all: simplebot friends getdelta groupmaster help tictactoe webgrabber wikiquote xkcd admin shortcuts
+all: simplebot friends getdelta groupmaster help tictactoe translator webgrabber wikiquote xkcd admin shortcuts rss
 
 .PHONY: simplebot
 simplebot:
@@ -25,9 +25,9 @@ help:
 tictactoe:
 	echo y | pip uninstall simplebot_tictactoe; pip install plugins/simplebot_tictactoe
 
-.PHONY: translators
-translators:
-	echo y | pip uninstall simplebot_translators; pip install plugins/simplebot_translators
+.PHONY: translator
+translator:
+	echo y | pip uninstall simplebot_translator; pip install plugins/simplebot_translator
 
 .PHONY: webgrabber
 webgrabber:
@@ -48,3 +48,7 @@ admin:
 .PHONY: shortcuts
 shortcuts:
 	echo y | pip uninstall simplebot_shortcuts; pip install plugins/simplebot_shortcuts
+
+.PHONY: rss
+rss:
+	echo y | pip uninstall simplebot_rss; pip install plugins/simplebot_rss
