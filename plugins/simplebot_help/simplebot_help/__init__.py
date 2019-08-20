@@ -37,7 +37,6 @@ class Helper(Plugin):
             'You need a browser with JavaScript support for this page to work correctly.')
         cls.MORE = _('More')
         cls.LESS = _('Less')
-        cls.USE = _('Use')
 
     @classmethod
     def deactivate(cls):
