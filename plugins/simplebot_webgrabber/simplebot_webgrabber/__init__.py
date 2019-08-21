@@ -195,4 +195,4 @@ class WebGrabber(Plugin):
     @classmethod
     def wttr_cmd(cls, msg, arg):
         cls.send_page(cls.bot.get_chat(
-            msg), "https://wttr.in/{}_0p_lang={}.png".format(quote(arg), cls.bot.locale), msg.user_agent)
+            msg), "https://wttr.in/{}_Fnp_lang={}.png".format(quote(arg), cls.bot.locale), msg.user_agent)
