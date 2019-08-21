@@ -47,7 +47,7 @@ class WebGrabber(Plugin):
             ('/wt', ['<text>'], _('Search in Wiktionary'), cls.wt_cmd),
             ('/w', ['<text>'], _('Search in Wikipedia'), cls.w_cmd),
             ('/wttr', ['<text>'],
-             _('Search weather info from wttr.in'), cls.w_cmd),
+             _('Search weather info from wttr.in'), cls.wttr_cmd),
             ('/web', ['<url>'], _('Get a webpage or file'), cls.web_cmd),
             ('/web/app', [], _('Sends an html app to help you to use the plugin.'), cls.app_cmd)]
         cls.bot.add_commands(cls.commands)
