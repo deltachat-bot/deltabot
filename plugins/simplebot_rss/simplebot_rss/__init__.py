@@ -25,7 +25,7 @@ class RSS(Plugin):
 
         cls.cfg = cls.bot.get_config(__name__)
         if not cls.cfg.get('delay'):
-            cls.cfg['delay'] = '600'
+            cls.cfg['delay'] = '300'
             cls.bot.save_config()
 
         cls.env = Environment(loader=PackageLoader(__name__, 'templates'))
@@ -67,9 +67,10 @@ class RSS(Plugin):
         sender = msg.get_sender_contact()
         if feed is None:  # new feed
             d = feedparser.parse(url)
-            if d.get('bozo') or not d.feed:
+            if d.get('bozo') == '1' or not d.feed:
                 chat = cls.bot.get_chat(msg)
                 chat.send_text(_('Invalid feed url: {}').format(url))
+                return
             title = d.feed.get('title')
             if not title:
                 title = url
@@ -80,6 +81,10 @@ class RSS(Plugin):
             group.send_text(
                 _('Title:\n{}\n\nDescription:\n{}').format(title, description))
             img_link = d.feed.get('image', {'href': None}).get('href')
+            if img_link is None:
+                img_link = d.feed.get('icon')
+            if img_link is not None:
+                img_link = img_link.strip('/')
             cls.set_image(group, img_link)
         elif cls._is_subscribed(sender, feed):  # user is already subscribed
             chat = cls.bot.get_chat(msg)
