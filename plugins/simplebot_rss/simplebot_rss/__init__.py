@@ -80,12 +80,7 @@ class RSS(Plugin):
                            None, None, str(group.id), None))
             group.send_text(
                 _('Title:\n{}\n\nDescription:\n{}').format(title, description))
-            img_link = d.feed.get('image', {'href': None}).get('href')
-            if img_link is None:
-                img_link = d.feed.get('icon')
-            if img_link is not None:
-                img_link = img_link.strip('/')
-            cls.set_image(group, img_link)
+            cls.set_image(group, d)
         elif cls._is_subscribed(sender, feed):  # user is already subscribed
             chat = cls.bot.get_chat(msg)
             chat.send_text(_('You are alredy subscribed to that feed.'))
@@ -98,8 +93,7 @@ class RSS(Plugin):
                 'UPDATE feeds SET chats=? WHERE url=?', (chats, feed[0]))
             group.send_text(
                 _('Title:\n{}\n\nDescription:\n{}').format(feed[1], feed[2]))
-            img_link = d.feed.get('image', {'href': None}).get('href')
-            cls.set_image(group, img_link)
+            cls.set_image(group, d)
             if d.entries and feed[6]:
                 latest = tuple(map(int, feed[6].split()))
                 d.entries = cls.get_old_entries(d, latest)
@@ -201,7 +195,12 @@ class RSS(Plugin):
             return False
 
     @classmethod
-    def set_image(cls, group, img_link):
+    def set_image(cls, group, d):
+        img_link = d.feed.get('icon', d.feed.get('logo'))
+        if img_link is None:
+            img_link = d.feed.get('image', {'href': None}).get('href')
+        if img_link is not None:
+            img_link = img_link.strip('/')
         try:
             if img_link:
                 image = os.path.join(cls.bot.get_blobdir(), 'image.jpg')
