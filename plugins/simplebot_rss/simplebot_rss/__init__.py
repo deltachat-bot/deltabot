@@ -159,6 +159,9 @@ class RSS(Plugin):
                         continue
                     d = feedparser.parse(
                         feed[0], etag=feed[3], modified=feed[4])
+                    if d.get('bozo') == '1':
+                        cls.db.delete(feed[0])
+                        continue
                     if d.entries and feed[6]:
                         latest = tuple(map(int, feed[6].split()))
                         d.entries = cls.get_new_entries(d, latest)
