@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from urllib.parse import quote_plus, unquote_plus
+from urllib.parse import quote_plus, unquote_plus, quote
 import gettext
 import os
 import re
