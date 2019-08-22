@@ -67,7 +67,7 @@ class RSS(Plugin):
         sender = msg.get_sender_contact()
         if feed is None:  # new feed
             d = feedparser.parse(url)
-            if d.get('bozo') == '1' or not d.feed:
+            if d.get('bozo') == 1:
                 chat = cls.bot.get_chat(msg)
                 chat.send_text(_('Invalid feed url: {}').format(url))
                 return
@@ -153,7 +153,14 @@ class RSS(Plugin):
                         continue
                     d = feedparser.parse(
                         feed[0], etag=feed[3], modified=feed[4])
-                    if d.get('bozo') == '1':
+                    if d.get('bozo') == 1:
+                        for gid in feed[5].split():
+                            g = cls.bot.get_chat(int(gid))
+                            members = g.get_contacts()
+                            if me in members and len(members) > 1:
+                                g.send_text(
+                                    'This feed is invalid, please delete this group')
+                                g.remove_contact(cls.bot.get_contact())
                         cls.db.delete(feed[0])
                         continue
                     if d.entries and feed[6]:
