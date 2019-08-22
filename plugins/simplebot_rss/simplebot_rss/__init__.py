@@ -199,6 +199,7 @@ class RSS(Plugin):
                         d = feedparser.parse(
                             feed[0], etag=feed[3], modified=feed[4])
                         if d.get('bozo') == 1:
+                            cls.db.delete(feed[0])
                             for gid in feed[5].split():
                                 g = cls.bot.get_chat(int(gid))
                                 members = g.get_contacts()
@@ -206,7 +207,6 @@ class RSS(Plugin):
                                     g.send_text(
                                         'This feed is invalid, please delete this group')
                                     g.remove_contact(cls.bot.get_contact())
-                            cls.db.delete(feed[0])
                             continue
                         if d.entries and feed[6]:
                             latest = tuple(map(int, feed[6].split()))
