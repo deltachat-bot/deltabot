@@ -6,6 +6,7 @@
   .w3-left{float:left!important}
   .w3-right{float:right!important}
   .w3-center{text-align:center !important}
+  .w3-red,.w3-hover-red:hover{color:#fff !important;background-color:#f44336 !important}
 </style>
 {% endblock %}
 
@@ -22,6 +23,7 @@
 	<li>{{ f[5].split()|length }} 👤</li>
       </ul>
       <p>{{ f[2] }}</p>
+      <a class="w3-btn w3-left w3-large w3-red" href="mailto:{{ bot_addr }}?body=/rss/unsubscribe {{ f[7] }}">❮ Unsubscribe</a>
       <a class="w3-btn w3-right w3-large main-color" href="mailto:{{ bot_addr }}?body=/rss/subscribe {{ f[7] }}">Subscribe ❯</a>
     </div>
     <br>
