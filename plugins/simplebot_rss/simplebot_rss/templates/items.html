@@ -12,11 +12,11 @@
   {% for e in entries %}
   <div class="rss-card w3-card-2">
     <header class="w3-container main-color">
-      <a href="{{ e.link }}"><h3>{{ e.title }}</h3></a>
+      <a href="{{ e.get('link') }}"><h3>{{ e.get('title', 'NO TITLE') }}</h3></a>
     </header>
     <div class="w3-container">
       <h6>{{ e.get('published', '')}}</h6>
-      <p>{{ e.description }}</p>
+      <p>{{ e.get('description', '') }}</p>
     </div>
   </div>
   {% endfor %}

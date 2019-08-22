@@ -103,7 +103,7 @@ class RSS(Plugin):
 
     @classmethod
     def list_cmd(cls, msg, args):
-        feeds = [(quote_plus(f[0]), *f[1:])
+        feeds = [f+(quote_plus(f[0]),)
                  for f in cls.db.execute('SELECT * FROM feeds')]
         template = cls.env.get_template('feeds.html')
         addr = cls.bot.get_address()
