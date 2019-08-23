@@ -123,7 +123,7 @@ class RSS(Plugin):
     def info_cmd(cls, msg, args):
         g = cls.bot.get_chat(msg)
         for f in cls.db.execute('SELECT * FROM feeds'):
-            if g.id in map(int, feed[5].split()):
+            if g.id in map(int, f[5].split()):
                 g.send_text(
                     _('Title:\n{}\nURL:{}\n\nDescription:\n{}').format(f[1], f[0], f[2]))
                 return
