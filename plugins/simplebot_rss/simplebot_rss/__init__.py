@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from threading import Thread, RLock
+from threading import Thread, RLock, Event
 from urllib.parse import quote_plus
 from urllib.request import urlretrieve
 import functools
@@ -48,6 +48,7 @@ class RSS(Plugin):
         cls.db = DBManager(db_path)
 
         cls.worker = Thread(target=cls.check_feeds)
+        cls.worker.deactivated = Event()
         cls.worker.start()
 
         cls.description = _('Subscribe to RSS and Atom links.')
@@ -66,7 +67,8 @@ class RSS(Plugin):
     @classmethod
     def deactivate(cls):
         super().deactivate()
-        # TODO: stop threads
+        cls.worker.deactivated.set()
+        cls.worker.join()
         cls.db.close()
 
     @classmethod
@@ -198,13 +200,15 @@ class RSS(Plugin):
     @classmethod
     def check_feeds(cls):
         while True:
-            # TODO: check if must stop
+            if cls.worker.deactivated.is_set():
+                return
             with cls.db.lock:
                 feeds = cls.db.execute('SELECT * FROM feeds')
                 if feeds:
                     me = cls.bot.get_contact()
                     for feed in feeds:
-                        # TODO: check if must stop
+                        if cls.worker.deactivated.is_set():
+                            return
                         if not feed[5].strip():
                             cls.db.delete(feed[0])
                             continue
@@ -238,7 +242,7 @@ class RSS(Plugin):
                                 latest, feed[0])
                         cls.db.execute(
                             'UPDATE feeds SET etag=?, modified=?, latest=? WHERE url=?', args)
-            time.sleep(cls.cfg.getint('delay'))  # TODO: check if must stop
+            cls.worker.deactivated.wait(cls.cfg.getint('delay'))
 
     @classmethod
     def _is_subscribed(cls, contact, feed):
