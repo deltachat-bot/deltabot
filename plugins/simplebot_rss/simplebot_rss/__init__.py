@@ -58,6 +58,8 @@ class RSS(Plugin):
              _('Unsubscribe you from the given feed'), cls.unsubscribe_cmd),
             ('/rss/list', [],
              _('List feeds users are subscribed'), cls.list_cmd),
+            ('/rss/info', [],
+             _('Send this on a feed group to see the feed info'), cls.info_cmd),
         ]
         cls.bot.add_commands(cls.commands)
 
@@ -93,7 +95,7 @@ class RSS(Plugin):
             cls.db.insert((url, title, description,
                            None, None, str(group.id), None))
             group.send_text(
-                _('Title:\n{}\n\nDescription:\n{}').format(title, description))
+                _('Title:\n{}\nURL:{}\n\nDescription:\n{}').format(title, url, description))
             cls.set_image(group, d)
         elif cls._is_subscribed(sender, feed):  # user is already subscribed
             chat = cls.bot.get_chat(msg)
@@ -114,6 +116,16 @@ class RSS(Plugin):
                 html = cls.env.get_template('items.html').render(
                     plugin=cls, title=feed[1], entries=d.entries[-100:])
                 cls.bot.send_html(group, html, cls.temp_file, msg.user_agent)
+
+    @classmethod
+    def info_cmd(cls, msg, args):
+        g = cls.get_chat(msg)
+        for f in cls.db.execute('SELECT * FROM feeds'):
+            if g.id in map(int, feed[5].split()):
+                g.send_text(
+                    _('Title:\n{}\nURL:{}\n\nDescription:\n{}').format(f[1], f[0], f[2]))
+                return
+        g.send_text(_('This is not a feed group.'))
 
     @classmethod
     def list_cmd(cls, msg, args):
