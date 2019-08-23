@@ -97,7 +97,7 @@ class RSS(Plugin):
             cls.db.insert((url, title, description,
                            None, None, str(group.id), None))
             group.send_text(
-                _('Title:\n{}\nURL:{}\n\nDescription:\n{}').format(title, url, description))
+                _('Title:\n{}\n\nURL:\n{}\n\nDescription:\n{}').format(title, url, description))
             cls.set_image(group, d)
         elif cls._is_subscribed(sender, feed):  # user is already subscribed
             chat = cls.bot.get_chat(msg)
@@ -125,7 +125,7 @@ class RSS(Plugin):
         for f in cls.db.execute('SELECT * FROM feeds'):
             if g.id in map(int, f[5].split()):
                 g.send_text(
-                    _('Title:\n{}\nURL:{}\n\nDescription:\n{}').format(f[1], f[0], f[2]))
+                    _('Title:\n{}\n\nURL:\n{}\n\nDescription:\n{}').format(f[1], f[0], f[2]))
                 return
         g.send_text(_('This is not a feed group.'))
 
