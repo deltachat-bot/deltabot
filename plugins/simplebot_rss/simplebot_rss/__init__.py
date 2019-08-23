@@ -198,20 +198,10 @@ class RSS(Plugin):
                             continue
                         d = feedparser.parse(
                             feed[0], etag=feed[3], modified=feed[4])
-                        if d.get('bozo') == 1:
-                            cls.db.delete(feed[0])
-                            for gid in feed[5].split():
-                                g = cls.bot.get_chat(int(gid))
-                                members = g.get_contacts()
-                                if me in members and len(members) > 1:
-                                    g.send_text(
-                                        'This feed is invalid, please delete this group')
-                                    g.remove_contact(cls.bot.get_contact())
-                            continue
-                        if d.entries and feed[6]:
+                        if d.get('entries') and feed[6]:
                             latest = tuple(map(int, feed[6].split()))
                             d.entries = cls.get_new_entries(d, latest)
-                        if not d.entries:
+                        if not d.get('entries'):
                             continue
                         html = cls.env.get_template('items.html').render(
                             plugin=cls, title=feed[1], entries=d.entries[-100:])
