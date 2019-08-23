@@ -214,10 +214,10 @@ class RSS(Plugin):
                             continue
                         d = feedparser.parse(
                             feed[0], etag=feed[3], modified=feed[4])
-                        if d.get('entries') and feed[6]:
+                        if d.entries and feed[6]:
                             latest = tuple(map(int, feed[6].split()))
                             d.entries = cls.get_new_entries(d, latest)
-                        if not d.get('entries'):
+                        if not d.entries:
                             continue
                         html = cls.env.get_template('items.html').render(
                             plugin=cls, title=feed[1], entries=d.entries[-100:])

@@ -60,7 +60,13 @@ class SimpleBot(DeltaBot):
         self._cdl = set()
         self._cpl = set()
         self.load_plugins()
+
+    def start(self):
         self.activate_plugins()
+        try:
+            super().start()
+        finally:
+            self.deactivate_plugins()
 
     def send_html(self, chat, html, basename, user_agent):
         if user_agent == 'zhv':
