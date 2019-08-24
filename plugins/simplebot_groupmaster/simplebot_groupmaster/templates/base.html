@@ -25,7 +25,7 @@
   </head>
   <body>
     <div id="topbar" class="w3-container main-color">
-      <h1>{{ plugin.name }}</h1>
+      <h1>{% block header %}{{ plugin.name }}{% endblock %}</h1>
     </div>
     <noscript><div class="w3-container w3-section w3-red"><p>{{ plugin.NOSCRIPT }}<p></div></noscript>
     <div id="content" style="display: none;">

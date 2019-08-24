@@ -10,6 +10,10 @@
 </style>
 {% endblock %}
 
+{% block header %}
+{{ '{} ({})'.format(plugin.name, feeds|length) }}
+{% endblock %}
+
 {% block content %}
 <div id="feeds">
   {% for f in feeds %}

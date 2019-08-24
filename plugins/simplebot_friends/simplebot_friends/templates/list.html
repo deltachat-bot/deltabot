@@ -17,6 +17,10 @@
 </style>
 {% endblock %}
 
+{% block header %}
+{{ '{} ({})'.format(plugin.name, friends|length) }}
+{% endblock %}
+
 {% block content %}
 {% for f in friends %}
 <div class="user-card w3-card-2">
