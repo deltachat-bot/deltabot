@@ -1,5 +1,5 @@
 .PHONY: all
-all: simplebot friends getdelta groupmaster help tictactoe translator webgrabber wikiquote xkcd admin shortcuts rss
+all: simplebot friends groupmaster help tictactoe translator webgrabber wikiquote xkcd admin shortcuts rss
 
 .PHONY: simplebot
 simplebot:
@@ -8,10 +8,6 @@ simplebot:
 .PHONY: friends
 friends:
 	echo y | pip uninstall simplebot_friends; pip install plugins/simplebot_friends
-
-.PHONY: getdelta
-getdelta:
-	echo y | pip uninstall simplebot_getdelta; pip install plugins/simplebot_getdelta
 
 .PHONY: groupmaster
 groupmaster:
