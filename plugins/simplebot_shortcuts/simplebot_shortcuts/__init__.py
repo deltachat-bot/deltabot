@@ -92,7 +92,7 @@ class Shortcuts(Plugin):
     @classmethod
     def process_shortcuts(cls, msg, text):
         addr = msg.get_sender_contact().addr
-        shortcut = text.strip()
+        shortcut = text.strip().lower()
         cmd = cls.db.execute(
             'SELECT cmd FROM shortcuts WHERE addr=? and shortcut=?', (addr, shortcut)).fetchone()
         if cmd is None:
