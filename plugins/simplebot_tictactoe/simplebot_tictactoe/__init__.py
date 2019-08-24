@@ -29,21 +29,19 @@ class TicTacToe(Plugin):
     def activate(cls, bot):
         super().activate(bot)
         cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name)
+
         cls.env = Environment(
             loader=PackageLoader(__name__, 'templates'),
             autoescape=select_autoescape(['html', 'xml'])
         )
-        cls.db = sqlite3.connect(
-            os.path.join(cls.bot.basedir, 'tictactoe.db'))
-        with cls.db:
-            cls.db.execute('''CREATE TABLE IF NOT EXISTS games
-                                (players TEXT NOT NULL, gid INTEGER NOT NULL, status INTEGER NOT NULL,
-                                 turn TEXT NOT NULL,  board TEXT NOT NULL, x TEXT NOT NULL, PRIMARY KEY(players))''')
+
+        cls.db = DBManager(os.path.join(cls.bot.basedir, 'tictactoe.db'))
 
         localedir = os.path.join(os.path.dirname(__file__), 'locale')
         lang = gettext.translation('simplebot_echo', localedir=localedir,
                                    languages=[bot.locale], fallback=True)
         lang.install()
+
         cls.description = _('Tic Tac Toe game to play with friends')
         cls.commands = [
             ('/toe/play', ['[email]'],
@@ -61,15 +59,15 @@ class TicTacToe(Plugin):
         cls.db.close()
 
     @classmethod
-    def run_turn(cls, chat, game):
+    def run_turn(cls, chat, players):
+        game = cls.db.execute(
+            'SELECT * FROM games WHERE players=?', (players,), 'one')
         b = Board(game[BOARD])
         p1, p2 = game[PLAYERS].split(',')
         winner = b.get_winner()
         if winner is not None:
-            game[STATUS] = cls.FINISHED_STATUS
-            with cls.db:
-                cls.db.execute(
-                    'REPLACE INTO games VALUES (?,?,?,?,?,?)', game)
+            cls.db.execute('UPDATE games SET status=? WHERE players=?',
+                           (cls.FINISHED_STATUS, game[PLAYERS]))
             if winner == '-':
                 chat.send_text(
                     _('Game over.\nIt is a draw!\n\n{}').format(b.pretty_str()))
@@ -99,13 +97,12 @@ class TicTacToe(Plugin):
                 return
             players = ','.join(sorted([p1, p2]))
             game = cls.db.execute(
-                'SELECT * FROM games WHERE players=?', (players,)).fetchone()
+                'SELECT * FROM games WHERE players=?', (players,), 'one')
             if game is None:  # first time playing with p2
                 chat = cls.bot.create_group(
                     '❎ {} Vs {} [{}]'.format(p1, p2, cls.name), [msg.get_sender_contact(), p2])
-                with cls.db:
-                    cls.db.execute('INSERT INTO games VALUES (?,?,?,?,?,?)',
-                                   (players, chat.id, cls.INVITED_STATUS, p1, str(Board()), p1))
+                cls.db.insert(
+                    (players, chat.id, cls.INVITED_STATUS, p1, str(Board()), p1))
                 chat.send_text(_('Hello {},\nYou had been invited by {} to play {}, to start playing send a message in this group with the command:\n{}').format(
                     p2, p1, cls.name, cls.commands[0][0]))
             else:
@@ -116,22 +113,18 @@ class TicTacToe(Plugin):
             p2 = msg.get_sender_contact().addr
             chat = cls.bot.get_chat(msg)
             game = cls.db.execute(
-                'SELECT * FROM games WHERE gid=?', (chat.id,)).fetchone()
-            # this is not your game group
+                'SELECT * FROM games WHERE gid=?', (chat.id,), 'one')
             orig_p2 = [p for p in game[PLAYERS].split(',') if p != game[X]][0]
             if game is None or p2 != orig_p2:
                 chat.send_text(
                     _('You are not allowed to do that, if you are trying to invite a new friend, please provide the email of the friend you want to play with'))
             # accept the invitation and start playing
             elif game[STATUS] == cls.INVITED_STATUS:
-                game = list(game)
-                game[STATUS] = cls.PLAYING_STATUS
-                with cls.db:
-                    cls.db.execute(
-                        'REPLACE INTO games VALUES (?,?,?,?,?,?)', game)
+                cls.db.execute('UPDATE games SET status=? WHERE players=?',
+                               (cls.PLAYING_STATUS, game[PLAYERS]))
                 chat = cls.bot.get_chat(msg)
                 chat.send_text(_('Game started!'))
-                cls.run_turn(chat, game)
+                cls.run_turn(chat, game[PLAYERS])
             else:  # p2 already accepted the game
                 chat = cls.bot.get_chat(msg)
                 chat.send_text(
@@ -142,19 +135,16 @@ class TicTacToe(Plugin):
         chat = cls.bot.get_chat(msg)
         loser = msg.get_sender_contact().addr
         game = cls.db.execute(
-            'SELECT * FROM games WHERE gid=?', (chat.id,)).fetchone()
+            'SELECT * FROM games WHERE gid=?', (chat.id,), 'one')
         # this is not your game group
         if game is None or loser not in game[PLAYERS].split(','):
             chat.send_text(
                 _('This is not your game group, please send that command in the game group you want to surrender'))
         elif game[STATUS] != cls.FINISHED_STATUS:
-            game = list(game)
             p1, p2 = game[PLAYERS].split(',')
-            game[STATUS] = cls.FINISHED_STATUS
-            game[TURN] = game[X] = p1 if p1 != loser else p2
-            with cls.db:
-                cls.db.execute(
-                    'REPLACE INTO games VALUES (?,?,?,?,?,?)', game)
+            x = p1 if p1 != loser else p2
+            cls.db.execute('UPDATE games SET status=?, turn=?, x=? WHERE players=?',
+                           (cls.FINISHED_STATUS, x, x, game[PLAYERS]))
             chat.send_text(_('Game Over.\n{} Wins!!!').format(game[TURN]))
         else:
             chat.send_text(
@@ -165,23 +155,19 @@ class TicTacToe(Plugin):
         chat = cls.bot.get_chat(msg)
         sender = msg.get_sender_contact().addr
         game = cls.db.execute(
-            'SELECT * FROM games WHERE gid=?', (chat.id,)).fetchone()
+            'SELECT * FROM games WHERE gid=?', (chat.id,), 'one')
         # this is not your game group
         if game is None or sender not in game[PLAYERS].split(','):
             chat.send_text(
                 _('This is not your game group, please send that command in the game group you want to start a new game'))
         elif game[STATUS] == cls.FINISHED_STATUS:
-            game = list(game)
             p1, p2 = game[PLAYERS].split(',')
-            game[STATUS] = cls.PLAYING_STATUS
-            game[TURN] = game[X] = p1 if p1 != game[X] else p2
-            game[BOARD] = str(Board())
-            with cls.db:
-                cls.db.execute(
-                    'REPLACE INTO games VALUES (?,?,?,?,?,?)', game)
+            x = p1 if p1 != game[X] else p2
+            cls.db.execute('UPDATE games SET status=?, turn=?, x=?, board=? WHERE players=?',
+                           (cls.PLAYING_STATUS, x, x, str(Board()), game[PLAYERS]))
             chat = cls.bot.get_chat(msg)
             chat.send_text(_('Game started!'))
-            cls.run_turn(chat, game)
+            cls.run_turn(chat, game[PLAYERS])
         else:
             chat.send_text(
                 _('There are a game running already, to start a new one first end this game or surrender'))
@@ -191,21 +177,18 @@ class TicTacToe(Plugin):
         chat_id, pos = map(int, arg.split())
         player = msg.get_sender_contact().addr
         game = cls.db.execute(
-            'SELECT * FROM games WHERE gid=?', (chat_id,)).fetchone()
+            'SELECT * FROM games WHERE gid=?', (chat_id,), 'one')
         if game is not None and player == game[TURN]:
-            game = list(game)
             p1, p2 = game[PLAYERS].split(',')
             board = Board(game[BOARD])
             sign = 'x' if player == game[X] else 'o'
             try:
                 board.move(sign, pos)
-                game[TURN] = p1 if p1 != player else p2
-                game[BOARD] = str(board)
-                with cls.db:
-                    cls.db.execute(
-                        'REPLACE INTO games VALUES (?,?,?,?,?,?)', game)
+                turn = p1 if p1 != player else p2
+                cls.db.execute('UPDATE games SET turn=?, board=? WHERE players=?', (turn, str(
+                    board), game[PLAYERS]))
                 chat = cls.bot.get_chat(chat_id)
-                cls.run_turn(chat, game)
+                cls.run_turn(chat, game[PLAYERS])
             except InvalidMove:
                 chat = cls.bot.get_chat(msg)
                 chat.send_text(_('Invalid move!'))
@@ -227,12 +210,18 @@ class Board:
 
     def get_winner(self):
         b = self.board
-        if b[4] != ' ' and (b[0] == b[4] == b[8] or b[1] == b[4] == b[7] or b[2] == b[4] == b[6] or b[3] == b[4] == b[5]):
-            return b[4]
-        elif b[0] != ' ' and (b[0] == b[1] == b[2] or b[0] == b[3] == b[6]):
-            return b[0]
-        elif b[8] != ' ' and (b[6] == b[7] == b[8] or b[2] == b[5] == b[8]):
-            return b[8]
+        rows = [(b[0], b[4], b[8]),
+                (b[1], b[4], b[7]),
+                (b[2], b[4], b[6]),
+                (b[3], b[4], b[5]),
+                (b[0], b[1], b[2]),
+                (b[0], b[3], b[6]),
+                (b[6], b[7], b[8]),
+                (b[2], b[5], b[8])]
+        if ('x',)*3 in rows:
+            return 'x'
+        elif ('o',)*3 in rows:
+            return 'o'
         elif ' ' not in self.board:
             return '-'
         return None
@@ -253,3 +242,27 @@ class Board:
 class InvalidMove(Exception):
     def __init__(self):
         super().__init__()
+
+
+class DBManager:
+    def __init__(self, db_path):
+        self.db = sqlite3.connect(db_path)
+        self.execute('''CREATE TABLE IF NOT EXISTS games
+                        (players TEXT NOT NULL,
+                         gid INTEGER NOT NULL, 
+                         status INTEGER NOT NULL,
+                         turn TEXT NOT NULL,
+                         board TEXT NOT NULL,
+                         x TEXT NOT NULL,
+                         PRIMARY KEY(players))''')
+
+    def execute(self, statement, args=(), get='all'):
+        with self.db:
+            r = self.db.execute(statement, args)
+            return r.fetchall() if get == 'all' else r.fetchone()
+
+    def insert(self, row):
+        self.execute('INSERT INTO games VALUES (?,?,?,?,?,?)', row)
+
+    def close(self):
+        self.db.close()
