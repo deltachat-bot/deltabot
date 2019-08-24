@@ -30,7 +30,6 @@ class RSS(Plugin):
     @classmethod
     def activate(cls, bot):
         super().activate(bot)
-        cls.temp_file = os.path.join(cls.bot.basedir, cls.name)
 
         cls.cfg = cls.bot.get_config(__name__)
         if not cls.cfg.get('delay'):
@@ -44,7 +43,7 @@ class RSS(Plugin):
                                    languages=[bot.locale], fallback=True)
         lang.install()
 
-        db_path = os.path.join(cls.bot.basedir, 'rss.db')
+        db_path = os.path.join(cls.bot.get_dir(__name__), 'rss.db')
         cls.db = DBManager(db_path)
 
         cls.worker = Thread(target=cls.check_feeds)
@@ -117,7 +116,7 @@ class RSS(Plugin):
                 d.entries = cls.get_old_entries(d, latest)
                 html = cls.env.get_template('items.html').render(
                     plugin=cls, title=feed[1], entries=d.entries[-100:])
-                cls.bot.send_html(group, html, cls.temp_file, msg.user_agent)
+                cls.bot.send_html(group, html, cls.name, msg.user_agent)
 
     @classmethod
     def info_cmd(cls, msg, args):
@@ -138,7 +137,7 @@ class RSS(Plugin):
         addr = cls.bot.get_address()
         html = template.render(plugin=cls, feeds=feeds, bot_addr=addr)
         chat = cls.bot.get_chat(msg)
-        cls.bot.send_html(chat, html, cls.temp_file, msg.user_agent)
+        cls.bot.send_html(chat, html, cls.name, msg.user_agent)
 
     @classmethod
     def unsubscribe_cmd(cls, msg, url):
@@ -221,7 +220,7 @@ class RSS(Plugin):
                             continue
                         html = cls.env.get_template('items.html').render(
                             plugin=cls, title=feed[1], entries=d.entries[-100:])
-                        html_file = cls.temp_file+'.html'
+                        html_file = cls.bot.get_blobpath(cls.name+'.html')
                         with open(html_file, 'w') as fd:
                             fd.write(html)
                         for gid in feed[5].split():

@@ -28,14 +28,14 @@ class TicTacToe(Plugin):
     @classmethod
     def activate(cls, bot):
         super().activate(bot)
-        cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name)
 
         cls.env = Environment(
             loader=PackageLoader(__name__, 'templates'),
             autoescape=select_autoescape(['html', 'xml'])
         )
 
-        cls.db = DBManager(os.path.join(cls.bot.basedir, 'tictactoe.db'))
+        cls.db = DBManager(os.path.join(
+            cls.bot.get_dir(__name__), 'tictactoe.db'))
 
         localedir = os.path.join(os.path.dirname(__file__), 'locale')
         lang = gettext.translation('simplebot_echo', localedir=localedir,
@@ -82,7 +82,7 @@ class TicTacToe(Plugin):
             board = [board[:3], board[3:6], board[6:]]
             html = cls.env.get_template('index.html').render(
                 plugin=cls, bot_addr=bot_addr, gid=chat.id, board=board)
-            cls.bot.send_html(priv_chat, html, cls.TEMP_FILE, msg.user_agent)
+            cls.bot.send_html(priv_chat, html, cls.name, msg.user_agent)
             chat.send_text(
                 _('{} is your turn...\n\n{}').format(game[TURN], b.pretty_str()))
 

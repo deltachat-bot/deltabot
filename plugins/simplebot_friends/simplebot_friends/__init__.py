@@ -18,13 +18,14 @@ class DeltaFriends(Plugin):
     @classmethod
     def activate(cls, bot):
         super().activate(bot)
-        cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name)
+
         cls.env = Environment(
             loader=PackageLoader(__name__, 'templates'),
             autoescape=select_autoescape(['html', 'xml'])
         )
+
         cls.db = sqlite3.connect(os.path.join(
-            cls.bot.basedir, 'deltafriends.db'))
+            cls.bot.get_dir(__name__), 'deltafriends.db'))
         with cls.db:
             cls.db.execute(
                 '''CREATE TABLE IF NOT EXISTS deltafriends (addr TEXT NOT NULL, bio TEXT, PRIMARY KEY(addr))''')
@@ -33,6 +34,7 @@ class DeltaFriends(Plugin):
         lang = gettext.translation('simplebot_friends', localedir=localedir,
                                    languages=[bot.locale], fallback=True)
         lang.install()
+
         cls.description = _('Provides a directory of Delta Chat users.')
         cls.commands = [
             ('/friends/join', ['<bio>'],
@@ -46,6 +48,7 @@ class DeltaFriends(Plugin):
             ('/friends/me', [], _('Sends your biography'), cls.me_cmd),
             ('/friends/app', [], _('Sends an html app to help you to use the plugin'), cls.html_cmd)]
         cls.bot.add_commands(cls.commands)
+
         cls.NOSCRIPT = _(
             'You need a browser with JavaScript support for this page to work correctly.')
         cls.JOIN_BTN = _('Join/Update')
@@ -72,7 +75,7 @@ class DeltaFriends(Plugin):
         html = cls.env.get_template('index.html').render(
             plugin=cls, bot_addr=cls.bot.get_address(), bio=bio)
         chat = cls.bot.get_chat(msg)
-        cls.bot.send_html(chat, html, cls.TEMP_FILE, msg.user_agent)
+        cls.bot.send_html(chat, html, cls.name, msg.user_agent)
 
     @classmethod
     def list_cmd(cls, msg, *args):
@@ -81,7 +84,7 @@ class DeltaFriends(Plugin):
         html = cls.env.get_template('list.html').render(
             plugin=cls, friends=friends)
         chat = cls.bot.get_chat(msg)
-        cls.bot.send_html(chat, html, cls.TEMP_FILE, msg.user_agent)
+        cls.bot.send_html(chat, html, cls.name, msg.user_agent)
 
     @classmethod
     def join_cmd(cls, msg, text):

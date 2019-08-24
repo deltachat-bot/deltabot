@@ -30,7 +30,6 @@ class WebGrabber(Plugin):
             cls.cfg['max-size'] = '5242880'
             cls.bot.save_config()
 
-        cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name)
         cls.env = Environment(
             loader=PackageLoader(__name__, 'templates'),
             autoescape=select_autoescape(['html', 'xml'])
@@ -130,7 +129,7 @@ class WebGrabber(Plugin):
                     t.string = 'var simplebot_url = "{}";'.format(url)+script
                     soup.body.append(t)
                     cls.bot.send_html(
-                        chat, str(soup), cls.TEMP_FILE, user_agent)
+                        chat, str(soup), cls.name, user_agent)
                 else:
                     max_size = cls.cfg.getint('max-size')
                     chunks = b''
@@ -149,14 +148,16 @@ class WebGrabber(Plugin):
                                 "filename=(.+)", d)[0].strip('"')
                         else:
                             fname = r.url.split('/').pop().split('?')[0]
+                            content_type = r.headers.get(
+                                'content-type', '').lower()
                             if '.' not in fname:
-                                if 'image/png' in r.headers['content-type']:
+                                if 'image/png' in content_type:
                                     fname += '.png'
-                                elif 'image/jpeg' in r.headers['content-type']:
+                                elif 'image/jpeg' in content_type:
                                     fname += '.jpg'
-                                elif 'image/gif' in r.headers['content-type']:
+                                elif 'image/gif' in content_type:
                                     fname += '.gif'
-                        fpath = os.path.join(cls.bot.get_blobdir(), fname)
+                        fpath = cls.bot.get_blobpath(fname)
                         with open(fpath, 'wb') as fd:
                             fd.write(chunks)
                         chat.send_file(fpath)
@@ -169,7 +170,7 @@ class WebGrabber(Plugin):
         chat = cls.bot.get_chat(msg)
         template = cls.env.get_template('index.html')
         html = template.render(plugin=cls, bot_addr=cls.bot.get_address())
-        cls.bot.send_html(chat, html, cls.TEMP_FILE, msg.user_agent)
+        cls.bot.send_html(chat, html, cls.name, msg.user_agent)
 
     @classmethod
     def web_cmd(cls, msg, url):

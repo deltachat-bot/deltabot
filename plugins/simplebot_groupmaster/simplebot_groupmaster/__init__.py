@@ -26,14 +26,14 @@ class GroupMaster(Plugin):
     @classmethod
     def activate(cls, bot):
         super().activate(bot)
-        cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name)
 
         cls.env = Environment(
             loader=PackageLoader(__name__, 'templates'),
             autoescape=select_autoescape(['html', 'xml'])
         )
 
-        cls.db = DBManager(os.path.join(cls.bot.basedir, 'groupmaster.db'))
+        cls.db = DBManager(os.path.join(
+            cls.bot.get_dir(__name__), 'groupmaster.db'))
 
         localedir = os.path.join(os.path.dirname(__file__), 'locale')
         lang = gettext.translation('simplebot_groupmaster', localedir=localedir,
@@ -268,7 +268,7 @@ class GroupMaster(Plugin):
         html = template.render(
             plugin=cls, bot_addr=cls.bot.get_address(), groups=groups)
         chat = cls.bot.get_chat(msg)
-        cls.bot.send_html(chat, html, cls.TEMP_FILE, msg.user_agent)
+        cls.bot.send_html(chat, html, cls.name, msg.user_agent)
 
 
 class DBManager:
