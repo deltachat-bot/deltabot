@@ -14,7 +14,6 @@ class Helper(Plugin):
     @classmethod
     def activate(cls, bot):
         super().activate(bot)
-        cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name)
 
         env = Environment(
             loader=PackageLoader(__name__, 'templates'),
@@ -69,4 +68,4 @@ class Helper(Plugin):
         bot_addr = cls.bot.get_address()
         html = cls.template.render(
             plugin=cls, plugins=plugins, bot_addr=bot_addr)
-        cls.bot.send_html(chat, html, cls.TEMP_FILE, user_agent)
+        cls.bot.send_html(chat, html, cls.name, user_agent)

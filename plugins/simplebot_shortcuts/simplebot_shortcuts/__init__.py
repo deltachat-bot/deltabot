@@ -24,7 +24,7 @@ class Shortcuts(Plugin):
                                    languages=[bot.locale], fallback=True)
         lang.install()
 
-        db_path = os.path.join(cls.bot.basedir, 'shortcuts.db')
+        db_path = os.path.join(cls.bot.get_dir(__name__), 'shortcuts.db')
         cls.db = sqlite3.connect(db_path)
         with cls.db:
             cls.db.execute(

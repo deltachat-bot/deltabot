@@ -15,7 +15,7 @@ __version__ = '0.9.0'
 
 
 class Plugin(ABC):
-    """Interface for the bot's  plugins."""
+    """Interface for the bot's plugins."""
 
     name = ''
     description = ''
@@ -70,16 +70,40 @@ class SimpleBot(DeltaBot):
 
     def send_html(self, chat, html, basename, user_agent):
         if user_agent == 'zhv':
-            file_path = basename+'.htmlzip'
+            file_path = self.get_blobpath(basename+'.htmlzip')
             zlib.Z_DEFAULT_COMPRESSION = 9
             with zipfile.ZipFile(file_path, 'w', compression=zipfile.ZIP_DEFLATED) as fd:
                 fd.writestr('index.html', html)
             chat.send_file(file_path)
         else:
-            file_path = basename+'.html'
+            file_path = self.get_blobpath(basename+'.html')
             with open(file_path, 'w') as fd:
                 fd.write(html)
             chat.send_file(file_path, mime_type='text/html')
+        return file_path
+
+    def get_blobpath(self, basename):
+        path = os.path.join(self.get_blobdir(), basename)
+
+        basename = basename.split('.', 1)
+        if len(basename) == 2:
+            basename, extension = basename[0], '.'+basename[1]
+        else:
+            basename, extension = basename[0], ''
+
+        i = 1
+        while os.path.exists(path):
+            path = os.path.join(self.get_blobdir(),
+                                '{}-{}{}'.format(basename, i, extension))
+            i += 1
+
+        return path
+
+    def get_dir(self, plugin_name):
+        pdir = os.path.join(self.basedir, plugin_name)
+        if not os.path.exists(pdir):
+            os.makedirs(pdir)
+        return pdir
 
     def _load_config(self):
         if os.path.exists(self._cfg.path):
