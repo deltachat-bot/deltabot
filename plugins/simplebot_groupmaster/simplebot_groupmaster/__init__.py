@@ -27,19 +27,19 @@ class GroupMaster(Plugin):
     def activate(cls, bot):
         super().activate(bot)
         cls.TEMP_FILE = os.path.join(cls.bot.basedir, cls.name)
+
         cls.env = Environment(
             loader=PackageLoader(__name__, 'templates'),
             autoescape=select_autoescape(['html', 'xml'])
         )
-        cls.db = sqlite3.connect(os.path.join(
-            cls.bot.basedir, 'groupmaster.db'))
-        with cls.db:
-            cls.db.execute(
-                '''CREATE TABLE IF NOT EXISTS groups (id INTEGER NOT NULL, pid TEXT NOT NULL, topic TEXT, status INTEGER,  PRIMARY KEY(id))''')
+
+        cls.db = DBManager(os.path.join(cls.bot.basedir, 'groupmaster.db'))
+
         localedir = os.path.join(os.path.dirname(__file__), 'locale')
         lang = gettext.translation('simplebot_groupmaster', localedir=localedir,
                                    languages=[bot.locale], fallback=True)
         lang.install()
+
         cls.description = _(
             'Extends the capabilities of DeltaChat groups.')
         cls.commands = [
@@ -62,6 +62,7 @@ class GroupMaster(Plugin):
             ('/group/msg', ['<id>', '<msg>'], _(
                 'Will send the given message to the group with the given id.'), cls.msg_cmd)]
         cls.bot.add_commands(cls.commands)
+
         cls.LIST_BTN = _('Groups List')
         cls.JOIN_BTN = _('Join')
         cls.LEAVE_BTN = _('Leave')
@@ -74,14 +75,12 @@ class GroupMaster(Plugin):
     @classmethod
     def get_info(cls, gid):
         info = cls.db.execute(
-            'SELECT pid,topic,status FROM groups WHERE id=?', (gid,)).fetchone()
+            'SELECT pid,topic,status FROM groups WHERE id=?', (gid,), 'one')
         if info is None:
             pid = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits)
                           for i in range(10))
             info = (pid, '', PRIVATE)
-            with cls.db:
-                cls.db.execute(
-                    'INSERT INTO groups VALUES (?,?,?,?)', (gid, info[0], info[1], info[2]))
+            cls.db.insert((gid, info[0], info[1], info[2]))
         return info
 
     @classmethod
@@ -99,51 +98,48 @@ class GroupMaster(Plugin):
     @classmethod
     def id_cmd(cls, msg, arg):
         chat = cls.bot.get_chat(msg)
-        if cls.bot.is_group(msg.chat):
+        if cls.bot.is_group(chat):
             text = _('Not a group.')
         else:
-            pid, topic, status = cls.get_info(msg.chat.id)
+            pid, topic, status = cls.get_info(chat.id)
             if status == PUBLIC:
                 status = _('Group status: {}').format(_('Public'))
-                gid = '{}{}'.format(cls.DELTA_URL, msg.chat.id)
+                gid = '{}{}'.format(cls.DELTA_URL, chat.id)
             else:
                 status = _('Group status: {}').format(_('Private'))
-                gid = '{}{}-{}'.format(cls.DELTA_URL, pid, msg.chat.id)
+                gid = '{}{}-{}'.format(cls.DELTA_URL, pid, chat.id)
             text = status+'\nID: {}'.format(gid)
         chat.send_text(text)
 
     @classmethod
     def public_cmd(cls, msg, arg):
-        pid, topic, status = cls.get_info(msg.chat.id)
-        if status != PUBLIC:
-            with cls.db:
-                cls.db.execute(
-                    'REPLACE INTO groups VALUES (?,?,?,?)', (msg.chat.id, pid, topic, PUBLIC))
         chat = cls.bot.get_chat(msg)
+        status = cls.get_info(chat.id)[2]
+        if status != PUBLIC:
+            cls.db.execute(
+                'UPDATE groups SET status=? WHERE id=?', (PUBLIC, chat.id))
         chat.send_text(_('Group status: {}').format(_('Public')))
 
     @classmethod
     def private_cmd(cls, msg, arg):
-        pid, topic, status = cls.get_info(msg.chat.id)
-        if status != PRIVATE:
-            with cls.db:
-                cls.db.execute(
-                    'REPLACE INTO groups VALUES (?,?,?,?)', (msg.chat.id, pid, topic, PRIVATE))
         chat = cls.bot.get_chat(msg)
+        status = cls.get_info(chat.id)[2]
+        if status != PRIVATE:
+            cls.db.execute(
+                'UPDATE groups SET status=? WHERE id=?', (PRIVATE, chat.id))
         chat.send_text(_('Group status: {}').format(_('Private')))
 
     @classmethod
     def topic_cmd(cls, msg, new_topic):
-        pid, topic, status = cls.get_info(msg.chat.id)
+        chat = cls.bot.get_chat(msg)
+        topic = cls.get_info(chat.id)[1]
         new_topic = ' '.join(new_topic.split())
         if new_topic:
             if len(new_topic) > 250:
                 new_topic = new_topic[:250]+'...'
             topic = new_topic
-            with cls.db:
-                cls.db.execute(
-                    'REPLACE INTO groups VALUES (?,?,?,?)', (msg.chat.id, pid, topic, status))
-        chat = cls.bot.get_chat(msg)
+            cls.db.execute(
+                'UPDATE groups SET topic=? WHERE id=?', (topic, chat.id))
         chat.send_text(_('Topic:\n{}').format(topic))
 
     @classmethod
@@ -163,7 +159,7 @@ class GroupMaster(Plugin):
                         chat.send_text(_('Added to {} [ID:{}]\n\nTopic:\n{}').format(
                             g.get_name(), g.id, topic))
                         return
-                    raise ValueError
+                    raise ValueError('Group is private')
         except (ValueError, IndexError) as err:
             cls.bot.logger.exception(err)
             gid = arg
@@ -176,7 +172,7 @@ class GroupMaster(Plugin):
             if arg:
                 gid = int(arg.strip(cls.DELTA_URL).split('-').pop())
             else:
-                gid = msg.chat.id
+                gid = chat.id
             for g in cls.get_groups():
                 if g.id == gid and msg.get_sender_contact() in g.get_contacts():
                     g.remove_contact(msg.get_sender_contact())
@@ -273,3 +269,28 @@ class GroupMaster(Plugin):
             plugin=cls, bot_addr=cls.bot.get_address(), groups=groups)
         chat = cls.bot.get_chat(msg)
         cls.bot.send_html(chat, html, cls.TEMP_FILE, msg.user_agent)
+
+
+class DBManager:
+    def __init__(self, db_path):
+        self.db = sqlite3.connect(db_path)
+        self.execute('''CREATE TABLE IF NOT EXISTS groups
+                        (id INTEGER NOT NULL,
+                         pid TEXT NOT NULL,
+                         topic TEXT,
+                         status INTEGER,
+                         PRIMARY KEY(id))''')
+
+    def execute(self, statement, args=(), get='all'):
+        with self.db:
+            r = self.db.execute(statement, args)
+            return r.fetchall() if get == 'all' else r.fetchone()
+
+    def insert(self, row):
+        self.execute('INSERT INTO groups VALUES (?,?,?,?)', row)
+
+    def delete(self, gid):
+        self.execute('DELETE FROM groups WHERE id=?', (gid,))
+
+    def close(self):
+        self.db.close()
