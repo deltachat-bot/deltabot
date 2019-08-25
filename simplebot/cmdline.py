@@ -57,10 +57,7 @@ def serve(ctx, locale):
     if not bot.is_configured():
         fail(ctx, "account not configured: {}".format(bot.account.db_path))
 
-    try:
-        bot.start()
-    finally:
-        bot.deactivate_plugins()
+    bot.start()
 
 
 def fail(ctx, msg):
