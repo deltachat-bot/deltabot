@@ -51,7 +51,7 @@ class DeltaBot:
         self.commands[cmd] = (args, description, action)
 
     def remove_command(self, cmd):
-        del self.commands[cmd]
+        self.commands.pop(cmd)
 
     def add_filters(self, filters):
         self.filters.update(filters)
