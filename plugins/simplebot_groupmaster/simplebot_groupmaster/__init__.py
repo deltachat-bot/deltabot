@@ -146,7 +146,7 @@ class GroupMaster(Plugin):
     def join_cmd(cls, msg, arg):
         chat = cls.bot.get_chat(msg)
         try:
-            gid = arg.strip(cls.DELTA_URL).split('-')
+            gid = arg.lstrip(cls.DELTA_URL).split('-')
             pid = ''
             if len(gid) == 2:
                 pid = gid[0]
@@ -170,7 +170,7 @@ class GroupMaster(Plugin):
         chat = cls.bot.get_chat(msg)
         try:
             if arg:
-                gid = int(arg.strip(cls.DELTA_URL).split('-').pop())
+                gid = int(arg.lstrip(cls.DELTA_URL).split('-').pop())
             else:
                 gid = chat.id
             for g in cls.get_groups():
@@ -187,10 +187,10 @@ class GroupMaster(Plugin):
     @classmethod
     def add_cmd(cls, msg, arg):
         try:
-            gid = arg.split()[0]
+            gid, addrs = arg.split(maxsplit=1)
             addrs = [addr.strip()
-                     for addr in arg[len(gid):].strip().split(',')]
-            gid = int(gid.strip(cls.DELTA_URL).split('-').pop())
+                     for addr in addrs.strip().split(',') if '@' in addr]
+            gid = int(gid.lstrip(cls.DELTA_URL).split('-').pop())
             if not addrs:
                 raise ValueError
         except (ValueError, IndexError) as err:
@@ -213,11 +213,11 @@ class GroupMaster(Plugin):
     @classmethod
     def remove_cmd(cls, msg, arg):
         try:
-            gid = arg.split()[0]
-            addr = arg[len(gid):].strip()
-            gid = int(gid.strip(cls.DELTA_URL).split('-').pop())
+            gid, addr = arg.split(maxsplit=1)
+            addr = addr.rstrip()
+            gid = int(gid.lstrip(cls.DELTA_URL).split('-').pop())
             if '@' not in addr:
-                raise ValueError
+                raise ValueError('Invalid email address')
         except (ValueError, IndexError) as err:
             cls.bot.logger.exception(err)
             chat = cls.bot.get_chat(msg)
@@ -238,11 +238,11 @@ class GroupMaster(Plugin):
     @classmethod
     def msg_cmd(cls, msg, arg):
         try:
-            group_id = arg.split()[0]
-            text = arg[len(group_id):].strip()
+            group_id, text = arg.split(maxsplit=1)
+            text = text.rstrip()
             if not text:
                 raise ValueError('Missing text argument')
-            group_id = int(group_id.strip(cls.DELTA_URL).split('-').pop())
+            group_id = int(group_id.lstrip(cls.DELTA_URL).split('-').pop())
         except (ValueError, IndexError) as err:
             cls.bot.logger.exception(err)
             chat = cls.bot.get_chat(msg)
