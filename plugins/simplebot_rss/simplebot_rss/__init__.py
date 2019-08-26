@@ -201,6 +201,7 @@ class RSS(Plugin):
         while True:
             if cls.worker.deactivated.is_set():
                 return
+            cls.bot.logger.debug('Checking feeds')
             with cls.db.lock:
                 feeds = cls.db.execute('SELECT * FROM feeds')
                 if feeds:
