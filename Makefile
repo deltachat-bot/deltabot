@@ -1,5 +1,5 @@
 .PHONY: all
-all: simplebot friends groupmaster help tictactoe translator webgrabber wikiquote xkcd admin shortcuts rss
+all: simplebot friends groupmaster help tictactoe translator webgrabber wikiquote xkcd admin shortcuts rss facebook
 
 .PHONY: simplebot
 simplebot:
@@ -48,3 +48,7 @@ shortcuts:
 .PHONY: rss
 rss:
 	echo y | pip uninstall simplebot_rss; pip install plugins/simplebot_rss
+
+.PHONY: facebook
+facebook:
+	echo y | pip uninstall simplebot_facebook; pip install plugins/simplebot_facebook
