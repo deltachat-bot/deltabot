@@ -209,6 +209,8 @@ class SimpleBot(DeltaBot):
         if text is None:
             text = msg.text
         real_cmd = self.get_args('/z', text)
+        if real_cmd is None and text.startswith('/z/'):
+            real_cmd = text[2:]
         if real_cmd is None:
             msg.user_agent = 'unknow'
         else:
