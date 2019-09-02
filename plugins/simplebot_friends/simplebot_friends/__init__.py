@@ -24,11 +24,8 @@ class DeltaFriends(Plugin):
             autoescape=select_autoescape(['html', 'xml'])
         )
 
-        cls.db = sqlite3.connect(os.path.join(
+        cls.db = DBManager(os.path.join(
             cls.bot.get_dir(__name__), 'deltafriends.db'))
-        with cls.db:
-            cls.db.execute(
-                '''CREATE TABLE IF NOT EXISTS deltafriends (addr TEXT NOT NULL, bio TEXT, PRIMARY KEY(addr))''')
 
         localedir = os.path.join(os.path.dirname(__file__), 'locale')
         lang = gettext.translation('simplebot_friends', localedir=localedir,
@@ -66,12 +63,12 @@ class DeltaFriends(Plugin):
     @classmethod
     def html_cmd(cls, msg, text):
         addr = msg.get_sender_contact().addr
-        bio = cls.db.execute(
-            'SELECT bio FROM deltafriends WHERE addr=?', (addr,)).fetchone()
-        if bio is None:
+        row = cls.db.execute(
+            'SELECT bio FROM deltafriends WHERE addr=?', (addr,), 'one')
+        if row is None:
             bio = ""
         else:
-            bio = bio[0]
+            bio = row['bio']
         html = cls.env.get_template('index.html').render(
             plugin=cls, bot_addr=cls.bot.get_address(), bio=bio)
         chat = cls.bot.get_chat(msg)
@@ -79,8 +76,7 @@ class DeltaFriends(Plugin):
 
     @classmethod
     def list_cmd(cls, msg, *args):
-        friends = [{'addr': addr, 'bio': bio}
-                   for addr, bio in cls.db.execute('SELECT * FROM deltafriends ORDER BY addr').fetchall()]
+        friends = cls.db.execute('SELECT * FROM deltafriends ORDER BY addr')
         html = cls.env.get_template('list.html').render(
             plugin=cls, friends=friends)
         chat = cls.bot.get_chat(msg)
@@ -92,31 +88,45 @@ class DeltaFriends(Plugin):
         text = ' '.join(text.split())
         if len(text) > cls.MAX_BIO_LEN:
             text = text[:cls.MAX_BIO_LEN] + '...'
-        with cls.db:
-            cls.db.execute(
-                'INSERT OR REPLACE INTO deltafriends VALUES (?, ?)', (addr, text))
+        cls.db.execute(
+            'INSERT OR REPLACE INTO deltafriends VALUES (?, ?)', (addr, text))
         chat = cls.bot.get_chat(msg)
         chat.send_text(_('You are now in the DeltaFriends list'))
 
     @classmethod
     def leave_cmd(cls, msg, *args):
         addr = msg.get_sender_contact().addr
-        with cls.db:
-            rowcount = cls.db.execute(
-                'DELETE FROM deltafriends WHERE addr=?', (addr,)).rowcount
+        cls.db.execute(
+            'DELETE FROM deltafriends WHERE addr=?', (addr,))
         chat = cls.bot.get_chat(msg)
-        if rowcount == 1:
-            chat.send_text(_('You was removed from the DeltaFriends list'))
-        else:
-            chat.send_text(_('You are NOT in the DeltaFriends list'))
+        chat.send_text(_('You was removed from the DeltaFriends list'))
 
     @classmethod
     def me_cmd(cls, msg, *args):
         addr = msg.get_sender_contact().addr
-        bio = cls.db.execute(
-            'SELECT bio FROM deltafriends WHERE addr=?', (addr,)).fetchone()
-        if bio is None:
+        row = cls.db.execute(
+            'SELECT bio FROM deltafriends WHERE addr=?', (addr,), 'one')
+        if row is None:
             bio = _('You have not set a biography')
         else:
-            bio = '{}:\n{}'.format(addr, bio[0])
+            bio = '{}:\n{}'.format(addr, row['bio'])
         cls.bot.get_chat(msg).send_text(bio)
+
+
+class DBManager:
+    def __init__(self, db_path):
+        self.db = sqlite3.connect(db_path)
+        self.db.row_factory = sqlite3.Row
+        self.db.execute(
+            '''CREATE TABLE IF NOT EXISTS deltafriends 
+            (addr TEXT NOT NULL,
+            bio TEXT,
+            PRIMARY KEY(addr))''')
+
+    def execute(self, statement, args=(), get='all'):
+        with self.db:
+            r = self.db.execute(statement, args)
+            return r.fetchall() if get == 'all' else r.fetchone()
+
+    def close(self):
+        self.db.close()

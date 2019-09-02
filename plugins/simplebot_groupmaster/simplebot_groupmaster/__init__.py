@@ -13,15 +13,13 @@ import deltachat as dc
 
 PUBLIC = 1
 PRIVATE = 0
+DELTA_URL = 'http://delta.chat/group/'
 
 
 class GroupMaster(Plugin):
 
     name = 'GroupMaster'
     version = '0.2.0'
-
-    MAX_TOPIC_SIZE = 250
-    DELTA_URL = 'http://delta.chat/group/'
 
     @classmethod
     def activate(cls, bot):
@@ -80,7 +78,7 @@ class GroupMaster(Plugin):
             pid = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits)
                           for i in range(10))
             info = (pid, '', PRIVATE)
-            cls.db.insert((gid, info[0], info[1], info[2]))
+            cls.db.insert((gid, *info))
         return info
 
     @classmethod
@@ -104,10 +102,10 @@ class GroupMaster(Plugin):
             pid, topic, status = cls.get_info(chat.id)
             if status == PUBLIC:
                 status = _('Group status: {}').format(_('Public'))
-                gid = '{}{}'.format(cls.DELTA_URL, chat.id)
+                gid = '{}{}'.format(DELTA_URL, chat.id)
             else:
                 status = _('Group status: {}').format(_('Private'))
-                gid = '{}{}-{}'.format(cls.DELTA_URL, pid, chat.id)
+                gid = '{}{}-{}'.format(DELTA_URL, pid, chat.id)
             text = status+'\nID: {}'.format(gid)
         chat.send_text(text)
 
@@ -146,7 +144,7 @@ class GroupMaster(Plugin):
     def join_cmd(cls, msg, arg):
         chat = cls.bot.get_chat(msg)
         try:
-            gid = arg.lstrip(cls.DELTA_URL).split('-')
+            gid = arg.lstrip(DELTA_URL).split('-')
             pid = ''
             if len(gid) == 2:
                 pid = gid[0]
@@ -170,7 +168,7 @@ class GroupMaster(Plugin):
         chat = cls.bot.get_chat(msg)
         try:
             if arg:
-                gid = int(arg.lstrip(cls.DELTA_URL).split('-').pop())
+                gid = int(arg.lstrip(DELTA_URL).split('-').pop())
             else:
                 gid = chat.id
             for g in cls.get_groups():
@@ -190,7 +188,7 @@ class GroupMaster(Plugin):
             gid, addrs = arg.split(maxsplit=1)
             addrs = [addr.strip()
                      for addr in addrs.strip().split(',') if '@' in addr]
-            gid = int(gid.lstrip(cls.DELTA_URL).split('-').pop())
+            gid = int(gid.lstrip(DELTA_URL).split('-').pop())
             if not addrs:
                 raise ValueError
         except (ValueError, IndexError) as err:
@@ -215,7 +213,7 @@ class GroupMaster(Plugin):
         try:
             gid, addr = arg.split(maxsplit=1)
             addr = addr.rstrip()
-            gid = int(gid.lstrip(cls.DELTA_URL).split('-').pop())
+            gid = int(gid.lstrip(DELTA_URL).split('-').pop())
             if '@' not in addr:
                 raise ValueError('Invalid email address')
         except (ValueError, IndexError) as err:
@@ -242,7 +240,7 @@ class GroupMaster(Plugin):
             text = text.rstrip()
             if not text:
                 raise ValueError('Missing text argument')
-            group_id = int(group_id.lstrip(cls.DELTA_URL).split('-').pop())
+            group_id = int(group_id.lstrip(DELTA_URL).split('-').pop())
         except (ValueError, IndexError) as err:
             cls.bot.logger.exception(err)
             chat = cls.bot.get_chat(msg)
@@ -262,7 +260,7 @@ class GroupMaster(Plugin):
         groups.sort(key=lambda g: g.get_name())
         for i, g in enumerate(groups):
             topic = cls.get_info(g.id)[1]
-            gid = quote_plus('{}{}'.format(cls.DELTA_URL, g.id))
+            gid = quote_plus('{}{}'.format(DELTA_URL, g.id))
             groups[i] = (g.get_name(), topic, gid, len(g.get_contacts()))
         template = cls.env.get_template('list.html')
         html = template.render(
@@ -274,6 +272,7 @@ class GroupMaster(Plugin):
 class DBManager:
     def __init__(self, db_path):
         self.db = sqlite3.connect(db_path)
+        self.db.row_factory = sqlite3.Row
         self.execute('''CREATE TABLE IF NOT EXISTS groups
                         (id INTEGER NOT NULL,
                          pid TEXT NOT NULL,

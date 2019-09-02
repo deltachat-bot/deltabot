@@ -25,11 +25,11 @@
 {% for f in friends %}
 <div class="user-card w3-card-2">
   <header class="w3-container main-color">
-    <h3>{{ f.addr }}</h3>
+    <h3>{{ f['addr'] }}</h3>
   </header>
   <div class="w3-container">
-    <p>{{ f.bio }}</p>
-    <a class="w3-btn w3-teal w3-large w3-right" href="mailto:{{ f.addr }}">{{ plugin.WRITE_BTN }} ❯</a>
+    <p>{{ f['bio'] }}</p>
+    <a class="w3-btn w3-teal w3-large w3-right" href="mailto:{{ f['addr'] }}">{{ plugin.WRITE_BTN }} ❯</a>
   </div>
   <br>
 </div>

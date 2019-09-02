@@ -46,8 +46,8 @@ class RSS(Plugin):
                                    languages=[bot.locale], fallback=True)
         lang.install()
 
-        db_path = os.path.join(cls.bot.get_dir(__name__), 'rss.db')
-        cls.db = DBManager(db_path)
+        cls.db = DBManager(
+            os.path.join(cls.bot.get_dir(__name__), 'rss.db'))
 
         cls.worker = Thread(target=cls.check_feeds)
         cls.worker.deactivated = Event()
@@ -106,36 +106,36 @@ class RSS(Plugin):
             chat.send_text(_('You are alredy subscribed to that feed.'))
         else:  # feed exists
             d = feedparser.parse(url)
-            group = cls.bot.create_group('[RSS] '+feed[1], [sender])
+            group = cls.bot.create_group('[RSS] '+feed['title'], [sender])
             chats = '{} {}'.format(
-                feed[5], group.id) if feed[5] else str(group.id)
+                feed['chats'], group.id) if feed['chats'] else str(group.id)
             cls.db.execute(
-                'UPDATE feeds SET chats=? WHERE url=?', (chats, feed[0]))
+                'UPDATE feeds SET chats=? WHERE url=?', (chats, feed['url']))
             group.send_text(
-                _('Title:\n{}\n\nDescription:\n{}').format(feed[1], feed[2]))
+                _('Title:\n{}\n\nDescription:\n{}').format(feed['title'], feed['description']))
             cls.set_image(group, d)
-            if d.entries and feed[6]:
-                latest = tuple(map(int, feed[6].split()))
+            if d.entries and feed['latest']:
+                latest = tuple(map(int, feed['latest'].split()))
                 d.entries = cls.get_old_entries(d, latest)
                 html = cls.env.get_template('items.html').render(
-                    plugin=cls, title=feed[1], entries=d.entries[-100:])
+                    plugin=cls, title=feed['title'], entries=d.entries[-100:])
                 cls.bot.send_html(group, html, cls.name, msg.user_agent)
 
     @classmethod
     def info_cmd(cls, msg, args):
         g = cls.bot.get_chat(msg)
         for f in cls.db.execute('SELECT * FROM feeds'):
-            if g.id in map(int, f[5].split()):
+            if g.id in map(int, f['chats'].split()):
                 g.send_text(
-                    _('Title:\n{}\n\nURL:\n{}\n\nDescription:\n{}').format(f[1], f[0], f[2]))
+                    _('Title:\n{}\n\nURL:\n{}\n\nDescription:\n{}').format(f['title'], f['url'], f['description']))
                 return
         g.send_text(_('This is not a feed group.'))
 
     @classmethod
     def list_cmd(cls, msg, args):
-        feeds = [f+(quote_plus(f[0]),)
+        feeds = [(*f, quote_plus(f['url']))
                  for f in cls.db.execute('SELECT * FROM feeds')]
-        feeds.sort(key=lambda f: len(f[5].split()), reverse=True)
+        feeds.sort(key=lambda f: len(f['chats'].split()), reverse=True)
         template = cls.env.get_template('feeds.html')
         addr = cls.bot.get_address()
         html = template.render(plugin=cls, feeds=feeds, bot_addr=addr)
@@ -160,10 +160,10 @@ class RSS(Plugin):
         sender = msg.get_sender_contact()
         gid = cls._is_subscribed(sender, feed)
         if gid:
-            ids = feed[5].split()
+            ids = feed['chats'].split()
             ids.remove(gid)
             cls.db.execute(
-                'UPDATE feeds SET chats=? WHERE url=?', (' '.join(ids), feed[0]))
+                'UPDATE feeds SET chats=? WHERE url=?', (' '.join(ids), feed['url']))
             g = cls.bot.get_chat(int(gid))
             g.send_text(
                 _('You had unsubscribed, you can remove this group'))
@@ -213,43 +213,43 @@ class RSS(Plugin):
                         if cls.worker.deactivated.is_set():
                             return
                         if not feed[5].strip():
-                            cls.db.delete(feed[0])
+                            cls.db.delete(feed['url'])
                             continue
                         d = feedparser.parse(
-                            feed[0], etag=feed[3], modified=feed[4])
-                        if d.entries and feed[6]:
-                            latest = tuple(map(int, feed[6].split()))
+                            feed['url'], etag=feed['etag'], modified=feed['modified'])
+                        if d.entries and feed['latest']:
+                            latest = tuple(map(int, feed['latest'].split()))
                             d.entries = cls.get_new_entries(d, latest)
                         if not d.entries:
                             continue
                         html = cls.env.get_template('items.html').render(
-                            plugin=cls, title=feed[1], entries=d.entries[-100:])
+                            plugin=cls, title=feed['title'], entries=d.entries[-100:])
                         html_file = cls.bot.get_blobpath(cls.name+'.html')
                         with open(html_file, 'w') as fd:
                             fd.write(html)
-                        for gid in feed[5].split():
+                        for gid in feed['chats'].split():
                             g = cls.bot.get_chat(int(gid))
                             members = g.get_contacts()
                             if me in members and len(members) > 1:
                                 g.send_file(html_file,
                                             mime_type='text/html')
                             else:
-                                ids = feed[5].split()
+                                ids = feed['chats'].split()
                                 ids.remove(gid)
                                 cls.db.execute(
-                                    'UPDATE feeds SET chats=? WHERE url=?', (' '.join(ids), feed[0]))
+                                    'UPDATE feeds SET chats=? WHERE url=?', (' '.join(ids), feed['url']))
                         latest = cls.get_latest_date(d)
                         if latest is not None:
                             latest = ' '.join(map(str, latest))
                         args = (d.get('etag'), d.get('modified', d.get('updated')),
-                                latest, feed[0])
+                                latest, feed['url'])
                         cls.db.execute(
                             'UPDATE feeds SET etag=?, modified=?, latest=? WHERE url=?', args)
             cls.worker.deactivated.wait(cls.cfg.getint('delay'))
 
     @classmethod
     def _is_subscribed(cls, contact, feed):
-        for gid in feed[5].split():
+        for gid in feed['chats'].split():
             g = cls.bot.get_chat(int(gid))
             if contact in g.get_contacts():
                 return gid
@@ -276,6 +276,7 @@ class RSS(Plugin):
 class DBManager:
     def __init__(self, db_path):
         self.db = sqlite3.connect(db_path, check_same_thread=False)
+        self.db.row_factory = sqlite3.Row
         self.lock = RLock()
         with self.db:
             self.db.execute(
