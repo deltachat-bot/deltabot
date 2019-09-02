@@ -25,13 +25,8 @@ class Admin(Plugin):
                                    languages=[bot.locale], fallback=True)
         lang.install()
 
-        db_path = os.path.join(cls.bot.get_dir(__name__), 'admin.db')
-        cls.db = sqlite3.connect(db_path)
-        with cls.db:
-            cls.db.execute(
-                '''CREATE TABLE IF NOT EXISTS blacklist
-                       (addr TEXT NOT NULL,
-                        PRIMARY KEY(addr))''')
+        cls.db = DBManager(
+            os.path.join(cls.bot.get_dir(__name__), 'admin.db'))
 
         cls.description = _('Administration tools for bot operators.')
         cls.long_description = _(
@@ -54,12 +49,13 @@ class Admin(Plugin):
         super().deactivate()
         cls.bot.remove_on_msg_detected_listener(cls.msg_detected)
         cls.bot.remove_on_cmd_detected_listener(cls.msg_detected)
+        cls.db.close()
 
     @classmethod
     def msg_detected(cls, msg, text):
         addr = msg.get_sender_contact().addr
         banned = cls.db.execute(
-            'SELECT * FROM blacklist WHERE addr=?', (addr,)).fetchone()
+            'SELECT * FROM blacklist WHERE addr=?', (addr,), 'one')
         if banned is None:
             return text
         else:
@@ -77,7 +73,7 @@ class Admin(Plugin):
             chat.send_text(
                 _('You can NOT block administrators'))
         else:
-            cls._insert(addr)
+            cls.db.insert(addr)
             chat.send_text(_('{} banned').format(addr))
 
     @classmethod
@@ -87,7 +83,7 @@ class Admin(Plugin):
             chat.send_text(_('You are not an administrator'))
             return
 
-        cls._delete(addr)
+        cls.db.delete(addr)
         chat.send_text(_('{} unblocked').format(addr))
 
     @classmethod
@@ -97,10 +93,10 @@ class Admin(Plugin):
             chat.send_text(_('You are not an administrator'))
             return
 
-        blacklist = cls.db.execute('SELECT addr FROM blacklist').fetchall()
+        blacklist = cls.db.execute('SELECT addr FROM blacklist')
         if blacklist:
             chat.send_text(_('Banned addresses:\n\n{}').format(
-                '\n'.join('* '+r[0] for r in blacklist)))
+                '\n'.join('* '+r['addr'] for r in blacklist)))
         else:
             chat.send_text(_('The list is empty'))
 
@@ -126,14 +122,26 @@ class Admin(Plugin):
         chat.send_text(_('Bot stats:\n\nGroups: {}\nPrivate Chats: {}\nContacts: {}\nMessages: {}').format(
             groups, private, contacts, messages))
 
-    @classmethod
-    def _insert(cls, addr):
-        with cls.db:
-            cls.db.execute(
-                'INSERT INTO blacklist VALUES (?)', (addr,))
 
-    @classmethod
-    def _delete(cls, addr):
-        with cls.db:
-            cls.db.execute(
-                'DELETE FROM blacklist WHERE addr=?', (addr,))
+class DBManager:
+    def __init__(self, db_path):
+        self.db = sqlite3.connect(db_path)
+        self.db.row_factory = sqlite3.Row
+        self.execute(
+            '''CREATE TABLE IF NOT EXISTS blacklist
+            (addr TEXT NOT NULL,
+            PRIMARY KEY(addr))''')
+
+    def execute(self, statement, args=(), get='all'):
+        with self.db:
+            r = self.db.execute(statement, args)
+            return r.fetchall() if get == 'all' else r.fetchone()
+
+    def insert(self, addr):
+        self.execute('INSERT INTO blacklist VALUES (?)', (addr,))
+
+    def delete(self, addr):
+        self.execute('DELETE FROM blacklist WHERE addr=?', (addr,))
+
+    def close(self):
+        self.db.close()

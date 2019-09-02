@@ -8,22 +8,15 @@ from deltachat.chatting import Chat
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 
-PLAYERS = 0
-GID = 1
-STATUS = 2
-TURN = 3
-BOARD = 4
-X = 5
+INVITED_STATUS = -1
+FINISHED_STATUS = 0
+PLAYING_STATUS = 1
 
 
 class TicTacToe(Plugin):
 
     name = 'Tic Tac Toe'
     version = '0.1.0'
-
-    INVITED_STATUS = -1
-    FINISHED_STATUS = 0
-    PLAYING_STATUS = 1
 
     @classmethod
     def activate(cls, bot):
@@ -62,21 +55,21 @@ class TicTacToe(Plugin):
     def run_turn(cls, chat, players):
         game = cls.db.execute(
             'SELECT * FROM games WHERE players=?', (players,), 'one')
-        b = Board(game[BOARD])
-        p1, p2 = game[PLAYERS].split(',')
+        b = Board(game['board'])
+        p1, p2 = game['players'].split(',')
         winner = b.get_winner()
         if winner is not None:
             cls.db.execute('UPDATE games SET status=? WHERE players=?',
-                           (cls.FINISHED_STATUS, game[PLAYERS]))
+                           (FINISHED_STATUS, game['players']))
             if winner == '-':
                 chat.send_text(
                     _('Game over.\nIt is a draw!\n\n{}').format(b.pretty_str()))
             else:
-                winner = p1 if p1 != game[TURN] else p2
+                winner = p1 if p1 != game['turn'] else p2
                 chat.send_text(_('Game over.\n{} Wins!!!\n\n{}').format(
                     winner, b.pretty_str()))
         else:
-            priv_chat = cls.bot.get_chat(game[TURN])
+            priv_chat = cls.bot.get_chat(game['turn'])
             bot_addr = cls.bot.get_address()
             board = list(enumerate(b.board))
             board = [board[:3], board[3:6], board[6:]]
@@ -84,7 +77,7 @@ class TicTacToe(Plugin):
                 plugin=cls, bot_addr=bot_addr, gid=chat.id, board=board)
             cls.bot.send_html(priv_chat, html, cls.name, msg.user_agent)
             chat.send_text(
-                _('{} is your turn...\n\n{}').format(game[TURN], b.pretty_str()))
+                _('{} is your turn...\n\n{}').format(game['turn'], b.pretty_str()))
 
     @classmethod
     def play_cmd(cls, msg, arg):
@@ -102,7 +95,7 @@ class TicTacToe(Plugin):
                 chat = cls.bot.create_group(
                     '❎ {} Vs {} [{}]'.format(p1, p2, cls.name), [msg.get_sender_contact(), p2])
                 cls.db.insert(
-                    (players, chat.id, cls.INVITED_STATUS, p1, str(Board()), p1))
+                    (players, chat.id, INVITED_STATUS, p1, str(Board()), p1))
                 chat.send_text(_('Hello {},\nYou had been invited by {} to play {}, to start playing send a message in this group with the command:\n{}').format(
                     p2, p1, cls.name, cls.commands[0][0]))
             else:
@@ -114,17 +107,18 @@ class TicTacToe(Plugin):
             chat = cls.bot.get_chat(msg)
             game = cls.db.execute(
                 'SELECT * FROM games WHERE gid=?', (chat.id,), 'one')
-            orig_p2 = [p for p in game[PLAYERS].split(',') if p != game[X]][0]
+            orig_p2 = [p for p in game['players'].split(
+                ',') if p != game['x']][0]
             if game is None or p2 != orig_p2:
                 chat.send_text(
                     _('You are not allowed to do that, if you are trying to invite a new friend, please provide the email of the friend you want to play with'))
             # accept the invitation and start playing
-            elif game[STATUS] == cls.INVITED_STATUS:
+            elif game['status'] == INVITED_STATUS:
                 cls.db.execute('UPDATE games SET status=? WHERE players=?',
-                               (cls.PLAYING_STATUS, game[PLAYERS]))
+                               (PLAYING_STATUS, game['players']))
                 chat = cls.bot.get_chat(msg)
                 chat.send_text(_('Game started!'))
-                cls.run_turn(chat, game[PLAYERS])
+                cls.run_turn(chat, game['players'])
             else:  # p2 already accepted the game
                 chat = cls.bot.get_chat(msg)
                 chat.send_text(
@@ -137,15 +131,15 @@ class TicTacToe(Plugin):
         game = cls.db.execute(
             'SELECT * FROM games WHERE gid=?', (chat.id,), 'one')
         # this is not your game group
-        if game is None or loser not in game[PLAYERS].split(','):
+        if game is None or loser not in game['players'].split(','):
             chat.send_text(
                 _('This is not your game group, please send that command in the game group you want to surrender'))
-        elif game[STATUS] != cls.FINISHED_STATUS:
-            p1, p2 = game[PLAYERS].split(',')
+        elif game['status'] != FINISHED_STATUS:
+            p1, p2 = game['players'].split(',')
             x = p1 if p1 != loser else p2
             cls.db.execute('UPDATE games SET status=?, turn=?, x=? WHERE players=?',
-                           (cls.FINISHED_STATUS, x, x, game[PLAYERS]))
-            chat.send_text(_('Game Over.\n{} Wins!!!').format(game[TURN]))
+                           (FINISHED_STATUS, x, x, game['players']))
+            chat.send_text(_('Game Over.\n{} Wins!!!').format(game['turn']))
         else:
             chat.send_text(
                 _('There are no game running. To start a new game use {}').format(cls.commands[2][0]))
@@ -157,17 +151,17 @@ class TicTacToe(Plugin):
         game = cls.db.execute(
             'SELECT * FROM games WHERE gid=?', (chat.id,), 'one')
         # this is not your game group
-        if game is None or sender not in game[PLAYERS].split(','):
+        if game is None or sender not in game['players'].split(','):
             chat.send_text(
                 _('This is not your game group, please send that command in the game group you want to start a new game'))
-        elif game[STATUS] == cls.FINISHED_STATUS:
-            p1, p2 = game[PLAYERS].split(',')
-            x = p1 if p1 != game[X] else p2
+        elif game['status'] == FINISHED_STATUS:
+            p1, p2 = game['players'].split(',')
+            x = p1 if p1 != game['x'] else p2
             cls.db.execute('UPDATE games SET status=?, turn=?, x=?, board=? WHERE players=?',
-                           (cls.PLAYING_STATUS, x, x, str(Board()), game[PLAYERS]))
+                           (PLAYING_STATUS, x, x, str(Board()), game['players']))
             chat = cls.bot.get_chat(msg)
             chat.send_text(_('Game started!'))
-            cls.run_turn(chat, game[PLAYERS])
+            cls.run_turn(chat, game['players'])
         else:
             chat.send_text(
                 _('There are a game running already, to start a new one first end this game or surrender'))
@@ -178,17 +172,17 @@ class TicTacToe(Plugin):
         player = msg.get_sender_contact().addr
         game = cls.db.execute(
             'SELECT * FROM games WHERE gid=?', (chat_id,), 'one')
-        if game is not None and player == game[TURN]:
-            p1, p2 = game[PLAYERS].split(',')
-            board = Board(game[BOARD])
-            sign = 'x' if player == game[X] else 'o'
+        if game is not None and player == game['turn']:
+            p1, p2 = game['players'].split(',')
+            board = Board(game['board'])
+            sign = 'x' if player == game['x'] else 'o'
             try:
                 board.move(sign, pos)
                 turn = p1 if p1 != player else p2
                 cls.db.execute('UPDATE games SET turn=?, board=? WHERE players=?', (turn, str(
-                    board), game[PLAYERS]))
+                    board), game['players']))
                 chat = cls.bot.get_chat(chat_id)
-                cls.run_turn(chat, game[PLAYERS])
+                cls.run_turn(chat, game['players'])
             except InvalidMove:
                 chat = cls.bot.get_chat(msg)
                 chat.send_text(_('Invalid move!'))
@@ -247,6 +241,7 @@ class InvalidMove(Exception):
 class DBManager:
     def __init__(self, db_path):
         self.db = sqlite3.connect(db_path)
+        self.db.row_factory = sqlite3.Row
         self.execute('''CREATE TABLE IF NOT EXISTS games
                         (players TEXT NOT NULL,
                          gid INTEGER NOT NULL, 
