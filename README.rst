@@ -133,4 +133,5 @@ Games API
 ---------
 
 - **TODO:** talk here about an integrated webview in DC clients, and an API for intercommunication between the webview(JavaScript) and DCC
-- messages sent in background with the game api should be differentiated from messages sent manually by the user
+- Messages sent in background with the game api should be differentiated from messages sent manually by the user
+- Background messages can only include the bot address in the "To" header (ex. clients can't be used to send spam to 3rd parties)
