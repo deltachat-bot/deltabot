@@ -129,7 +129,7 @@ class FacebookBridge(Plugin):
             file_name = os.path.basename(t.photo).split('?')[
                 0].split('#')[0].lower()
         file_name = cls.bot.get_blobpath(file_name)
-        with open(file_name, 'w') as fd:
+        with open(file_name, 'wb') as fd:
             fd.write(r.content)
         dc.capi.lib.dc_set_chat_profile_image(
             cls.bot.account._dc_context, g.id, dc.account.as_dc_charpointer(file_name))
