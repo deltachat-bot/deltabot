@@ -276,12 +276,13 @@ class FacebookBridge(Plugin):
             if cls.worker.deactivated.is_set():
                 return
             row = cls.db.execute(
-                'SELECT group_id, status FROM groups '
+                'SELECT group_id, thread_type, status FROM groups '
                 'WHERE thread_id=? AND addr=?', (t_id, addr), 'one')
             if row is None:
                 t = user.fetchThreadInfo(t_id)[t_id]
                 cls.bot.logger.debug("Thread: %s", t.name)
                 g = cls._create_group(user, t, addr)
+                thread_type = t.type
             else:
                 if row['status'] == G_DISABLED:
                     continue
@@ -289,8 +290,9 @@ class FacebookBridge(Plugin):
                 members = g.get_contacts()
                 if me not in members or len(members) != 2:
                     cls.db.execute(
-                        'DELETE FROM groups WHERE group_id=? AND addr=?', (g.id, addr))
+                        'DELETE FROM groups WHERE group_id=?', (g.id,))
                     continue
+                thread_type = ThreadType(row['thread_type'])
             messages = []
             before = None
             while True:
@@ -301,13 +303,17 @@ class FacebookBridge(Plugin):
                     break
                 before = msgs[-1].timestamp
             user.markAsRead(t_id)
-            names = dict()
             text = ''
-            for msg in reversed(messages):
-                if msg.author not in names:
-                    names[msg.author] = user.fetchUserInfo(msg.author)[
-                        msg.author].name
-                text += '{}:\n{}\n\n\n'.format(names[msg.author], msg.text)
+            if thread_type == ThreadType.GROUP:
+                names = dict()
+                for msg in reversed(messages):
+                    if msg.author not in names:
+                        names[msg.author] = user.fetchUserInfo(msg.author)[
+                            msg.author].name
+                    text += '{}:\n{}\n\n\n'.format(names[msg.author], msg.text)
+            else:
+                for msg in reversed(messages):
+                    text += '{}\n\n'.format(msg.text)
             g.send_text(text)
 
     @classmethod
