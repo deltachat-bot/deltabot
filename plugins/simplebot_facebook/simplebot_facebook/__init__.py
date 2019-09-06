@@ -334,7 +334,7 @@ class FacebookBridge(Plugin):
                     if onlogin.user is None:
                         continue
                     cls._send_new_messages(onlogin.user, addr)
-                except FBchatException as ex:
+                except Exception as ex:
                     cls.bot.logger.exception(ex)
             cls.worker.deactivated.wait(cls.cfg.getint('delay'))
 
