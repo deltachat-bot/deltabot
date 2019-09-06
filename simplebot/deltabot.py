@@ -142,7 +142,7 @@ class DeltaBot:
             c = self.account.create_contact(ref.strip())
             return self.account.create_chat_by_contact(c)
         elif type(ref) is int:
-            return dc.chatting.Chat(self.account._dc_context, ref)
+            return dc.chatting.Chat(self.account, ref)
 
     def get_chats(self):
         return self.account.get_chats()
