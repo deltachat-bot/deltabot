@@ -119,20 +119,21 @@ class FacebookBridge(Plugin):
         cls.db.insert_group((g.id, t.uid, t.type.value, addr, G_ENABLED))
         g.send_text(_('Name: {}').format(t.name))
 
-        r = requests.get(t.photo)
-        content_type = r.headers.get('content-type', '').lower()
-        if 'image/png' in content_type:
-            file_name = 'group-img.png'
-        elif 'image/jpeg' in content_type:
-            file_name = 'group-img.jpg'
-        else:
-            file_name = os.path.basename(t.photo).split('?')[
-                0].split('#')[0].lower()
-        file_name = cls.bot.get_blobpath(file_name)
-        with open(file_name, 'wb') as fd:
-            fd.write(r.content)
-        dc.capi.lib.dc_set_chat_profile_image(
-            cls.bot.account._dc_context, g.id, dc.account.as_dc_charpointer(file_name))
+        if t.photo:
+            r = requests.get(t.photo)
+            content_type = r.headers.get('content-type', '').lower()
+            if 'image/png' in content_type:
+                file_name = 'group-img.png'
+            elif 'image/jpeg' in content_type:
+                file_name = 'group-img.jpg'
+            else:
+                file_name = os.path.basename(t.photo).split('?')[
+                    0].split('#')[0].lower()
+            file_name = cls.bot.get_blobpath(file_name)
+            with open(file_name, 'wb') as fd:
+                fd.write(r.content)
+            dc.capi.lib.dc_set_chat_profile_image(
+                cls.bot.account._dc_context, g.id, dc.account.as_dc_charpointer(file_name))
         return g
 
     @classmethod
