@@ -162,7 +162,6 @@ class DeltaBot:
         return group
 
     def is_group(self, chat):
-        self.logger.debug('CHAT TYPE: %s', chat.get_type())
         return chat.get_type() in (dc.const.DC_CHAT_TYPE_GROUP, dc.const.DC_CHAT_TYPE_VERIFIED_GROUP)
 
     def _wait_configuration_progress(self, target):

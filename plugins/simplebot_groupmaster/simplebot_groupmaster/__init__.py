@@ -97,8 +97,6 @@ class GroupMaster(Plugin):
     def id_cmd(cls, msg, arg):
         chat = cls.bot.get_chat(msg)
         if cls.bot.is_group(chat):
-            text = _('Not a group.')
-        else:
             pid, topic, status = cls.get_info(chat.id)
             if status == PUBLIC:
                 status = _('Group status: {}').format(_('Public'))
@@ -107,6 +105,8 @@ class GroupMaster(Plugin):
                 status = _('Group status: {}').format(_('Private'))
                 gid = '{}{}-{}'.format(DELTA_URL, pid, chat.id)
             text = status+'\nID: {}'.format(gid)
+        else:
+            text = _('Not a group.')
         chat.send_text(text)
 
     @classmethod
