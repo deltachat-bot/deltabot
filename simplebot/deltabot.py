@@ -142,7 +142,7 @@ class DeltaBot:
             c = self.account.create_contact(ref.strip())
             return self.account.create_chat_by_contact(c)
         elif type(ref) is int:
-            if tuple(int(i) for i in dc.__version__.split('.')) >= (0, 600, 0):
+            if dc.__version__.split('.') >= '0.600.0'.split('.'):
                 return dc.chatting.Chat(self.account, ref)
             else:
                 return dc.chatting.Chat(self.account._dc_context, ref)
