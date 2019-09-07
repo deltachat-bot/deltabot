@@ -133,9 +133,9 @@ class RSS(Plugin):
 
     @classmethod
     def list_cmd(cls, msg, args):
-        feeds = [(*f, quote_plus(f['url']))
-                 for f in cls.db.execute('SELECT * FROM feeds')]
+        feeds = cls.db.execute('SELECT * FROM feeds')
         feeds.sort(key=lambda f: len(f['chats'].split()), reverse=True)
+        feeds = [(*f, quote_plus(f['url'])) for f in feeds]
         template = cls.env.get_template('feeds.html')
         addr = cls.bot.get_address()
         html = template.render(plugin=cls, feeds=feeds, bot_addr=addr)
