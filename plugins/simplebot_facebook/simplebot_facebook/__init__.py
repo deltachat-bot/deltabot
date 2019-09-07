@@ -115,10 +115,10 @@ class FacebookBridge(Plugin):
 
     @classmethod
     def _create_group(cls, user, t, addr):
-        cls.bot.logger.debug(t)
-        g = cls.bot.create_group('[F] ' + t.name, [addr])
+        name = t.name if t.name else _('(NO NAME)')
+        g = cls.bot.create_group('[F] ' + name, [addr])
         cls.db.insert_group((g.id, t.uid, t.type.value, addr, G_ENABLED))
-        g.send_text(_('Name: {}').format(t.name))
+        g.send_text(_('Name: {}').format(name))
 
         if t.photo:
             r = requests.get(t.photo)
@@ -287,7 +287,6 @@ class FacebookBridge(Plugin):
                 'WHERE thread_id=? AND addr=?', (t_id, addr), 'one')
             if row is None:
                 t = user.fetchThreadInfo(t_id)[t_id]
-                cls.bot.logger.debug("Thread: %s", t.name)
                 g = cls._create_group(user, t, addr)
                 thread_type = t.type
             else:
