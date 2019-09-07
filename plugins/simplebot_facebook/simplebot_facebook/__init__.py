@@ -236,10 +236,6 @@ class FacebookBridge(Plugin):
             'SELECT * FROM groups WHERE group_id=?', (chat.id,), 'one')
         if group is None:
             return False
-        elif not text:
-            chat.send_text(_('Only text messages are supported'))
-            return True
-
         addr = msg.get_sender_contact().addr
         u = cls.db.execute(
             'SELECT * FROM users WHERE addr=?', (addr,), 'one')
@@ -251,12 +247,12 @@ class FacebookBridge(Plugin):
             cls.db.execute(
                 'UPDATE groups SET status=? WHERE group_id=? AND addr=?', (G_ENABLED, chat.id, addr))
 
-        Thread(target=cls._send_text, args=(
-            group, addr, text), daemon=True).start()
+        Thread(target=cls._send_dc2fb, args=(
+            group, addr, text, msg.filename), daemon=True).start()
         return True
 
     @classmethod
-    def _send_text(cls, g, addr, text):
+    def _send_dc2fb(cls, g, addr, text, filename):
         if addr in cls.code_events:
             cls.bot.logger.warning(
                 'Tried to send message before code verification')
@@ -265,8 +261,17 @@ class FacebookBridge(Plugin):
         cls._login(onlogin, addr)
         if onlogin.user is not None:
             try:
-                onlogin.user.send_text(
-                    g['thread_id'], ThreadType(g['thread_type']), text)
+                thread_type = ThreadType(g['thread_type'])
+                msg = Message(text) if text else None
+                if filename:
+                    onlogin.user.sendLocalFiles(
+                        [filename], message=msg, thread_id=g['thread_id'], thread_type=thread_type)
+                elif msg:
+                    onlogin.user.send(msg, thread_id=g['thread_id'],
+                                      thread_type=thread_type)
+                else:
+                    cls.bot.logger.warning(
+                        'No file or text given, skipping message')
             except FBchatException as ex:
                 cls.bot.logger.exception(ex)
 
@@ -304,18 +309,38 @@ class FacebookBridge(Plugin):
                     break
                 before = msgs[-1].timestamp
             user.markAsRead(t_id)
-            text = ''
-            if thread_type == ThreadType.GROUP:
-                names = dict()
-                for msg in reversed(messages):
+            names = dict()
+            for msg in reversed(messages):
+                if thread_type == ThreadType.GROUP:
                     if msg.author not in names:
                         names[msg.author] = user.fetchUserInfo(msg.author)[
                             msg.author].name
-                    text += '{}:\n{}\n\n\n'.format(names[msg.author], msg.text)
-            else:
-                for msg in reversed(messages):
-                    text += '{}\n\n'.format(msg.text)
-            g.send_text(text)
+                    text = '{}:\n'.format(names[msg.author])
+                else:
+                    text = ''
+                if msg.text:
+                    g.send_text(text+msg.text)
+                    return
+                if msg.sticker:
+                    images = [msg.sticker.url]
+                elif msg.attachments:
+                    images = []
+                    for a in msg.attachments:
+                        if type(a) is fbchat.ImageAttachment:
+                            images.append(a.preview_url)
+                else:
+                    cls.bot.logger.warning('Unsuported message, ignored.')
+                    return
+                if text:
+                    g.send_text(text)
+                for img_url in images:
+                    r = requests.get(img_url)
+                    file_name = os.path.basename(img_url).split('?')[
+                        0].split('#')[0].lower()
+                    file_path = cls.bot.get_blobpath(file_name)
+                    with open(file_path, 'wb') as fd:
+                        fd.write(r.content)
+                    g.send_image(file_path)
 
     @classmethod
     def listen_to_fb(cls):
@@ -351,10 +376,6 @@ class FBUser(Client):
 
     def on2FACode(self):
         return self.on_2fa()
-
-    def send_text(self, thread_id, thread_type, text):
-        self.send(Message(text=text), thread_id=thread_id,
-                  thread_type=ThreadType(thread_type))
 
 
 class DBManager:
