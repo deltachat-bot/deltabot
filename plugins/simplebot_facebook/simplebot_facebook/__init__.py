@@ -6,7 +6,7 @@ import json
 import os
 import sqlite3
 
-from fbchat import Client, Message, ThreadType, FBchatException
+from fbchat import Client, Message, ThreadType, FBchatException, ImageAttachment
 from simplebot import Plugin
 import deltachat as dc
 import requests
@@ -326,7 +326,7 @@ class FacebookBridge(Plugin):
                 elif msg.attachments:
                     images = []
                     for a in msg.attachments:
-                        if type(a) is fbchat.ImageAttachment:
+                        if type(a) is ImageAttachment:
                             images.append(a.preview_url)
                 else:
                     cls.bot.logger.warning('Unsuported message, ignored.')
