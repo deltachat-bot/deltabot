@@ -111,7 +111,8 @@ class FacebookBridge(Plugin):
             cls.bot.logger.exception(ex)
             cls.bot.get_chat(addr).send_text(
                 _('Failed to login in Facebook, try enabling 2FA for your account and check your password is correct'))
-        onlogin.set()
+        finally:
+            onlogin.set()
 
     @classmethod
     def _create_group(cls, user, t, addr):
