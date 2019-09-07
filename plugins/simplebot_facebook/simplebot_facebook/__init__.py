@@ -115,6 +115,7 @@ class FacebookBridge(Plugin):
 
     @classmethod
     def _create_group(cls, user, t, addr):
+        cls.bot.logger.debug(t)
         g = cls.bot.create_group('[F] ' + t.name, [addr])
         cls.db.insert_group((g.id, t.uid, t.type.value, addr, G_ENABLED))
         g.send_text(_('Name: {}').format(t.name))
