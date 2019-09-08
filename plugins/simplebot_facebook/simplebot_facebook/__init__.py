@@ -122,7 +122,7 @@ class FacebookBridge(Plugin):
     @classmethod
     def _create_group(cls, user, t, addr):
         name = t.name if t.name else _('(NO NAME)')
-        g = cls.bot.create_group('[F] ' + name, [addr])
+        g = cls.bot.create_group('🇫 ' + name, [addr])
         cls.db.insert_group((g.id, t.uid, t.type.value, addr, G_ENABLED))
         g.send_text(_('Name: {}').format(name))
 
