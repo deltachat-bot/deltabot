@@ -35,11 +35,12 @@ class Shortcuts(Plugin):
                         PRIMARY KEY(addr, shortcut))''')
 
         cls.description = _('Allows to create custom shortcuts for commands.')
+        cls.long_description = _('')
         cls.filters = [cls.process_shortcuts]
         cls.bot.add_filters(cls.filters)
         cls.commands = [
             ('/shortcut', ['"<shortcut>"', '"<cmd>"'],
-             _('Create a shortcut for the given command'), cls.shortcut_cmd),
+             _('Create a shortcut for the given command, if the shortcut ends with {}, then in the associated command, {} will be replaced with the arguments passed to the shortcut, for example: /shortcut "say hello to {}" "/echo hello {}!!!"'), cls.shortcut_cmd),
             ('/shortcut/del', ['<shortcut>'],
              _('Delete a shortcut you had created'), cls.del_cmd),
             ('/shortcut/list', [], _('List your shortcuts'), cls.list_cmd),
@@ -93,10 +94,12 @@ class Shortcuts(Plugin):
     def process_shortcuts(cls, msg, text):
         addr = msg.get_sender_contact().addr
         shortcut = text.strip().lower()
-        cmd = cls.db.execute(
-            'SELECT cmd FROM shortcuts WHERE addr=? and shortcut=?', (addr, shortcut)).fetchone()
-        if cmd is None:
-            return False
-        else:
-            cls.bot.on_command(msg, cmd[0])
-            return True
+        for sc, cmd in cls.db.execute('SELECT shortcut, cmd FROM shortcuts WHERE addr=?', (addr,)):
+            if sc.endswith('{}') and shortcut.startswith(sc[:-3]):
+                cls.bot.on_command(msg, cmd.format(
+                    shortcut.lstrip(sc[:-3]).strip()))
+                return True
+            elif shortcut == sc:
+                cls.bot.on_command(msg, cmd)
+                return True
+        return False
