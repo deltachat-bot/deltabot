@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from threading import Thread, RLock, Event
 from urllib.parse import quote_plus
-from urllib.request import urlretrieve
 import functools
 import gettext
 import os
@@ -12,6 +11,7 @@ from jinja2 import Environment, PackageLoader
 from simplebot import Plugin
 import deltachat as dc
 import feedparser
+import requests
 
 
 feedparser.USER_AGENT = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
@@ -258,17 +258,26 @@ class RSS(Plugin):
 
     @classmethod
     def set_image(cls, group, d):
-        img_link = d.feed.get('icon', d.feed.get('logo'))
-        if img_link is None:
-            img_link = d.feed.get('image', {'href': None}).get('href')
+        img_link = d.feed.get('icon', d.feed.get(
+            'logo', d.feed.get('image', {'href': None}).get('href')))
         if img_link is not None:
-            img_link = img_link.strip('/')
+            img_link = img_link.rstrip('/')
         try:
             if img_link:
-                image = os.path.join(cls.bot.get_blobdir(), 'image.jpg')
-                urlretrieve(img_link, image)
+                r = requests.get(img_link)
+                content_type = r.headers.get('content-type', '').lower()
+                if 'image/png' in content_type:
+                    file_name = 'group-img.png'
+                elif 'image/jpeg' in content_type:
+                    file_name = 'group-img.jpg'
+                else:
+                    file_name = os.path.basename(img_link).split('?')[
+                        0].split('#')[0].lower()
+                file_name = cls.bot.get_blobpath(file_name)
+                with open(file_name, 'wb') as fd:
+                    fd.write(r.content)
                 dc.capi.lib.dc_set_chat_profile_image(
-                    cls.bot.account._dc_context, group.id, dc.account.as_dc_charpointer(image))
+                    cls.bot.account._dc_context, group.id, dc.account.as_dc_charpointer(file_name))
         except Exception as ex:
             cls.bot.logger.exception(ex)
 
