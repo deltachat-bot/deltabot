@@ -68,6 +68,8 @@ class FacebookBridge(Plugin):
              _('Stop receiving messages from the Facebook group this command is sent'), cls.mute_cmd),
             ('/fb/unmute', [],
              _('Start receiving messages again from the Facebook group this command is sent'), cls.unmute_cmd),
+            ('/fb/more', [],
+             _('Every time you send this command, up to 20 more Facebook chats will be loaded in Delta Chat'), cls.more_cmd),
         ]
         cls.bot.add_commands(cls.commands)
 
@@ -143,8 +145,9 @@ class FacebookBridge(Plugin):
 
     @classmethod
     def login_cmd(cls, msg, arg):
-        def create_chats(onlogin, t, addr):
-            t.join()
+        def create_chats(addr):
+            onlogin = Event()
+            cls._login(onlogin, addr)
             user = onlogin.user
             if user is not None:
                 for t in user.fetchThreadList(limit=20):
@@ -157,12 +160,7 @@ class FacebookBridge(Plugin):
             'SELECT * FROM users WHERE addr=?', (addr,), 'one')
         if not old_user:
             cls.db.insert_user((addr, uname, passwd, None, U_DISABLED))
-            onlogin = Event()
-            t = Thread(target=cls._login, args=(
-                onlogin, addr), daemon=True)
-            t.start()
-            Thread(target=create_chats, args=(
-                onlogin, t, addr), daemon=True).start()
+            Thread(target=create_chats, args=(addr,), daemon=True).start()
         else:
             cls.bot.get_chat(msg).send_text(
                 _('You are already logged in'))
@@ -235,6 +233,35 @@ class FacebookBridge(Plugin):
         chat.send_text(_('Group unmuted'))
 
     @classmethod
+    def more_cmd(cls, msg, arg):
+        def create_chats(addr):
+            onlogin = Event()
+            cls._login(onlogin, addr)
+            user = onlogin.user
+            if user is not None:
+                threads = [t[0] for t in cls.db.execute(
+                    'SELECT thread_id FROM groups WHERE addr=?', (addr,))]
+                before = None
+                while True:
+                    tlist = user.fetchThreadList(limit=20, before=before)
+                    for t in tlist:
+                        if t.uid not in threads:
+                            cls._create_group(user, t, addr)
+                    if len(tlist) < 20 or tlist[-1].last_message_timestamp in (None, before):
+                        break
+                    before = tlist[-1].last_message_timestamp
+
+        addr = msg.get_sender_contact().addr
+        u = cls.db.execute(
+            'SELECT * FROM users WHERE addr=?', (addr,), 'one')
+        if not u:
+            cls.bot.get_chat(msg).send_text(
+                _('You are not logged in'))
+            return
+
+        Thread(target=create_chats, args=(addr,), daemon=True).start()
+
+    @classmethod
     def process_messages(cls, msg, text):
         chat = cls.bot.get_chat(msg)
         group = cls.db.execute(
@@ -281,7 +308,7 @@ class FacebookBridge(Plugin):
                 cls.bot.logger.exception(ex)
 
     @classmethod
-    def _send_new_messages(cls, user, addr):
+    def _send_fb2dc(cls, user, addr):
         me = cls.bot.get_contact()
         for t_id in user.fetchUnread():
             if cls.worker.deactivated.is_set():
@@ -315,16 +342,6 @@ class FacebookBridge(Plugin):
             user.markAsRead(t_id)
             names = dict()
             for msg in reversed(messages):
-                if thread_type == ThreadType.GROUP:
-                    if msg.author not in names:
-                        names[msg.author] = user.fetchUserInfo(msg.author)[
-                            msg.author].name
-                    text = '{}:\n'.format(names[msg.author])
-                else:
-                    text = ''
-                if msg.text:
-                    g.send_text(text+msg.text)
-                    return
                 if msg.sticker:
                     images = [msg.sticker.url]
                 elif msg.attachments:
@@ -332,11 +349,19 @@ class FacebookBridge(Plugin):
                     for a in msg.attachments:
                         if type(a) is ImageAttachment:
                             images.append(a.preview_url)
-                else:
+                elif not msg.text:
                     cls.bot.logger.warning('Unsuported message, ignored.')
                     return
+
+                text = msg.text if msg.text else ''
+                if thread_type == ThreadType.GROUP:
+                    if msg.author not in names:
+                        names[msg.author] = user.fetchUserInfo(msg.author)[
+                            msg.author].name
+                    text = '{}:\n{}'.format(names[msg.author], text)
                 if text:
                     g.send_text(text)
+
                 for img_url in images:
                     r = requests.get(img_url)
                     file_name = os.path.basename(img_url).split('?')[
@@ -362,7 +387,7 @@ class FacebookBridge(Plugin):
                     onlogin.wait()
                     if onlogin.user is None:
                         continue
-                    cls._send_new_messages(onlogin.user, addr)
+                    cls._send_fb2dc(onlogin.user, addr)
                 except Exception as ex:
                     cls.bot.logger.exception(ex)
             cls.worker.deactivated.wait(cls.cfg.getint('delay'))
