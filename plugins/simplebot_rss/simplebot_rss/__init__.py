@@ -49,6 +49,18 @@ class RSS(Plugin):
         cls.db = DBManager(
             os.path.join(cls.bot.get_dir(__name__), 'rss.db'))
 
+        # TODO: remove this block
+        for f in cls.db.execute('SELECT * FROM feeds'):
+            if f['url'].endswith('/'):
+                url2 = url[:-1]
+                chats = cls.db.execute(
+                    'SELECT chats FROM feeds WHERE url=?', (url2,), 'one')
+                if chats:
+                    chats = chats[0]
+                    cls.db.execute('UPDATE feeds SET chats=? WHERE url=?',
+                                   (' '.join(f['chats'], chats), f['url']))
+                    cls.db.delete(url2)
+
         cls.worker = Thread(target=cls.check_feeds)
         cls.worker.deactivated = Event()
         cls.worker.start()
@@ -82,8 +94,12 @@ class RSS(Plugin):
     def _subscribe_cmd(cls, msg, url):
         if not url.startswith('http'):
             url = 'http://'+url
+        if url.endswith('/'):
+            url2 = url[:-1]
+        else:
+            url2 = url+'/'
         feed = cls.db.execute(
-            'SELECT * FROM feeds WHERE url=?', (url,), 'one')
+            'SELECT * FROM feeds WHERE url=? OR url=?', (url, url2), 'one')
         sender = msg.get_sender_contact()
         if feed is None:  # new feed
             d = feedparser.parse(url)
@@ -105,14 +121,14 @@ class RSS(Plugin):
             chat = cls.bot.get_chat(msg)
             chat.send_text(_('You are alredy subscribed to that feed.'))
         else:  # feed exists
-            d = feedparser.parse(url)
+            d = feedparser.parse(feed['url'])
             group = cls.bot.create_group('[RSS] '+feed['title'], [sender])
             chats = '{} {}'.format(
                 feed['chats'], group.id) if feed['chats'] else str(group.id)
             cls.db.execute(
                 'UPDATE feeds SET chats=? WHERE url=?', (chats, feed['url']))
             group.send_text(
-                _('Title:\n{}\n\nDescription:\n{}').format(feed['title'], feed['description']))
+                _('Title:\n{}\n\nURL:\n{}\n\nDescription:\n{}').format(feed['title'], feed['url'], feed['description']))
             cls.set_image(group, d)
             if d.entries and feed['latest']:
                 latest = tuple(map(int, feed['latest'].split()))
