@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import gettext
 import os
+import re
 import sqlite3
 
 from simplebot import Plugin
@@ -35,12 +36,12 @@ class Admin(Plugin):
         cls.bot.add_on_msg_detected_listener(cls.msg_detected)
         cls.bot.add_on_cmd_detected_listener(cls.msg_detected)
         cls.commands = [
-            ('/admin/ban', ['<addr>'],
-             _('The given email address will be ignored by the bot'), cls.ban_cmd),
-            ('/admin/unban', ['<addr>'],
-             _('The given address will be allowed to use the bot again'), cls.unban_cmd),
+            ('/admin/ban', ['<rule>'],
+             _('Ignore addresses matching the give regular expression'), cls.ban_cmd),
+            ('/admin/unban', ['<rule>'],
+             _('Remove the given rule'), cls.unban_cmd),
             ('/admin/banlist', [],
-             _('Display a list of banned addresses'), cls.banlist_cmd),
+             _('Display the list of rules'), cls.banlist_cmd),
             ('/admin/stats', [], _('Show statistics about the bot'), cls.stats_cmd)]
         cls.bot.add_commands(cls.commands)
 
@@ -54,55 +55,54 @@ class Admin(Plugin):
     @classmethod
     def msg_detected(cls, msg, text):
         addr = msg.get_sender_contact().addr
-        banned = cls.db.execute(
-            'SELECT * FROM blacklist WHERE addr=?', (addr,), 'one')
-        if banned is None:
-            return text
-        else:
-            return None
+
+        if addr not in cls.cfg['admins'].split():
+            for r in cls.db.execute('SELECT * FROM blacklist'):
+                if re.match(r[0], addr):
+                    return None
+        return text
 
     @classmethod
-    def ban_cmd(cls, msg, addr):
+    def ban_cmd(cls, msg, rule):
         chat = cls.bot.get_chat(msg)
-        admins = cls.cfg['admins'].split()
-        if msg.get_sender_contact().addr not in admins:
-            chat.send_text(_('You are not an administrator'))
-            return
 
-        if addr in admins:
-            chat.send_text(
-                _('You can NOT block administrators'))
-        else:
-            cls.db.insert(addr)
-            chat.send_text(_('{} banned').format(addr))
-
-    @classmethod
-    def unban_cmd(cls, msg, addr):
-        chat = cls.bot.get_chat(msg)
         if msg.get_sender_contact().addr not in cls.cfg['admins'].split():
             chat.send_text(_('You are not an administrator'))
             return
 
-        cls.db.delete(addr)
-        chat.send_text(_('{} unblocked').format(addr))
+        cls.db.insert(rule)
+        chat.send_text(_('Rule added: {}').format(rule))
+
+    @classmethod
+    def unban_cmd(cls, msg, rule):
+        chat = cls.bot.get_chat(msg)
+
+        if msg.get_sender_contact().addr not in cls.cfg['admins'].split():
+            chat.send_text(_('You are not an administrator'))
+            return
+
+        cls.db.delete(rule)
+        chat.send_text(_('Rule removed: {}').format(rule))
 
     @classmethod
     def banlist_cmd(cls, msg, args):
         chat = cls.bot.get_chat(msg)
+
         if msg.get_sender_contact().addr not in cls.cfg['admins'].split():
             chat.send_text(_('You are not an administrator'))
             return
 
-        blacklist = cls.db.execute('SELECT addr FROM blacklist')
+        blacklist = cls.db.execute('SELECT * FROM blacklist')
         if blacklist:
-            chat.send_text(_('Banned addresses:\n\n{}').format(
-                '\n'.join('* '+r['addr'] for r in blacklist)))
+            chat.send_text(_('Rules:\n\n{}').format(
+                '\n'.join('* '+r[0] for r in blacklist)))
         else:
             chat.send_text(_('The list is empty'))
 
     @classmethod
     def stats_cmd(cls, msg, args):
         chat = cls.bot.get_chat(msg)
+
         if msg.get_sender_contact().addr not in cls.cfg['admins'].split():
             chat.send_text(_('You are not an administrator'))
             return
