@@ -52,7 +52,7 @@ class RSS(Plugin):
         # TODO: remove this block
         for f in cls.db.execute('SELECT * FROM feeds'):
             if f['url'].endswith('/'):
-                url2 = url[:-1]
+                url2 = f['url'][:-1]
                 chats = cls.db.execute(
                     'SELECT chats FROM feeds WHERE url=?', (url2,), 'one')
                 if chats:
