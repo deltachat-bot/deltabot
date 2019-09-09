@@ -58,7 +58,7 @@ class RSS(Plugin):
                 if chats:
                     chats = chats[0]
                     cls.db.execute('UPDATE feeds SET chats=? WHERE url=?',
-                                   (' '.join(f['chats'], chats), f['url']))
+                                   ('{} {}'.format(f['chats'], chats), f['url']))
                     cls.db.delete(url2)
 
         cls.worker = Thread(target=cls.check_feeds)
