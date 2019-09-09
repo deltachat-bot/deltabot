@@ -342,10 +342,10 @@ class FacebookBridge(Plugin):
             user.markAsRead(t_id)
             names = dict()
             for msg in reversed(messages):
+                images = []
                 if msg.sticker:
-                    images = [msg.sticker.url]
+                    images.append(msg.sticker.url)
                 elif msg.attachments:
-                    images = []
                     for a in msg.attachments:
                         if type(a) is ImageAttachment:
                             images.append(a.preview_url)
