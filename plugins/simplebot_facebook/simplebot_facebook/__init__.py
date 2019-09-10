@@ -342,6 +342,8 @@ class FacebookBridge(Plugin):
             user.markAsRead(t_id)
             names = dict()
             for msg in reversed(messages):
+                if msg.author == user.uid:
+                    continue
                 images = []
                 if msg.sticker:
                     images.append(msg.sticker.url)
