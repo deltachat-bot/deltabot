@@ -70,7 +70,7 @@ class SimpleBot(DeltaBot):
 
     def send_html(self, chat, html, basename, user_agent):
         if user_agent == 'zhv':
-            file_path = self.get_blobpath(basename+'.htmlzip')
+            file_path = self.get_blobpath(basename+'.html.zip')
             zlib.Z_DEFAULT_COMPRESSION = 9
             with zipfile.ZipFile(file_path, 'w', compression=zipfile.ZIP_DEFLATED) as fd:
                 fd.writestr('index.html', html)
