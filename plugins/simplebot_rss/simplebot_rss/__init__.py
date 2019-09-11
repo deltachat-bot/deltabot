@@ -52,14 +52,21 @@ class RSS(Plugin):
         # TODO: remove this block
         for f in cls.db.execute('SELECT * FROM feeds'):
             if f['url'].endswith('/'):
-                url2 = f['url'][:-1]
-                chats = cls.db.execute(
-                    'SELECT chats FROM feeds WHERE url=?', (url2,), 'one')
-                if chats:
-                    chats = chats[0]
-                    cls.db.execute('UPDATE feeds SET chats=? WHERE url=?',
-                                   ('{} {}'.format(f['chats'], chats), f['url']))
-                    cls.db.delete(url2)
+                urls = [f['url'][:-1]]
+                if f['url'].startswith('https'):
+                    urls.append('http'+f['url'][5:])
+                    urls.append('http'+url[0][5:])
+                elif f['url'].startswith('http'):
+                    urls.append('https'+f['url'][4:])
+                    urls.append('https'+url[0][4:])
+                for url in urls:
+                    chats = cls.db.execute(
+                        'SELECT chats FROM feeds WHERE url=?', (url,), 'one')
+                    if chats:
+                        chats = chats[0]
+                        cls.db.execute('UPDATE feeds SET chats=? WHERE url=?',
+                                       ('{} {}'.format(f['chats'], chats), f['url']))
+                        cls.db.delete(url)
 
         cls.worker = Thread(target=cls.check_feeds)
         cls.worker.deactivated = Event()
@@ -94,12 +101,19 @@ class RSS(Plugin):
     def _subscribe_cmd(cls, msg, url):
         if not url.startswith('http'):
             url = 'http://'+url
+        urls = [url]
         if url.endswith('/'):
-            url2 = url[:-1]
+            urls.append(url[:-1])
         else:
-            url2 = url+'/'
+            urls.append(url+'/')
+        if url.startswith('https'):
+            urls.append('http'+url[5:])
+            urls.append('http'+urls[1][5:])
+        elif url.startswith('http'):
+            urls.append('https'+url[4:])
+            urls.append('https'+urls[1][4:])
         feed = cls.db.execute(
-            'SELECT * FROM feeds WHERE url=? OR url=?', (url, url2), 'one')
+            'SELECT * FROM feeds WHERE url=? OR url=? OR url=? OR url=?', urls, 'one')
         sender = msg.get_sender_contact()
         if feed is None:  # new feed
             d = feedparser.parse(url)
