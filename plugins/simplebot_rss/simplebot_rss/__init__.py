@@ -55,10 +55,10 @@ class RSS(Plugin):
                 urls = [f['url'][:-1]]
                 if f['url'].startswith('https'):
                     urls.append('http'+f['url'][5:])
-                    urls.append('http'+url[0][5:])
+                    urls.append('http'+urls[0][5:])
                 elif f['url'].startswith('http'):
                     urls.append('https'+f['url'][4:])
-                    urls.append('https'+url[0][4:])
+                    urls.append('https'+urls[0][4:])
                 for url in urls:
                     chats = cls.db.execute(
                         'SELECT chats FROM feeds WHERE url=?', (url,), 'one')
