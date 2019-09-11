@@ -49,25 +49,6 @@ class RSS(Plugin):
         cls.db = DBManager(
             os.path.join(cls.bot.get_dir(__name__), 'rss.db'))
 
-        # TODO: remove this block
-        for f in cls.db.execute('SELECT * FROM feeds'):
-            if f['url'].endswith('/'):
-                urls = [f['url'][:-1]]
-                if f['url'].startswith('https'):
-                    urls.append('http'+f['url'][5:])
-                    urls.append('http'+urls[0][5:])
-                elif f['url'].startswith('http'):
-                    urls.append('https'+f['url'][4:])
-                    urls.append('https'+urls[0][4:])
-                for url in urls:
-                    chats = cls.db.execute(
-                        'SELECT chats FROM feeds WHERE url=?', (url,), 'one')
-                    if chats:
-                        chats = chats[0]
-                        cls.db.execute('UPDATE feeds SET chats=? WHERE url=?',
-                                       ('{} {}'.format(f['chats'], chats), f['url']))
-                        cls.db.delete(url)
-
         cls.worker = Thread(target=cls.check_feeds)
         cls.worker.deactivated = Event()
         cls.worker.start()
