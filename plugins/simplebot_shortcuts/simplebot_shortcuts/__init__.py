@@ -73,9 +73,9 @@ class Shortcuts(Plugin):
         shortcut = shortcut.strip('"').strip()
         addr = msg.get_sender_contact().addr
         with cls.db:
-            deleted = cls.db.execute(
-                'DELETE FROM shortcuts WHERE addr=? and shortcut=?', (addr, shortcut)).fetchone()
-        if deleted is None:
+            cur = cls.db.execute(
+                'DELETE FROM shortcuts WHERE addr=? and shortcut=?', (addr, shortcut))
+        if cur.rowcount <= 0:
             cls.bot.get_chat(msg).send_text(_('Unknown shortcut'))
 
     @classmethod
