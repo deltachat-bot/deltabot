@@ -368,15 +368,23 @@ class GroupMaster(Plugin):
                     raise ValueError('Wrong syntax')
             else:
                 raise ValueError('Wrong syntax')
-            if '@' not in addr:
+            if '@' not in addr and not mgroup:
                 raise ValueError('Invalid email address')
         except (ValueError, IndexError) as err:
             cls.bot.get_chat(sender).send_text(_('Wrong syntax'))
             return
 
-        contact = cls.bot.get_contact(addr)
         banner = _('Removed from {} by {}')
         if mgroup:
+            if '@' not in addr:
+                r = cls.db.execute(
+                    'SELECT addr FROM nicks WHERE nick=?', (addr,)).fetchone()
+                if not r:
+                    cls.bot.get_chat(sender).send_text(
+                        _('Unknow user: {}').format(addr))
+                else:
+                    addr = r[0]
+            contact = cls.bot.get_contact(addr)
             cgroup = None
             is_member = False
             for g in cls.get_mchats(mgroup['id']):
@@ -395,6 +403,7 @@ class GroupMaster(Plugin):
                 for chat in cls.get_mchats(mgroup['id']):
                     chat.send_text(text)
         else:
+            contact = cls.bot.get_contact(addr)
             contacts = group.get_contacts()
             if sender in contacts and contact in contacts:
                 group.remove_contact(contact)
