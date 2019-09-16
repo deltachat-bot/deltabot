@@ -427,7 +427,7 @@ class GroupMaster(Plugin):
     def members_cmd(cls, msg, arg):
         chat = cls.bot.get_chat(msg)
         me = cls.bot.get_contact()
-        mg = cls.get_mgroup(chat)
+        mg = cls.get_mgroup(chat.id)
         if mg:
             text = '{}:\n\n'.format(mg['name'])
             count = 0
