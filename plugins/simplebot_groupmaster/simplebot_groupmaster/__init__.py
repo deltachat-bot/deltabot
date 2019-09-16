@@ -75,11 +75,12 @@ class GroupMaster(Plugin):
 
     @classmethod
     def get_nick(cls, addr):
-        nick = cls.db.execute(
+        r = cls.db.execute(
             'SELECT nick from nicks WHERE addr=?', (addr,)).fetchone()
-        if not nick:
-            nick = addr
-        return nick
+        if r:
+            return r[0]
+        else:
+            return addr
 
     @classmethod
     def process_messages(cls, msg, text):
