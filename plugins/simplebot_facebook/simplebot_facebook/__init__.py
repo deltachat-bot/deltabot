@@ -241,15 +241,20 @@ class FacebookBridge(Plugin):
             if user is not None:
                 threads = [t[0] for t in cls.db.execute(
                     'SELECT thread_id FROM groups WHERE addr=?', (addr,))]
+                new_threads = set()
                 before = None
                 while True:
                     tlist = user.fetchThreadList(limit=20, before=before)
                     for t in tlist:
                         if t.uid not in threads:
-                            cls._create_group(user, t, addr)
-                    if len(tlist) < 20 or tlist[-1].last_message_timestamp in (None, before):
+                            if len(new_threads) == 20:
+                                break
+                            new_threads.add(t)
+                    if len(new_threads) == 20 or len(tlist) < 20 or tlist[-1].last_message_timestamp in (None, before):
                         break
                     before = tlist[-1].last_message_timestamp
+                for t in new_threads:
+                    cls._create_group(user, t, addr)
 
         addr = msg.get_sender_contact().addr
         u = cls.db.execute(
