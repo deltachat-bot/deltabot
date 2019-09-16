@@ -303,10 +303,10 @@ class GroupMaster(Plugin):
         chat = cls.bot.get_chat(msg)
         sender = msg.get_sender_contact()
         try:
-            if arg.startswit(MGROUP_URL):
+            if arg.startswith(MGROUP_URL):
                 is_mgroup = True
                 mgid = arg.lstrip(MGROUP_URL).split('-')
-            elif arg.startswit(GROUP_URL):
+            elif arg.startswith(GROUP_URL):
                 is_mgroup = False
                 gid = arg.lstrip(GROUP_URL).split('-')
             else:
@@ -351,13 +351,13 @@ class GroupMaster(Plugin):
         try:
             gid, addr = arg.split(maxsplit=1)
             addr = addr.rstrip()
-            if gid.startswit(MGROUP_URL):
+            if gid.startswith(MGROUP_URL):
                 _mgid = gid.lstrip(MGROUP_URL).split('-')[-1]
                 mgroup = cls.db.execute(
                     'SELECT * FROM mgroups WHERE id=?', (_mgid,)).fetchone()
                 if not mgroup:
                     raise ValueError('Wrong syntax')
-            elif gid.startswit(GROUP_URL):
+            elif gid.startswith(GROUP_URL):
                 mgroup = None
                 gid = int(gid.lstrip(GROUP_URL).split('-')[-1])
                 for g in cls.get_groups():
