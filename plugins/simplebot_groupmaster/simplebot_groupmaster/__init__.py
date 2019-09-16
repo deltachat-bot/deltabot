@@ -314,7 +314,7 @@ class GroupMaster(Plugin):
         try:
             if arg.startswith(MGROUP_URL):
                 is_mgroup = True
-                mgid = arg.lstrip(MGROUP_URL).split('-')
+                gid = arg.lstrip(MGROUP_URL).split('-')
             elif arg.startswith(GROUP_URL):
                 is_mgroup = False
                 gid = arg.lstrip(GROUP_URL).split('-')
@@ -327,7 +327,7 @@ class GroupMaster(Plugin):
             banner = _('Added to {}\n(ID:{})\n\nTopic:\n{}')
             if is_mgroup:
                 mg = cls.db.execute(
-                    'SELECT * FROM mgroups WHERE id=?', (mgid,)).fetchone()
+                    'SELECT * FROM mgroups WHERE id=?', (gid,)).fetchone()
                 if mg and (mg['status'] == PUBLIC or mg['pid'] == pid):
                     g = cls.bot.create_group(
                         mg['name'], [sender])
