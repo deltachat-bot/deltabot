@@ -88,8 +88,9 @@ class GroupMaster(Plugin):
         if mg:
             if msg.view_type != dc.const.DC_MSG_TEXT:
                 nick = cls.get_nick(msg.get_sender_contact().addr)
-                for chat in cls.get_mchats(mg['id']):
-                    chat.send_text('{}:\n{}'.format(nick, text))
+                for g in cls.get_mchats(mg['id']):
+                    if g.id != chat.id:
+                        g.send_text('{}:\n{}'.format(nick, text))
             else:
                 chat.send_text(
                     _('Only text messages are supported in mega-groups'))
