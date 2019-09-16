@@ -168,12 +168,21 @@ class GroupMaster(Plugin):
         for contact in chat.get_contacts():
             if contact in (me, sender):
                 continue
-            chat.remove_contact(contact)
+            try:
+                chat.remove_contact(contact)
+            except ValueError as ex:
+                cls.bot.logger.exception(ex)
             chats.append(cls.bot.create_group(name, [contact]))
         pid, topic, status = cls.get_info(chat.id)
-        chat.remove_contact(sender)
+        try:
+            chat.remove_contact(sender)
+        except ValueError as ex:
+            cls.bot.logger.exception(ex)
         chats.append(cls.bot.create_group(name, [sender]))
-        chat.remove_contact(me)
+        try:
+            chat.remove_contact(me)
+        except ValueError as ex:
+            cls.bot.logger.exception(ex)
         mgid = cls.db.execute('INSERT INTO mgroups VALUES(?,?,?,?,?)',
                               (None, pid, name, topic, status)).lastrowid
         for g in chats:
