@@ -108,7 +108,7 @@ class GroupMaster(Plugin):
         old_chats = (cls.bot.get_chat(r[0]) for r in cls.db.execute(
             'SELECT id FROM mchats WHERE mgroup=?', (mgid,)))
         for chat in old_chats:
-            contacts = chats.get_contacts()
+            contacts = chat.get_contacts()
             if me not in contacts or len(contacts) < 2:
                 invalid_chats.append(chat)
             else:
