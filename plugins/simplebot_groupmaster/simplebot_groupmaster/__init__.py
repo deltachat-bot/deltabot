@@ -240,14 +240,14 @@ class GroupMaster(Plugin):
     @classmethod
     def public_cmd(cls, msg, arg):
         chat = cls.bot.get_chat(msg)
-        nick = cls.get_nick(msg.get_sender_contact().addr)
+        addr = msg.get_sender_contact().addr
         mg = cls.get_mgroup(chat.id)
         if mg:
             if mg['status'] != PUBLIC:
                 cls.db.execute(
                     'UPDATE mgroups SET status=? WHERE id=?', (PUBLIC, mg['id'],))
                 text = _('** {} changed group status to: {}').format(
-                    nick, _('Public'))
+                    cls.get_nick(addr), _('Public'))
                 for chat in cls.get_mchats(mg['id']):
                     chat.send_text(text)
         else:
@@ -255,19 +255,19 @@ class GroupMaster(Plugin):
                 cls.db.execute(
                     'UPDATE groups SET status=? WHERE id=?', (PUBLIC, chat.id))
                 chat.send_text(
-                    _('** {} changed group status to: {}').format(nick, _('Public')))
+                    _('** {} changed group status to: {}').format(addr, _('Public')))
 
     @classmethod
     def private_cmd(cls, msg, arg):
         chat = cls.bot.get_chat(msg)
-        nick = cls.get_nick(msg.get_sender_contact().addr)
+        addr = msg.get_sender_contact().addr
         mg = cls.get_mgroup(chat.id)
         if mg:
             if mg['status'] != PRIVATE:
                 cls.db.execute(
                     'UPDATE mgroups SET status=? WHERE id=?', (PRIVATE, mg['id'],))
                 text = _('** {} changed group status to: {}').format(
-                    nick, _('Private'))
+                    cls.get_nick(addr), _('Private'))
                 for chat in cls.get_mchats(mg['id']):
                     chat.send_text(text)
         else:
@@ -275,36 +275,30 @@ class GroupMaster(Plugin):
                 cls.db.execute(
                     'UPDATE groups SET status=? WHERE id=?', (PRIVATE, chat.id))
                 chat.send_text(
-                    _('** {} changed group status to: {}').format(nick, _('Private')))
+                    _('** {} changed group status to: {}').format(addr, _('Private')))
 
     @classmethod
     def topic_cmd(cls, msg, new_topic):
         chat = cls.bot.get_chat(msg)
         mg = cls.get_mgroup(chat.id)
-        if mg:
-            table = 'mgroups'
-            gid = mg['id']
-            topic = mg['topic']
-        else:
-            table = 'groups'
-            gid = chat.id
-            topic = cls.get_info(chat.id)[1]
         new_topic = ' '.join(new_topic.split())
         if new_topic:
             if len(new_topic) > 250:
                 new_topic = new_topic[:250]+'...'
-            cls.db.execute(
-                'UPDATE ? SET topic=? WHERE id=?', (table, new_topic, gid))
             addr = msg.get_sender_contact().addr
+            banner = _('** {} changed topic to:\n{}')
             if mg:
-                addr = cls.get_nick(addr)
-            text = _('** {} changed topic to:\n{}').format(addr, new_topic)
-            if mg:
+                cls.db.execute(
+                    'UPDATE mgroups SET topic=? WHERE id=?', (new_topic, mg['id']))
+                text = banner.format(cls.get_nick(addr), new_topic)
                 for chat in cls.get_mchats(mg['id']):
                     chat.send_text(text)
             else:
-                chat.send_text(text)
+                cls.db.execute(
+                    'UPDATE groups SET topic=? WHERE id=?', (new_topic, chat.id))
+                chat.send_text(banner.format(addr, new_topic))
         else:
+            topic = mg['topic'] if mg else cls.get_info(chat.id)[1]
             chat.send_text(_('Topic:\n{}').format(topic))
 
     @classmethod
@@ -329,6 +323,11 @@ class GroupMaster(Plugin):
                 mg = cls.db.execute(
                     'SELECT * FROM mgroups WHERE id=?', (gid,)).fetchone()
                 if mg and (mg['status'] == PUBLIC or mg['pid'] == pid):
+                    for g in cls.get_mchats(mg['id']):
+                        if sender in g.get_contacts():
+                            chat.send_text(
+                                _('You are already a member of that group'))
+                            return
                     g = cls.bot.create_group(
                         mg['name'], [sender])
                     cls.db.execute(
@@ -345,9 +344,13 @@ class GroupMaster(Plugin):
                     if g.id == gid:
                         pid1, topic, status = cls.get_info(gid)
                         if status == PUBLIC or pid1 == pid:
-                            g.add_contact(sender)
-                            chat.send_text(banner.format(
-                                g.get_name(), arg, topic))
+                            if sender in g.get_contacts():
+                                chat.send_text(
+                                    _('You are already a member of that group'))
+                            else:
+                                g.add_contact(sender)
+                                chat.send_text(banner.format(
+                                    g.get_name(), arg, topic))
                             return
                         break
         except (ValueError, IndexError) as err:
