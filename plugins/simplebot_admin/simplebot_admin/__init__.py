@@ -53,42 +53,42 @@ class Admin(Plugin):
         cls.db.close()
 
     @classmethod
-    def msg_detected(cls, msg, text):
-        addr = msg.get_sender_contact().addr
+    def msg_detected(cls, ctx):
+        addr = ctx.msg.get_sender_contact().addr
 
         if addr not in cls.cfg['admins'].split():
             for r in cls.db.execute('SELECT * FROM blacklist'):
                 if re.match(r[0], addr):
-                    return None
-        return text
+                    ctx.rejected = True
+                    break
 
     @classmethod
-    def ban_cmd(cls, msg, rule):
-        chat = cls.bot.get_chat(msg)
+    def ban_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
 
-        if msg.get_sender_contact().addr not in cls.cfg['admins'].split():
+        if ctx.msg.get_sender_contact().addr not in cls.cfg['admins'].split():
             chat.send_text(_('You are not an administrator'))
             return
 
-        cls.db.insert(rule)
-        chat.send_text(_('Rule added: {}').format(rule))
+        cls.db.insert(ctx.text)
+        chat.send_text(_('Rule added: {}').format(ctx.text))
 
     @classmethod
-    def unban_cmd(cls, msg, rule):
-        chat = cls.bot.get_chat(msg)
+    def unban_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
 
-        if msg.get_sender_contact().addr not in cls.cfg['admins'].split():
+        if ctx.msg.get_sender_contact().addr not in cls.cfg['admins'].split():
             chat.send_text(_('You are not an administrator'))
             return
 
-        cls.db.delete(rule)
-        chat.send_text(_('Rule removed: {}').format(rule))
+        cls.db.delete(ctx.text)
+        chat.send_text(_('Rule removed: {}').format(ctx.text))
 
     @classmethod
-    def banlist_cmd(cls, msg, args):
-        chat = cls.bot.get_chat(msg)
+    def banlist_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
 
-        if msg.get_sender_contact().addr not in cls.cfg['admins'].split():
+        if ctx.msg.get_sender_contact().addr not in cls.cfg['admins'].split():
             chat.send_text(_('You are not an administrator'))
             return
 
@@ -100,10 +100,10 @@ class Admin(Plugin):
             chat.send_text(_('The list is empty'))
 
     @classmethod
-    def stats_cmd(cls, msg, args):
-        chat = cls.bot.get_chat(msg)
+    def stats_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
 
-        if msg.get_sender_contact().addr not in cls.cfg['admins'].split():
+        if ctx.msg.get_sender_contact().addr not in cls.cfg['admins'].split():
             chat.send_text(_('You are not an administrator'))
             return
 

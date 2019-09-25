@@ -48,9 +48,9 @@ class Shortcuts(Plugin):
         cls.bot.add_commands(cls.commands)
 
     @classmethod
-    def shortcut_cmd(cls, msg, args):
-        m = cls.regex.match(args)
-        chat = cls.bot.get_chat(msg)
+    def shortcut_cmd(cls, ctx):
+        m = cls.regex.match(ctx.text)
+        chat = cls.bot.get_chat(ctx.msg)
         if m is not None:
             shortcut = m.group('shortcut').strip().lower()
             if shortcut.startswith('/'):
@@ -63,27 +63,27 @@ class Shortcuts(Plugin):
                 return
             with cls.db:
                 cls.db.execute('INSERT OR REPLACE INTO shortcuts VALUES (?,?,?)',
-                               (msg.get_sender_contact().addr, shortcut, cmd))
+                               (ctx.msg.get_sender_contact().addr, shortcut, cmd))
             chat.send_text(_('Shortcut created'))
         else:
             chat.send_text(_('Invalid syntax'))
 
     @classmethod
-    def del_cmd(cls, msg, shortcut):
-        shortcut = shortcut.strip('"').strip()
-        addr = msg.get_sender_contact().addr
+    def del_cmd(cls, ctx):
+        shortcut = ctx.text.strip()
+        addr = ctx.msg.get_sender_contact().addr
         with cls.db:
             cur = cls.db.execute(
                 'DELETE FROM shortcuts WHERE addr=? and shortcut=?', (addr, shortcut))
         if cur.rowcount <= 0:
-            cls.bot.get_chat(msg).send_text(_('Unknown shortcut'))
+            cls.bot.get_chat(ctx.msg).send_text(_('Unknown shortcut'))
 
     @classmethod
-    def list_cmd(cls, msg, args):
-        addr = msg.get_sender_contact().addr
+    def list_cmd(cls, ctx):
+        addr = ctx.msg.get_sender_contact().addr
         shortcuts = cls.db.execute(
             'SELECT shortcut, cmd FROM shortcuts WHERE addr=?', (addr,)).fetchall()
-        chat = cls.bot.get_chat(msg)
+        chat = cls.bot.get_chat(ctx.msg)
         if not shortcuts:
             chat.send_text(_('You have not shortcuts yet'))
         else:
@@ -91,15 +91,17 @@ class Shortcuts(Plugin):
             chat.send_text(text)
 
     @classmethod
-    def process_shortcuts(cls, msg, text):
-        addr = msg.get_sender_contact().addr
-        shortcut = text.strip().lower()
+    def process_shortcuts(cls, ctx):
+        addr = ctx.msg.get_sender_contact().addr
+        shortcut = ctx.text.strip().lower()
         for sc, cmd in cls.db.execute('SELECT shortcut, cmd FROM shortcuts WHERE addr=?', (addr,)):
             if sc.endswith('{}') and shortcut.startswith(sc[:-3]):
-                cls.bot.on_command(msg, cmd.format(
-                    shortcut.lstrip(sc[:-3]).strip()))
-                return True
+                ctx.text = cmd.format(shortcut.lstrip(sc[:-3]).lstrip())
+                cls.bot.on_command(ctx)
+                ctx.processed = True
+                break
             elif shortcut == sc:
-                cls.bot.on_command(msg, cmd)
-                return True
-        return False
+                ctx.text = cmd
+                cls.bot.on_command(ctx)
+                ctx.processed = True
+                break

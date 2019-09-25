@@ -44,28 +44,30 @@ class Helper(Plugin):
         cls.bot.remove_on_msg_processed_listener(cls.on_msg_processed)
 
     @classmethod
-    def help_cmd(cls, msg, text):
-        chat = cls.bot.get_chat(msg)
-        cls.send_html_help(chat, msg.user_agent)
+    def help_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        if ctx.mode == Mode.TEXT:
+            text = _('Commands:\n\n')
+            for cmd, data in sorted(cls.bot.commands.items()):
+                text += '{0} {1}\n{2}\n\n'.format(
+                    cmd, ' '.join(data[0]), data[1])
+            chat.send_text(text)
+        else:
+            plugins = sorted(cls.bot.plugins, key=lambda p: p.name)
+            plugins.remove(cls)
+            plugins.insert(0, cls)
+            bot_addr = cls.bot.get_address()
+            html = cls.template.render(
+                plugin=cls, plugins=plugins, bot_addr=bot_addr)
+            cls.bot.send_html(chat, html, cls.name, ctx.mode)
 
     @classmethod
-    def on_cmd_processed(cls, msg, processed):
-        chat = cls.bot.get_chat(msg)
-        if not processed:
-            chat.send_text(
+    def on_cmd_processed(cls, ctx):
+        if not ctx.processed:
+            cls.bot.get_chat(ctx.msg).send_text(
                 _('Unknow command. Please send /help to learn how to use me.'))
 
     @classmethod
-    def on_msg_processed(cls, msg, processed):
-        if not cls.bot.is_group(cls.bot.get_chat(msg)):
-            cls.on_cmd_processed(msg, processed)
-
-    @classmethod
-    def send_html_help(cls, chat, user_agent):
-        plugins = sorted(cls.bot.plugins, key=lambda p: p.name)
-        plugins.remove(cls)
-        plugins.insert(0, cls)
-        bot_addr = cls.bot.get_address()
-        html = cls.template.render(
-            plugin=cls, plugins=plugins, bot_addr=bot_addr)
-        cls.bot.send_html(chat, html, cls.name, user_agent)
+    def on_msg_processed(cls, ctx):
+        if not cls.bot.is_group(cls.bot.get_chat(ctx.msg)):
+            cls.on_cmd_processed(ctx)

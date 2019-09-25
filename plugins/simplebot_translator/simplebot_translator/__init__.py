@@ -24,13 +24,11 @@ class Translator(Plugin):
         cls.bot.add_commands(cls.commands)
 
     @classmethod
-    def tr_cmd(cls, msg, text):
-        chat = cls.bot.get_chat(msg)
-        if not text:
+    def tr_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        if not ctx.text:
             chat.send_text(cls.description)
         else:
-            text = text.split()
-            l1, l2, text = text[0], text[1], ' '.join(text[2:])
-            text = ts.google(text=text, from_language=l1,
-                             to_language=l2, host='https://translate.google.com')
-            chat.send_text(text)
+            l1, l2, text = ctx.text.split(maxsplit=2)
+            chat.send_text(ts.google(text=text, from_language=l1,
+                                     to_language=l2, host='https://translate.google.com'))

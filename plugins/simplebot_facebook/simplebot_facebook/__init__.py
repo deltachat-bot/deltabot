@@ -144,7 +144,7 @@ class FacebookBridge(Plugin):
         return g
 
     @classmethod
-    def login_cmd(cls, msg, arg):
+    def login_cmd(cls, ctx):
         def create_chats(addr):
             onlogin = Event()
             cls._login(onlogin, addr)
@@ -153,8 +153,8 @@ class FacebookBridge(Plugin):
                 for t in user.fetchThreadList(limit=20):
                     cls._create_group(user, t, addr)
 
-        addr = msg.get_sender_contact().addr
-        uname, passwd = arg.split(maxsplit=1)
+        addr = ctx.msg.get_sender_contact().addr
+        uname, passwd = ctx.text.split(maxsplit=1)
         passwd = passwd.rstrip()
         old_user = cls.db.execute(
             'SELECT * FROM users WHERE addr=?', (addr,), 'one')
@@ -162,29 +162,30 @@ class FacebookBridge(Plugin):
             cls.db.insert_user((addr, uname, passwd, None, U_DISABLED))
             Thread(target=create_chats, args=(addr,), daemon=True).start()
         else:
-            cls.bot.get_chat(msg).send_text(
+            cls.bot.get_chat(ctx.msg).send_text(
                 _('You are already logged in'))
 
     @classmethod
-    def password_cmd(cls, msg, password):
-        addr = msg.get_sender_contact().addr
-        chat = cls.bot.get_chat(msg)
-        cls.db.execute('UPDATE users SET password=? WHERE addr=?', (addr,))
+    def password_cmd(cls, ctx):
+        addr = ctx.msg.get_sender_contact().addr
+        chat = cls.bot.get_chat(ctx.msg)
+        cls.db.execute(
+            'UPDATE users SET password=? WHERE addr=?', (ctx.text, addr))
         chat.send_text(_('Password updated'))
 
     @classmethod
-    def code_cmd(cls, msg, code):
-        addr = msg.get_sender_contact().addr
-        chat = cls.bot.get_chat(msg)
+    def code_cmd(cls, ctx):
+        addr = ctx.msg.get_sender_contact().addr
+        chat = cls.bot.get_chat(ctx.msg)
         if addr in cls.code_events:
-            cls.code_events[addr].code = code
+            cls.code_events[addr].code = ctx.text
             cls.code_events[addr].set()
         else:
             chat.send_text(_('Unexpected verification'))
 
     @classmethod
-    def logout_cmd(cls, msg, arg):
-        contact = msg.get_sender_contact()
+    def logout_cmd(cls, ctx):
+        contact = ctx.msg.get_sender_contact()
         addr = contact.addr
         ids = cls.db.execute(
             'SELECT group_id FROM groups WHERE addr=?', (addr,))
@@ -200,40 +201,40 @@ class FacebookBridge(Plugin):
             _('You have logged out from facebook'))
 
     @classmethod
-    def disable_cmd(cls, msg, arg):
-        addr = msg.get_sender_contact().addr
-        chat = cls.bot.get_chat(msg)
+    def disable_cmd(cls, ctx):
+        addr = ctx.msg.get_sender_contact().addr
+        chat = cls.bot.get_chat(ctx.msg)
         cls.db.execute('UPDATE users SET status=? WHERE addr=?',
                        (U_DISABLED, addr))
         chat.send_text(
             _('Account disabled'))
 
     @classmethod
-    def enable_cmd(cls, msg, arg):
-        addr = msg.get_sender_contact().addr
-        chat = cls.bot.get_chat(msg)
+    def enable_cmd(cls, ctx):
+        addr = ctx.msg.get_sender_contact().addr
+        chat = cls.bot.get_chat(ctx.msg)
         cls.db.execute('UPDATE users SET status=? WHERE addr=?',
                        (U_ENABLED, addr))
         chat.send_text(_('Account enabled'))
 
     @classmethod
-    def mute_cmd(cls, msg, arg):
-        addr = msg.get_sender_contact().addr
-        chat = cls.bot.get_chat(msg)
+    def mute_cmd(cls, ctx):
+        addr = ctx.msg.get_sender_contact().addr
+        chat = cls.bot.get_chat(ctx.msg)
         cls.db.execute('UPDATE groups SET status=? WHERE group_id=? AND addr=?',
                        (G_DISABLED, chat.id, addr))
         chat.send_text(_('Group muted'))
 
     @classmethod
-    def unmute_cmd(cls, msg, arg):
-        addr = msg.get_sender_contact().addr
-        chat = cls.bot.get_chat(msg)
+    def unmute_cmd(cls, ctx):
+        addr = ctx.msg.get_sender_contact().addr
+        chat = cls.bot.get_chat(ctx.msg)
         cls.db.execute('UPDATE groups SET status=? WHERE group_id=? AND addr=?',
                        (G_ENABLED, chat.id, addr))
         chat.send_text(_('Group unmuted'))
 
     @classmethod
-    def more_cmd(cls, msg, arg):
+    def more_cmd(cls, ctx):
         def create_chats(addr):
             onlogin = Event()
             cls._login(onlogin, addr)
@@ -256,46 +257,46 @@ class FacebookBridge(Plugin):
                 for t in new_threads:
                     cls._create_group(user, t, addr)
 
-        addr = msg.get_sender_contact().addr
+        addr = ctx.msg.get_sender_contact().addr
         u = cls.db.execute(
             'SELECT * FROM users WHERE addr=?', (addr,), 'one')
         if not u:
-            cls.bot.get_chat(msg).send_text(
+            cls.bot.get_chat(ctx.msg).send_text(
                 _('You are not logged in'))
             return
 
         Thread(target=create_chats, args=(addr,), daemon=True).start()
 
     @classmethod
-    def process_messages(cls, msg, text):
-        chat = cls.bot.get_chat(msg)
+    def process_messages(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
         group = cls.db.execute(
             'SELECT * FROM groups WHERE group_id=?', (chat.id,), 'one')
         if group is None:
-            return False
-        addr = msg.get_sender_contact().addr
+            return
+        ctx.processed = True
+        addr = ctx.msg.get_sender_contact().addr
         u = cls.db.execute(
             'SELECT * FROM users WHERE addr=?', (addr,), 'one')
         if u['status'] == U_DISABLED:
             chat.send_text(
                 _('Your account is disabled, use /fb/enable to enable it.'))
-            return True
+            return
         if group['status'] == G_DISABLED:
             cls.db.execute(
-                'UPDATE groups SET status=? WHERE group_id=? AND addr=?', (G_ENABLED, chat.id, addr))
+                'UPDATE groups SET status=? WHERE group_id=?', (G_ENABLED, chat.id))
 
         Thread(target=cls._send_dc2fb, args=(
-            group, addr, text, msg.filename), daemon=True).start()
-        return True
+            group, ctx.text, ctx.msg.filename), daemon=True).start()
 
     @classmethod
-    def _send_dc2fb(cls, g, addr, text, filename):
-        if addr in cls.code_events:
+    def _send_dc2fb(cls, g, text, filename):
+        if g['addr'] in cls.code_events:
             cls.bot.logger.warning(
                 'Tried to send message before code verification')
             return
         onlogin = Event()
-        cls._login(onlogin, addr)
+        cls._login(onlogin, g['addr'])
         if onlogin.user is not None:
             try:
                 thread_type = ThreadType(g['thread_type'])
@@ -424,7 +425,7 @@ class DBManager:
         with self.db:
             self.db.execute(
                 '''CREATE TABLE IF NOT EXISTS users 
-                (addr TEXT NOT NULL,
+                (addr TEXT,
                 username TEXT NOT NULL,
                 password TEXT NOT NULL,
                 cookie TEXT,
@@ -432,7 +433,7 @@ class DBManager:
                 PRIMARY KEY(addr))''')
             self.db.execute(
                 '''CREATE TABLE IF NOT EXISTS groups 
-                (group_id INTEGER NOT NULL,
+                (group_id INTEGER,
                 thread_id TEXT NOT NULL,
                 thread_type INTEGER NOT NULL,
                 addr TEXT NOT NULL REFERENCES users(addr),

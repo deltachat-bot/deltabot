@@ -27,8 +27,8 @@
 
 {% block content %}
 <a class="w3-btn-block w3-teal w3-large w3-center" onclick="document.getElementById('profile').style.display='block'">{{ plugin.JOIN_BTN }}</a></br></br>
-<a id="leave-btn" class="w3-btn-block w3-teal w3-large w3-center">{{ plugin.LEAVE_BTN }} ❯</a></br></br>
-<a id="list-btn" class="w3-btn-block w3-teal w3-large w3-center" href="mailto:{{ bot_addr }}?body=/friends/list">{{ plugin.LIST_BTN }} ❯</a>
+<a class="w3-btn-block w3-teal w3-large w3-center" href="mailto:{{ bot_addr }}?body=/friends/leave">{{ plugin.LEAVE_BTN }} ❯</a></br></br>
+<a class="w3-btn-block w3-teal w3-large w3-center" href="mailto:{{ bot_addr }}?body=/friends/list">{{ plugin.LIST_BTN }} ❯</a>
 
 <div id="profile" class="w3-modal">
   <div class="w3-modal-content">
@@ -53,12 +53,10 @@
 {% endblock %}
 {% block js %}
 <script>
-  var mailto = "mailto:{{ bot_addr }}?body=";
-  document.getElementById("leave-btn").href = mailto+zhv_cmd+"/friends/leave";
-  document.getElementById("list-btn").href = mailto+zhv_cmd+"/friends/list";
+  var mailto = "mailto:{{ bot_addr }}?body=/friends/join%20";
   var join_btn = document.getElementById("join-btn");
   function setBtn(i){
-      join_btn.href = mailto+zhv_cmd+"/friends/join%20"+encodeURIComponent(i.value);
+      join_btn.href = mailto+encodeURIComponent(i.value);
   }
 </script>
 {% endblock %}
