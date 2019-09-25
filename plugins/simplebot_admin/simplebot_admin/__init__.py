@@ -5,6 +5,7 @@ import re
 import sqlite3
 
 from simplebot import Plugin
+import psutil
 
 
 class Admin(Plugin):
@@ -107,6 +108,8 @@ class Admin(Plugin):
             chat.send_text(_('You are not an administrator'))
             return
 
+        text = _('Bot stats:\n\n')
+
         groups = 0
         private = 0
         messages = 0
@@ -118,9 +121,14 @@ class Admin(Plugin):
                 private += 1
             messages += len(c.get_messages())
         contacts = len(cls.bot.account.get_contacts())
-        # TODO: get basedir size
-        chat.send_text(_('Bot stats:\n\nGroups: {}\nPrivate Chats: {}\nContacts: {}\nMessages: {}').format(
-            groups, private, contacts, messages))
+        text += _('Groups: {}\nPrivate Chats: {}\nContacts: {}\nMessages: {}\n\n').format(
+            groups, private, contacts, messages)
+
+        mem = psutil.Process(os.getpid()).memory_info().rss
+        disk = get_size(cls.bot.basedir)
+        text += _('RAM usage: {}\nDisk usage: {}\n').format(mem, disk)
+
+        chat.send_text(text)
 
 
 class DBManager:
@@ -145,3 +153,16 @@ class DBManager:
 
     def close(self):
         self.db.close()
+
+
+def get_size(path):
+    total_size = 0
+    for root, dirs, files in os.walk(path):
+        for f in files:
+            fp = os.path.join(root, f)
+            if not os.path.islink(fp):
+                total_size += os.path.getsize(fp)
+        for d in dirs.copy():
+            if os.path.islink(os.path.join(root, d)):
+                dirs.remove(d)
+    return total_size
