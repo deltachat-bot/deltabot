@@ -29,16 +29,16 @@ class Wikiquote(Plugin):
         cls.bot.add_commands(cls.commands)
 
     @classmethod
-    def quote_cmd(cls, msg, text):
-        chat = cls.bot.get_chat(msg)
-        if text:
-            pages = wq.search(text, lang=cls.LANG)
+    def quote_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        if ctx.text:
+            pages = wq.search(ctx.text, lang=cls.LANG)
             if pages:
                 author = pages[0]
                 quote = '"%s"\n\n― %s' % (random.choice(
                     wq.quotes(author, max_quotes=100, lang=cls.LANG)), author)
             else:
-                quote = _('No quote found for: {}').format(text)
+                quote = _('No quote found for: {}').format(ctx.text)
             chat.send_text(quote)
         else:
             quote, author = wq.quote_of_the_day(lang=cls.LANG)

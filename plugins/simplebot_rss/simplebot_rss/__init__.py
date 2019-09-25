@@ -8,9 +8,10 @@ import sqlite3
 import time
 
 from jinja2 import Environment, PackageLoader
-from simplebot import Plugin
+from simplebot import Plugin, Mode
 import deltachat as dc
 import feedparser
+import html2text
 import requests
 
 
@@ -74,12 +75,13 @@ class RSS(Plugin):
         cls.db.close()
 
     @classmethod
-    def subscribe_cmd(cls, msg, url):
-        Thread(target=cls._subscribe_cmd, args=(msg, url)).start()
+    def subscribe_cmd(cls, ctx):
+        Thread(target=cls._subscribe_cmd, args=(ctx,)).start()
 
     @classmethod
     @with_dblock
-    def _subscribe_cmd(cls, msg, url):
+    def _subscribe_cmd(cls, ctx):
+        url = ctx.text
         if not url.startswith('http'):
             url = 'http://'+url
         urls = [url]
@@ -95,11 +97,11 @@ class RSS(Plugin):
             urls.append('https'+urls[1][4:])
         feed = cls.db.execute(
             'SELECT * FROM feeds WHERE url=? OR url=? OR url=? OR url=?', urls, 'one')
-        sender = msg.get_sender_contact()
+        sender = ctx.msg.get_sender_contact()
         if feed is None:  # new feed
             d = feedparser.parse(url)
             if d.get('bozo') == 1:
-                chat = cls.bot.get_chat(msg)
+                chat = cls.bot.get_chat(ctx.msg)
                 chat.send_text(_('Invalid feed url: {}').format(url))
                 return
             title = d.feed.get('title')
@@ -113,7 +115,7 @@ class RSS(Plugin):
                 _('Title:\n{}\n\nURL:\n{}\n\nDescription:\n{}').format(title, url, description))
             cls.set_image(group, d)
         elif cls._is_subscribed(sender, feed):  # user is already subscribed
-            chat = cls.bot.get_chat(msg)
+            chat = cls.bot.get_chat(ctx.msg)
             chat.send_text(_('You are alredy subscribed to that feed.'))
         else:  # feed exists
             d = feedparser.parse(feed['url'])
@@ -128,13 +130,28 @@ class RSS(Plugin):
             if d.entries and feed['latest']:
                 latest = tuple(map(int, feed['latest'].split()))
                 d.entries = cls.get_old_entries(d, latest)
-                html = cls.env.get_template('items.html').render(
-                    plugin=cls, title=feed['title'], entries=d.entries[-100:])
-                cls.bot.send_html(group, html, cls.name, msg.user_agent)
+                entries = d.entries[-10:]
+                if ctx.mode == Mode.TEXT:
+                    text = '{}:\n\n'.format(feed['title'])
+                    for e in entries:
+                        text += '{}:\n({})\n'.format(e.get('title',
+                                                           _('NO TITLE')), e.get('link', '-'))
+                        pub_date = e.get('published')
+                        if pub_date:
+                            text += '{}\n'.format(pub_date)
+                        desc = e.get('description')
+                        if desc:
+                            text += '{}\n'.format(html2text.html2text(desc))
+                        else:
+                            text += '\n\n'
+                else:
+                    html = cls.env.get_template('items.html').render(
+                        plugin=cls, title=feed['title'], entries=entries)
+                    cls.bot.send_html(group, html, cls.name, ctx.mode)
 
     @classmethod
-    def info_cmd(cls, msg, args):
-        g = cls.bot.get_chat(msg)
+    def info_cmd(cls, ctx):
+        g = cls.bot.get_chat(ctx.msg)
         for f in cls.db.execute('SELECT * FROM feeds'):
             if g.id in map(int, f['chats'].split()):
                 g.send_text(
@@ -143,32 +160,41 @@ class RSS(Plugin):
         g.send_text(_('This is not a feed group.'))
 
     @classmethod
-    def list_cmd(cls, msg, args):
+    def list_cmd(cls, ctx):
         feeds = cls.db.execute('SELECT * FROM feeds')
         feeds.sort(key=lambda f: len(f['chats'].split()), reverse=True)
-        feeds = [(*f, quote_plus(f['url'])) for f in feeds]
-        template = cls.env.get_template('feeds.html')
-        addr = cls.bot.get_address()
-        html = template.render(plugin=cls, feeds=feeds, bot_addr=addr)
-        chat = cls.bot.get_chat(msg)
-        cls.bot.send_html(chat, html, cls.name, msg.user_agent)
+        chat = cls.bot.get_chat(ctx.msg)
+        if ctx.mode == Mode.TEXT:
+            text = '{0} ({1}):\n\n'.format(cls.name, len(feeds))
+            for f in feeds:
+                scount = len(f['chats'].split())
+                text += '{}\n({})\n* {} 👤\n{}\n\n'.format(
+                    f['title'], f['url'], scount, f['description'])
+            chat.send_text(text)
+        else:
+            feeds = [(*f, quote_plus(f['url'])) for f in feeds]
+            template = cls.env.get_template('feeds.html')
+            addr = cls.bot.get_address()
+            html = template.render(plugin=cls, feeds=feeds, bot_addr=addr)
+            cls.bot.send_html(chat, html, cls.name, ctx.mode)
 
     @classmethod
-    def unsubscribe_cmd(cls, msg, url):
-        Thread(target=cls._unsubscribe_cmd, args=(msg, url)).start()
+    def unsubscribe_cmd(cls, ctx):
+        Thread(target=cls._unsubscribe_cmd, args=(ctx,)).start()
 
     @classmethod
     @with_dblock
-    def _unsubscribe_cmd(cls, msg, url):
+    def _unsubscribe_cmd(cls, ctx):
+        url = ctx.text
         if not url.startswith('http'):
             url = 'http://'+url
         feed = cls.db.execute(
             'SELECT * FROM feeds WHERE url=?', (url,), 'one')
-        chat = cls.bot.get_chat(msg)
+        chat = cls.bot.get_chat(ctx.msg)
         if feed is None:
             chat.send_text(_('Unknow feed: {}').format(url))
             return
-        sender = msg.get_sender_contact()
+        sender = ctx.msg.get_sender_contact()
         gid = cls._is_subscribed(sender, feed)
         if gid:
             ids = feed['chats'].split()
@@ -233,17 +259,34 @@ class RSS(Plugin):
                             d.entries = cls.get_new_entries(d, latest)
                         if not d.entries:
                             continue
-                        html = cls.env.get_template('items.html').render(
-                            plugin=cls, title=feed['title'], entries=d.entries[-100:])
-                        html_file = cls.bot.get_blobpath(cls.name+'.html')
-                        with open(html_file, 'w') as fd:
-                            fd.write(html)
+
+                        entries = d.entries[-50:]
+                        if ctx.mode == Mode.TEXT:
+                            text = ''
+                            for e in entries:
+                                text += '{}:\n({})\n'.format(e.get('title',
+                                                                   _('NO TITLE')), e.get('link', '-'))
+                                pub_date = e.get('published')
+                                if pub_date:
+                                    text += '**{}**\n'.format(pub_date)
+                                desc = e.get('description')
+                                if desc:
+                                    text += '{}\n'.format(html2text.html2text(desc))
+                                else:
+                                    text += '\n\n'
+
+                            def send_response(g): return g.send_text(text)
+                        else:
+                            html = cls.env.get_template('items.html').render(
+                                plugin=cls, title=feed['title'], entries=entries)
+
+                            def send_response(g): return cls.bot.send_html(
+                                g, html, cls.name, ctx.mode)
                         for gid in feed['chats'].split():
                             g = cls.bot.get_chat(int(gid))
                             members = g.get_contacts()
                             if me in members and len(members) > 1:
-                                g.send_file(html_file,
-                                            mime_type='text/html')
+                                send_response(g)
                             else:
                                 ids = feed['chats'].split()
                                 ids.remove(gid)

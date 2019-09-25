@@ -53,7 +53,7 @@
 	    <p>{{ p.long_description.replace('\n', '<br>') }}</p>
 	    <ul>
 	      {% for cmd, args, desc, action in p.commands %}
-	      <li><a class="cmd w3-btn w3-white w3-border w3-border-green w3-round" cmd="{{ cmd }}">{{ cmd }} {{ ' '.join(args) }}</a> <p>{{ desc }}</p></li>
+	      <li><a class="w3-btn w3-white w3-border w3-border-green w3-round" href="mailto:{{ bot_addr }}?body={{ cmd }}">{{ cmd }} {{ ' '.join(args) }}</a> <p>{{ desc }}</p></li>
 	      {% endfor %}
 	    </ul>
 	  </div><a class="w3-btn w3-dark-gray w3-large w3-left" onclick="toogleMore(this)">{{ plugin.MORE }}</a>
@@ -74,16 +74,6 @@
             section.className = section.className.replace(" w3-show", "");
             btn.innerHTML = "{{ plugin.MORE }}";
         }
-    }
-    if (typeof zhv !== "undefined") {
-	var zhv_cmd = "/z "
-    } else {
-	var zhv_cmd = ""
-    }
-    var mailto = "mailto:{{ bot_addr }}?body=";
-    var commands = document.getElementsByClassName("cmd");
-    for (a of commands) {
-	a.href = mailto+zhv_cmd+a.getAttribute("cmd");
     }
   </script>
 </html>

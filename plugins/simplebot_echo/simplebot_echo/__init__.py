@@ -27,9 +27,9 @@ class Echo(Plugin):
         cls.bot.add_commands(cls.commands)
 
     @classmethod
-    def on_echo(cls, msg, text):
-        chat = cls.bot.get_chat(msg)
-        if not text:
+    def on_echo(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        if not ctx.text:
             chat.send_text('🤖')
         else:
-            chat.send_text(text)
+            chat.send_text(ctx.text)

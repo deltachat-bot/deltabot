@@ -7,7 +7,7 @@ import string
 import sqlite3
 
 from jinja2 import Environment, PackageLoader, select_autoescape
-from simplebot import Plugin
+from simplebot import Plugin, Mode
 import deltachat as dc
 
 
@@ -83,20 +83,19 @@ class GroupMaster(Plugin):
             return addr
 
     @classmethod
-    def process_messages(cls, msg, text):
-        chat = cls.bot.get_chat(msg)
+    def process_messages(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
         mg = cls.get_mgroup(chat.id)
         if mg:
-            if msg.view_type != dc.const.DC_MSG_TEXT:
-                nick = cls.get_nick(msg.get_sender_contact().addr)
+            if ctx.msg.view_type != dc.const.DC_MSG_TEXT:
+                nick = cls.get_nick(ctx.msg.get_sender_contact().addr)
                 for g in cls.get_mchats(mg['id']):
                     if g.id != chat.id:
-                        g.send_text('{}:\n{}'.format(nick, text))
+                        g.send_text('{}:\n{}'.format(nick, ctx.text))
             else:
                 chat.send_text(
                     _('Only text messages are supported in mega-groups'))
-            return True
-        return False
+            ctx.processed = True
 
     @classmethod
     def generate_pid(cls):
@@ -155,14 +154,14 @@ class GroupMaster(Plugin):
         return groups
 
     @classmethod
-    def mega_cmd(cls, msg, arg):
-        chat = cls.bot.get_chat(msg)
+    def mega_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
         if cls.get_mgroup(chat.id):
             chat.send_text(_('This is already a mega-group'))
             return
 
         me = cls.bot.get_contact()
-        sender = msg.get_sender_contact()
+        sender = ctx.msg.get_sender_contact()
         name = chat.get_name()
         chats = []
         for contact in chat.get_contacts():
@@ -190,10 +189,10 @@ class GroupMaster(Plugin):
             g.send_text(_('Mega-group created'))
 
     @classmethod
-    def nick_cmd(cls, msg, new_nick):
-        chat = cls.bot.get_chat(msg)
-        addr = msg.get_sender_contact().addr
-        new_nick = ' '.join(new_nick.split())
+    def nick_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        addr = ctx.msg.get_sender_contact().addr
+        new_nick = ' '.join(ctx.text.split())
         if new_nick:
             if new_nick == addr:
                 cls.db.execute('DELETE FROM nicks WHERE addr=?', (addr,))
@@ -212,8 +211,8 @@ class GroupMaster(Plugin):
         chat.send_text(text)
 
     @classmethod
-    def id_cmd(cls, msg, arg):
-        chat = cls.bot.get_chat(msg)
+    def id_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
         if cls.bot.is_group(chat):
             mg = cls.get_mgroup(chat.id)
             if mg:
@@ -238,9 +237,9 @@ class GroupMaster(Plugin):
             chat.send_text(_('This is NOT a group'))
 
     @classmethod
-    def public_cmd(cls, msg, arg):
-        chat = cls.bot.get_chat(msg)
-        addr = msg.get_sender_contact().addr
+    def public_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        addr = ctx.msg.get_sender_contact().addr
         mg = cls.get_mgroup(chat.id)
         if mg:
             if mg['status'] != PUBLIC:
@@ -258,9 +257,9 @@ class GroupMaster(Plugin):
                     _('** {} changed group status to: {}').format(addr, _('Public')))
 
     @classmethod
-    def private_cmd(cls, msg, arg):
-        chat = cls.bot.get_chat(msg)
-        addr = msg.get_sender_contact().addr
+    def private_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        addr = ctx.msg.get_sender_contact().addr
         mg = cls.get_mgroup(chat.id)
         if mg:
             if mg['status'] != PRIVATE:
@@ -278,14 +277,14 @@ class GroupMaster(Plugin):
                     _('** {} changed group status to: {}').format(addr, _('Private')))
 
     @classmethod
-    def topic_cmd(cls, msg, new_topic):
-        chat = cls.bot.get_chat(msg)
+    def topic_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
         mg = cls.get_mgroup(chat.id)
-        new_topic = ' '.join(new_topic.split())
+        new_topic = ' '.join(ctx.text.split())
         if new_topic:
             if len(new_topic) > 250:
                 new_topic = new_topic[:250]+'...'
-            addr = msg.get_sender_contact().addr
+            addr = ctx.msg.get_sender_contact().addr
             banner = _('** {} changed topic to:\n{}')
             if mg:
                 cls.db.execute(
@@ -302,16 +301,16 @@ class GroupMaster(Plugin):
             chat.send_text(_('Topic:\n{}').format(topic))
 
     @classmethod
-    def join_cmd(cls, msg, arg):
-        chat = cls.bot.get_chat(msg)
-        sender = msg.get_sender_contact()
+    def join_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        sender = ctx.msg.get_sender_contact()
         try:
-            if arg.startswith(MGROUP_URL):
+            if ctx.text.startswith(MGROUP_URL):
                 is_mgroup = True
-                gid = arg.lstrip(MGROUP_URL).split('-')
-            elif arg.startswith(GROUP_URL):
+                gid = ctx.text.lstrip(MGROUP_URL).split('-')
+            elif ctx.text.startswith(GROUP_URL):
                 is_mgroup = False
-                gid = arg.lstrip(GROUP_URL).split('-')
+                gid = ctx.text.lstrip(GROUP_URL).split('-')
             else:
                 raise ValueError('Invalid Group ID')
             pid = ''
@@ -337,7 +336,8 @@ class GroupMaster(Plugin):
                     for chat in cls.get_mchats(mg['id']):
                         if chat.id != g.id:
                             chat.send_text(text)
-                    g.send_text(banner.format(mg['name'], arg, mg['topic']))
+                    g.send_text(banner.format(
+                        mg['name'], ctx.text, mg['topic']))
                     return
             else:
                 for g in cls.get_groups():
@@ -350,18 +350,18 @@ class GroupMaster(Plugin):
                             else:
                                 g.add_contact(sender)
                                 chat.send_text(banner.format(
-                                    g.get_name(), arg, topic))
+                                    g.get_name(), ctx.text, topic))
                             return
                         break
         except (ValueError, IndexError) as err:
             cls.bot.logger.exception(err)
-        chat.send_text(_('Unknow group ID: {}').format(arg))
+        chat.send_text(_('Unknow group ID: {}').format(ctx.text))
 
     @classmethod
-    def remove_cmd(cls, msg, arg):
-        sender = msg.get_sender_contact()
+    def remove_cmd(cls, ctx):
+        sender = ctx.msg.get_sender_contact()
         try:
-            gid, addr = arg.split(maxsplit=1)
+            gid, addr = ctx.text.split(maxsplit=1)
             addr = addr.rstrip()
             if gid.startswith(MGROUP_URL):
                 _mgid = gid.lstrip(MGROUP_URL).split('-')[-1]
@@ -423,31 +423,40 @@ class GroupMaster(Plugin):
                 chat.send_text(banner.format(group.get_name(), sender.addr))
 
     @classmethod
-    def list_cmd(cls, msg, arg):
+    def list_cmd(cls, ctx):
         groups = cls.get_groups(public_only=True)
         for i, g in enumerate(groups):
             topic = cls.get_info(g.id)[1]
-            gid = quote_plus('{}{}'.format(GROUP_URL, g.id))
-            groups[i] = (g.get_name(), topic, gid, len(g.get_contacts()))
+            groups[i] = [g.get_name(), topic, '{}{}'.format(
+                GROUP_URL, g.id), len(g.get_contacts())]
         mgroups = []
         for mg in cls.db.execute('SELECT * FROM mgroups WHERE status=?', (PUBLIC,)):
             count = sum(map(lambda g: len(g.get_contacts())-1,
                             cls.get_mchats(mg['id'])))
             if count == 0:
                 continue
-            mgroups.append((mg['name'], mg['topic'], quote_plus(
-                '{}{}'.format(MGROUP_URL, mg['id'])), count))
+            mgroups.append(
+                [mg['name'], mg['topic'], '{}{}'.format(MGROUP_URL, mg['id']), count])
         groups.extend(mgroups)
         groups.sort(key=lambda g: g[0])
-        template = cls.env.get_template('list.html')
-        html = template.render(
-            plugin=cls, bot_addr=cls.bot.get_address(), groups=groups)
-        chat = cls.bot.get_chat(msg)
-        cls.bot.send_html(chat, html, cls.name, msg.user_agent)
+        chat = cls.bot.get_chat(ctx.msg)
+        gcount = len(groups)
+        if ctx.mode == Mode.TEXT:
+            text = '{0} ({1}):\n\n'.format(cls.name, gcount)
+            for g in groups:
+                text += _('{0}:\n* {3} 👤\nTopic: {1}\nID: {2}\n\n').format(*g)
+            chat.send_text(text)
+        else:
+            for i in range(gcount):
+                groups[i][2] = quote_plus(groups[i][2])
+            template = cls.env.get_template('list.html')
+            html = template.render(
+                plugin=cls, bot_addr=cls.bot.get_address(), groups=groups)
+            cls.bot.send_html(chat, html, cls.name, ctx.mode)
 
     @classmethod
-    def members_cmd(cls, msg, arg):
-        chat = cls.bot.get_chat(msg)
+    def members_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
         me = cls.bot.get_contact()
         mg = cls.get_mgroup(chat.id)
         if mg:

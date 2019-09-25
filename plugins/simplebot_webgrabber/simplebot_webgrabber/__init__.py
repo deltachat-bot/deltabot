@@ -55,7 +55,7 @@ class WebGrabber(Plugin):
             'You need a browser with JavaScript support for this page to work correctly.')
 
     @classmethod
-    def send_page(cls, chat, url, user_agent):
+    def send_page(cls, chat, url, mode):
         if not url.startswith('http'):
             url = 'http://'+url
         try:
@@ -117,9 +117,8 @@ class WebGrabber(Plugin):
                                     break
                             else:
                                 del t['id']
-                    zhv_cmd = '/z ' if user_agent == 'zhv' else ''
                     script = r'for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${simplebot_url}/$1`)}`);a.href=`mailto:${"' + cls.bot.get_address(
-                    ) + r'"}?body=' + zhv_cmd + r'/web%20${b}`}'
+                    ) + r'"}?body=/web%20${b}`}'
                     t = soup.new_tag('script')
                     index = r.url.find('/', 8)
                     if index >= 0:
@@ -129,7 +128,7 @@ class WebGrabber(Plugin):
                     t.string = 'var simplebot_url = "{}";'.format(url)+script
                     soup.body.append(t)
                     cls.bot.send_html(
-                        chat, str(soup), cls.name, user_agent)
+                        chat, str(soup), cls.name, mode)
                 else:
                     max_size = cls.cfg.getint('max-size')
                     chunks = b''
@@ -166,34 +165,33 @@ class WebGrabber(Plugin):
             chat.send_text(_('Falied to get url:\n{}').format(url))
 
     @classmethod
-    def app_cmd(cls, msg, arg):
-        chat = cls.bot.get_chat(msg)
+    def app_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
         template = cls.env.get_template('index.html')
         html = template.render(plugin=cls, bot_addr=cls.bot.get_address())
-        cls.bot.send_html(chat, html, cls.name, msg.user_agent)
+        cls.bot.send_html(chat, html, cls.name, ctx.mode)
 
     @classmethod
-    def web_cmd(cls, msg, url):
-        url = url.replace(EQUAL_TOKEN, '=')
-        url = url.replace(AMP_TOKEN, '&')
-        cls.send_page(cls.bot.get_chat(msg), url, msg.user_agent)
+    def web_cmd(cls, ctx):
+        url = ctx.text.replace(EQUAL_TOKEN, '=').replace(AMP_TOKEN, '&')
+        cls.send_page(cls.bot.get_chat(ctx.msg), url, ctx.mode)
 
     @classmethod
-    def ddg_cmd(cls, msg, arg):
-        cls.send_page(cls.bot.get_chat(msg),
-                      "https://duckduckgo.com/lite?q={}".format(quote_plus(arg)), msg.user_agent)
-
-    @classmethod
-    def w_cmd(cls, msg, arg):
+    def ddg_cmd(cls, ctx):
         cls.send_page(cls.bot.get_chat(
-            msg), "https://{}.m.wikipedia.org/wiki/?search={}".format(cls.bot.locale, quote_plus(arg)), msg.user_agent)
+            ctx.msg), "https://duckduckgo.com/lite?q={}".format(quote_plus(ctx.text)), ctx.mode)
 
     @classmethod
-    def wt_cmd(cls, msg, arg):
-        cls.send_page(cls.bot.get_chat(
-            msg), "https://{}.m.wiktionary.org/wiki/?search={}".format(cls.bot.locale, quote_plus(arg)), msg.user_agent)
+    def w_cmd(cls, ctx):
+        cls.send_page(cls.bot.get_chat(ctx.msg), "https://{}.m.wikipedia.org/wiki/?search={}".format(
+            ctx.locale, quote_plus(ctx.text)), ctx.mode)
 
     @classmethod
-    def wttr_cmd(cls, msg, arg):
+    def wt_cmd(cls, ctx):
+        cls.send_page(cls.bot.get_chat(ctx.msg), "https://{}.m.wiktionary.org/wiki/?search={}".format(
+            ctx.locale, quote_plus(ctx.text)), ctx.mode)
+
+    @classmethod
+    def wttr_cmd(cls, ctx):
         cls.send_page(cls.bot.get_chat(
-            msg), "https://wttr.in/{}_Fnp_lang={}.png".format(quote(arg), cls.bot.locale), msg.user_agent)
+            ctx.msg), "https://wttr.in/{}_Fnp_lang={}.png".format(quote(ctx.text), ctx.locale), ctx.mode)

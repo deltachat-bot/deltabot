@@ -4,7 +4,7 @@ import os
 import re
 import sqlite3
 
-from simplebot import Plugin
+from simplebot import Plugin, Mode
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 
@@ -13,7 +13,7 @@ class DeltaFriends(Plugin):
     name = 'DeltaFriends'
     version = '0.3.0'
 
-    MAX_BIO_LEN = 250
+    MAX_BIO_LEN = 500
 
     @classmethod
     def activate(cls, bot):
@@ -35,7 +35,7 @@ class DeltaFriends(Plugin):
         cls.description = _('Provides a directory of Delta Chat users.')
         cls.commands = [
             ('/friends/join', ['<bio>'],
-             _('Will add you to the list or update your bio, <bio> is up to {} characters of text describing yourself').format(
+             _('Will add you to the list or update your bio, <bio> is up to {0} characters of text describing yourself').format(
                  cls.MAX_BIO_LEN),
              cls.join_cmd),
             ('/friends/leave', [], _('Will remove you from the DeltaFriends list'),
@@ -43,7 +43,7 @@ class DeltaFriends(Plugin):
             ('/friends/list', [],
              _('Will return the list of users wanting to make new friends'), cls.list_cmd),
             ('/friends/me', [], _('Sends your biography'), cls.me_cmd),
-            ('/friends/app', [], _('Sends an html app to help you to use the plugin'), cls.html_cmd)]
+            ('/friends/app', [], _('Sends an html app to help you to use the plugin'), cls.app_cmd)]
         cls.bot.add_commands(cls.commands)
 
         cls.NOSCRIPT = _(
@@ -61,8 +61,8 @@ class DeltaFriends(Plugin):
         cls.db.close()
 
     @classmethod
-    def html_cmd(cls, msg, text):
-        addr = msg.get_sender_contact().addr
+    def app_cmd(cls, ctx):
+        addr = ctx.msg.get_sender_contact().addr
         row = cls.db.execute(
             'SELECT bio FROM deltafriends WHERE addr=?', (addr,), 'one')
         if row is None:
@@ -71,46 +71,52 @@ class DeltaFriends(Plugin):
             bio = row['bio']
         html = cls.env.get_template('index.html').render(
             plugin=cls, bot_addr=cls.bot.get_address(), bio=bio)
-        chat = cls.bot.get_chat(msg)
-        cls.bot.send_html(chat, html, cls.name, msg.user_agent)
+        chat = cls.bot.get_chat(ctx.msg)
+        cls.bot.send_html(chat, html, cls.name, ctx.mode)
 
     @classmethod
-    def list_cmd(cls, msg, *args):
+    def list_cmd(cls, ctx):
         friends = cls.db.execute('SELECT * FROM deltafriends ORDER BY addr')
-        html = cls.env.get_template('list.html').render(
-            plugin=cls, friends=friends)
-        chat = cls.bot.get_chat(msg)
-        cls.bot.send_html(chat, html, cls.name, msg.user_agent)
+        chat = cls.bot.get_chat(ctx.msg)
+        if ctx.mode == Mode.TEXT:
+            text = _('{0} ({1}):\n\n').format(cls.name, len(friends))
+            for f in friends:
+                text += '{0}:\n{1}\n\n'.format(f['addr'], f['bio'])
+            chat.send_text(text)
+        else:
+            html = cls.env.get_template('list.html').render(
+                plugin=cls, friends=friends)
+            cls.bot.send_html(chat, html, cls.name, ctx.mode)
 
     @classmethod
-    def join_cmd(cls, msg, text):
-        addr = msg.get_sender_contact().addr
-        text = ' '.join(text.split())
+    def join_cmd(cls, ctx):
+        addr = ctx.msg.get_sender_contact().addr
+        text = ' '.join(ctx.text.split())
         if len(text) > cls.MAX_BIO_LEN:
             text = text[:cls.MAX_BIO_LEN] + '...'
         cls.db.execute(
             'INSERT OR REPLACE INTO deltafriends VALUES (?, ?)', (addr, text))
-        chat = cls.bot.get_chat(msg)
+        chat = cls.bot.get_chat(ctx.msg)
         chat.send_text(_('You are now in the DeltaFriends list'))
 
     @classmethod
-    def leave_cmd(cls, msg, *args):
-        addr = msg.get_sender_contact().addr
+    def leave_cmd(cls, ctx):
+        addr = ctx.msg.get_sender_contact().addr
         cls.db.execute(
             'DELETE FROM deltafriends WHERE addr=?', (addr,))
-        chat = cls.bot.get_chat(msg)
+        chat = cls.bot.get_chat(ctx.msg)
         chat.send_text(_('You was removed from the DeltaFriends list'))
 
     @classmethod
-    def me_cmd(cls, msg, *args):
-        addr = msg.get_sender_contact().addr
+    def me_cmd(cls, ctx):
+        addr = ctx.msg.get_sender_contact().addr
         row = cls.db.execute(
             'SELECT bio FROM deltafriends WHERE addr=?', (addr,), 'one')
         if row is None:
             bio = _('You have not set a biography')
         else:
             bio = '{}:\n{}'.format(addr, row['bio'])
-        cls.bot.get_chat(msg).send_text(bio)
+        cls.bot.get_chat(ctx.msg).send_text(bio)
 
 
 class DBManager:

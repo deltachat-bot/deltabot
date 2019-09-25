@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from abc import ABC, abstractmethod
+from enum import Enum
 import configparser
 import logging
 import os
@@ -12,6 +13,12 @@ import pkg_resources
 
 
 __version__ = '0.9.0'
+
+
+class Mode(Enum):
+    TEXT = 1
+    HTML = 2
+    HTMLZIP = 3
 
 
 class Plugin(ABC):
@@ -36,6 +43,34 @@ class Plugin(ABC):
         cls.bot.remove_filters(cls.filters)
 
 
+class Context:
+    rejected = False
+    processed = False
+
+    def __init__(self, msg, text, locale, mode):
+        self.msg = msg
+        self.text = text
+        self.locale = locale
+        self.mode = mode
+
+
+class DBManager:
+    def __init__(self, db_path):
+        self.db = sqlite3.connect(db_path)
+        self.db.row_factory = sqlite3.Row
+        self.execute('''CREATE TABLE IF NOT EXISTS preferences
+                        (addr TEXT PRIMARY KEY,
+                         locale TEXT,
+                         mode INTEGER)''')
+
+    def execute(self, statement, args=()):
+        with self.db:
+            return self.db.execute(statement, args)
+
+    def close(self):
+        self.db.close()
+
+
 class SimpleBot(DeltaBot):
     # deltachat.account.Account instance
     account = None
@@ -45,7 +80,7 @@ class SimpleBot(DeltaBot):
     logger = None
    # locale to start the bot: es, en, etc.
     locale = 'en'
-    # base directory for the bot configuration and db files
+    # base directory for the bot configuration and db file
     basedir = None
 
     def __init__(self, basedir):
@@ -54,11 +89,20 @@ class SimpleBot(DeltaBot):
         self._cfg = configparser.ConfigParser(allow_no_value=True)
         self._cfg.path = os.path.join(self.basedir, 'simplebot.cfg')
         self._load_config()
+        self._db = DBManager(os.path.join(self.basedir, 'simplebot.db'))
 
         self._mdl = set()
         self._mpl = set()
         self._cdl = set()
         self._cpl = set()
+
+        self.buildin_commands = [
+            ('/settings', ['<property>', '<value>'],
+             'Set your preferences, "property" can be "locale"(values: en, es, de, etc) or "mode"(values: text, html, html.zip)', self._settings_cmd),
+            ('/start', [],
+             'Show an information message', self._start_cmd)]
+        self.add_commands(self.buildin_commands)
+
         self.load_plugins()
 
     def start(self):
@@ -68,8 +112,8 @@ class SimpleBot(DeltaBot):
         finally:
             self.deactivate_plugins()
 
-    def send_html(self, chat, html, basename, user_agent):
-        if user_agent == 'zhv':
+    def send_html(self, chat, html, basename, mode):
+        if mode == Mode.HTMLZIP:
             file_path = self.get_blobpath(basename+'.html.zip')
             zlib.Z_DEFAULT_COMPRESSION = 9
             with zipfile.ZipFile(file_path, 'w', compression=zipfile.ZIP_DEFLATED) as fd:
@@ -110,6 +154,8 @@ class SimpleBot(DeltaBot):
             self._cfg.read(self._cfg.path)
 
         botcfg = self.get_config(__name__)
+        botcfg.setdefault(
+            'start_msg', 'This is SimpleBot, a free software bot for the Delta Chat aplication.\n\nSource code: https://github.com/adbenitez/simplebot')
         botcfg.setdefault('displayname', 'SimpleBot🤖')
         botcfg.setdefault('mdns_enabled', '0')
         botcfg.setdefault('mvbox_move', '1')
@@ -118,6 +164,49 @@ class SimpleBot(DeltaBot):
         self.set_name(botcfg['displayname'])
         self.account.set_config('mdns_enabled', botcfg['mdns_enabled'])
         self.account.set_config('mvbox_move', botcfg['mvbox_move'])
+
+    def _start_cmd(self, ctx):
+        botcfg = self.get_config(__name__)
+        self.get_chat(ctx.msg).send_text(botcfg['start_msg'])
+
+    def _settings_cmd(self, ctx):
+        prop, value = ctx.text.split(maxsplit=1)
+        prop = prop.lower()
+        value = value.rstrip()
+        addr = ctx.msg.get_sender_contact().addr
+        if prop == 'locale':
+            row = self._db.execute(
+                'SELECT locale FROM preferences WHERE addr=?', (addr,)).fetchone()
+            if row:
+                if row[0] != value:
+                    self.db.execute(
+                        'UPDATE preferences SET locale=? WHERE addr=?', (value, addr))
+            else:
+                self.db.execute(
+                    'INSERT INTO preferences VALUES (?,?,?)', (addr, value, None))
+        elif prop == 'mode':
+            if value == 'text':
+                mode = Mode.TEXT.value
+            elif value == 'html':
+                mode = Mode.HTML.value
+            elif value == 'html.zip':
+                mode = Mode.HTMLZIP.value
+            else:
+                self.get_chat(ctx.msg).send_text(
+                    'Invalid value: {}'.format(value))
+                return
+            row = self._db.execute(
+                'SELECT mode FROM preferences WHERE addr=?', (addr,)).fetchone()
+            if row:
+                if row[0] != mode:
+                    self.db.execute(
+                        'UPDATE preferences SET mode=? WHERE addr=?', (mode, addr))
+            else:
+                self.db.execute(
+                    'INSERT INTO preferences VALUES (?,?,?)', (addr, None, mode))
+        else:
+            self.get_chat(ctx.msg).send_text(
+                'Unknow property: {}'.format(prop))
 
     def get_config(self, section):
         if not self._cfg.has_section(section):
@@ -155,9 +244,9 @@ class SimpleBot(DeltaBot):
     # def on_message_delivered(self, msg):
     #     self.account.delete_messages((msg,))
 
-    def on_message(self, msg, text=None):
-        self.logger.debug('Received message from {}'.format(
-            msg.get_sender_contact().addr,))
+    def on_message(self, msg, context=None):
+        addr = msg.get_sender_contact().addr
+        self.logger.debug('Received message from {}'.format(addr,))
 
         try:
             if msg.get_mime_headers()['chat-version'] is None:
@@ -167,42 +256,46 @@ class SimpleBot(DeltaBot):
         except UnicodeDecodeError as ex:
             self.logger.exception(ex)
 
-        if text is None:
-            text = msg.text
+        if context is None:
+            context = Context(msg, msg.text, self.locale, Mode.TEXT)
+            row = self._db.execute(
+                'SELECT locale, mode FROM preferences WHERE addr=?', (addr,)).fetchone()
+            if row:
+                context.locale = row[0]
+                context.mode = Mode(row[1])
 
         for listener in self._mdl:
             try:
-                text = listener(msg, text)
-                if text is None:
+                listener(context)
+                if context.rejected:
                     self.logger.debug('Message rejected')
                     self.account.delete_messages((msg,))
                     return
             except Exception as ex:
                 self.logger.exception(ex)
 
-        processed = False
         for f in self.filters:
             try:
-                if f(msg, text):
-                    processed = True
+                f(context)
+                if context.processed:
                     self.logger.debug('Message processed')
             except Exception as ex:
                 self.logger.exception(ex)
 
-        if not processed:
+        if not context.processed:
             self.logger.debug('Message was not processed')
 
         for listener in self._mpl:
             try:
-                listener(msg, processed)
+                listener(context)
             except Exception as ex:
                 self.logger.exception(ex)
 
         self.account.mark_seen_messages([msg])
 
-    def on_command(self, msg, text=None):
-        self.logger.debug('Received command from {}'.format(
-            msg.get_sender_contact().addr,))
+    def on_command(self, msg, context=None):
+        addr = msg.get_sender_contact().addr
+        self.logger.debug('Received command from {}'.format(addr,))
 
         try:
             if msg.get_mime_headers()['chat-version'] is None:
@@ -212,21 +305,18 @@ class SimpleBot(DeltaBot):
         except UnicodeDecodeError as ex:
             self.logger.exception(ex)
 
-        if text is None:
-            text = msg.text
-        real_cmd = self.get_args('/z', text)
-        if real_cmd is None and text.startswith('/z/'):
-            real_cmd = text[2:]
-        if real_cmd is None:
-            msg.user_agent = 'unknow'
-        else:
-            msg.user_agent = 'zhv'
-            text = real_cmd
+        if context is None:
+            context = Context(msg, msg.text, self.locale, Mode.TEXT)
+            row = self._db.execute(
+                'SELECT locale, mode FROM preferences WHERE addr=?', (addr,)).fetchone()
+            if row:
+                context.locale = row[0]
+                context.mode = Mode(row[1])
 
         for listener in self._cdl:
             try:
-                text = listener(msg, text)
-                if text is None:
+                listener(context)
+                if context.rejected:
                     self.logger.debug('Command rejected')
                     self.account.delete_messages((msg,))
                     return
@@ -234,24 +324,23 @@ class SimpleBot(DeltaBot):
                 self.logger.exception(ex)
 
         for cmd in self.commands:
-            args = self.get_args(cmd, text)
+            args = self.get_args(cmd, context.text)
             if args is not None:
+                context.text = args
                 try:
-                    self.commands[cmd][-1](msg, args)
-                    processed = True
+                    self.commands[cmd][-1](context)
+                    context.processed = True
                     self.logger.debug('Command processed: {}'.format(cmd))
                     break
                 except Exception as ex:
                     self.logger.exception(ex)
-        else:
-            processed = False
 
-        if not processed:
+        if not context.processed:
             self.logger.debug('Command was not processed')
 
         for listener in self._cpl:
             try:
-                listener(msg, processed)
+                listener(context)
             except Exception as ex:
                 self.logger.exception(ex)
 

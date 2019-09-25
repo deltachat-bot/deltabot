@@ -52,7 +52,7 @@ class TicTacToe(Plugin):
         cls.db.close()
 
     @classmethod
-    def run_turn(cls, chat, players):
+    def run_turn(cls, chat, players, ctx):
         game = cls.db.execute(
             'SELECT * FROM games WHERE players=?', (players,), 'one')
         b = Board(game['board'])
@@ -75,17 +75,17 @@ class TicTacToe(Plugin):
             board = [board[:3], board[3:6], board[6:]]
             html = cls.env.get_template('index.html').render(
                 plugin=cls, bot_addr=bot_addr, gid=chat.id, board=board)
-            cls.bot.send_html(priv_chat, html, cls.name, msg.user_agent)
+            cls.bot.send_html(priv_chat, html, cls.name, ctx.mode)
             chat.send_text(
                 _('{} is your turn...\n\n{}').format(game['turn'], b.pretty_str()))
 
     @classmethod
-    def play_cmd(cls, msg, arg):
-        if arg:  # inviting someone to play
-            p1 = msg.get_sender_contact().addr
-            p2 = arg
+    def play_cmd(cls, ctx):
+        if ctx.text:  # inviting someone to play
+            p1 = ctx.msg.get_sender_contact().addr
+            p2 = ctx.text
             if p1 == p2:
-                chat = cls.bot.get_chat(msg)
+                chat = cls.bot.get_chat(ctx.msg)
                 chat.send_text(_("You can't play with yourself"))
                 return
             players = ','.join(sorted([p1, p2]))
@@ -93,18 +93,18 @@ class TicTacToe(Plugin):
                 'SELECT * FROM games WHERE players=?', (players,), 'one')
             if game is None:  # first time playing with p2
                 chat = cls.bot.create_group(
-                    '❎ {} Vs {} [{}]'.format(p1, p2, cls.name), [msg.get_sender_contact(), p2])
+                    '❎ {} Vs {} [{}]'.format(p1, p2, cls.name), [ctx.msg.get_sender_contact(), p2])
                 cls.db.insert(
                     (players, chat.id, INVITED_STATUS, p1, str(Board()), p1))
                 chat.send_text(_('Hello {},\nYou had been invited by {} to play {}, to start playing send a message in this group with the command:\n{}').format(
                     p2, p1, cls.name, cls.commands[0][0]))
             else:
-                chat = cls.bot.get_chat(msg)
+                chat = cls.bot.get_chat(ctx.msg)
                 chat.send_text(
                     _('You already has a game group with {}, to start a new game just go to the game group and send:\n{}').format(p2, cls.commands[2][0]))
         else:    # accepting a game
-            p2 = msg.get_sender_contact().addr
-            chat = cls.bot.get_chat(msg)
+            p2 = ctx.msg.get_sender_contact().addr
+            chat = cls.bot.get_chat(ctx.msg)
             game = cls.db.execute(
                 'SELECT * FROM games WHERE gid=?', (chat.id,), 'one')
             orig_p2 = [p for p in game['players'].split(
@@ -116,18 +116,18 @@ class TicTacToe(Plugin):
             elif game['status'] == INVITED_STATUS:
                 cls.db.execute('UPDATE games SET status=? WHERE players=?',
                                (PLAYING_STATUS, game['players']))
-                chat = cls.bot.get_chat(msg)
+                chat = cls.bot.get_chat(ctx.msg)
                 chat.send_text(_('Game started!'))
-                cls.run_turn(chat, game['players'])
+                cls.run_turn(chat, game['players'], ctx)
             else:  # p2 already accepted the game
-                chat = cls.bot.get_chat(msg)
+                chat = cls.bot.get_chat(ctx.msg)
                 chat.send_text(
                     _('You alredy accepted to play. To start a new game use {}').format(cls.commands[2][0]))
 
     @classmethod
-    def surrender_cmd(cls, msg, arg):
-        chat = cls.bot.get_chat(msg)
-        loser = msg.get_sender_contact().addr
+    def surrender_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        loser = ctx.msg.get_sender_contact().addr
         game = cls.db.execute(
             'SELECT * FROM games WHERE gid=?', (chat.id,), 'one')
         # this is not your game group
@@ -145,9 +145,9 @@ class TicTacToe(Plugin):
                 _('There are no game running. To start a new game use {}').format(cls.commands[2][0]))
 
     @classmethod
-    def new_cmd(cls, msg, arg):
-        chat = cls.bot.get_chat(msg)
-        sender = msg.get_sender_contact().addr
+    def new_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        sender = ctx.msg.get_sender_contact().addr
         game = cls.db.execute(
             'SELECT * FROM games WHERE gid=?', (chat.id,), 'one')
         # this is not your game group
@@ -159,17 +159,17 @@ class TicTacToe(Plugin):
             x = p1 if p1 != game['x'] else p2
             cls.db.execute('UPDATE games SET status=?, turn=?, x=?, board=? WHERE players=?',
                            (PLAYING_STATUS, x, x, str(Board()), game['players']))
-            chat = cls.bot.get_chat(msg)
+            chat = cls.bot.get_chat(ctx.msg)
             chat.send_text(_('Game started!'))
-            cls.run_turn(chat, game['players'])
+            cls.run_turn(chat, game['players'], ctx)
         else:
             chat.send_text(
                 _('There are a game running already, to start a new one first end this game or surrender'))
 
     @classmethod
-    def move_cmd(cls, msg, arg):
-        chat_id, pos = map(int, arg.split())
-        player = msg.get_sender_contact().addr
+    def move_cmd(cls, ctx):
+        chat_id, pos = map(int, ctx.text.split())
+        player = ctx.msg.get_sender_contact().addr
         game = cls.db.execute(
             'SELECT * FROM games WHERE gid=?', (chat_id,), 'one')
         if game is not None and player == game['turn']:
@@ -182,12 +182,12 @@ class TicTacToe(Plugin):
                 cls.db.execute('UPDATE games SET turn=?, board=? WHERE players=?', (turn, str(
                     board), game['players']))
                 chat = cls.bot.get_chat(chat_id)
-                cls.run_turn(chat, game['players'])
+                cls.run_turn(chat, game['players'], ctx)
             except InvalidMove:
-                chat = cls.bot.get_chat(msg)
+                chat = cls.bot.get_chat(ctx.msg)
                 chat.send_text(_('Invalid move!'))
         else:
-            chat = cls.bot.get_chat(msg.get_sender_contact())
+            chat = cls.bot.get_chat(ctx.msg.get_sender_contact())
             chat.send_text(
                 _("It's NOT your turn, please wait the other player to move"))
 

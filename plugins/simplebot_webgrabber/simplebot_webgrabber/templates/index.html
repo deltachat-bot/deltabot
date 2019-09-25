@@ -43,7 +43,7 @@
   var selec = document.getElementById("selector");
   var tf = document.getElementById("tf");
   function updateLink(){
-      btn.href = "mailto:{{ bot_addr }}?body="+encodeURIComponent(zhv_cmd+selec.value+" "+tf.value);
+      btn.href = "mailto:{{ bot_addr }}?body="+encodeURIComponent(selec.value+" "+tf.value);
   }
 </script>
 {% endblock %}
