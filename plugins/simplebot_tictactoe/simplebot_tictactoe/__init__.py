@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from enum import IntEnum
 import gettext
 import os
 import sqlite3
@@ -8,9 +9,10 @@ from deltachat.chatting import Chat
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 
-INVITED_STATUS = -1
-FINISHED_STATUS = 0
-PLAYING_STATUS = 1
+class Status(IntEnum):
+    INVITED = -1
+    FINISHED = 0
+    PLAYING = 1
 
 
 class TicTacToe(Plugin):
@@ -60,7 +62,7 @@ class TicTacToe(Plugin):
         winner = b.get_winner()
         if winner is not None:
             cls.db.execute('UPDATE games SET status=? WHERE players=?',
-                           (FINISHED_STATUS, game['players']))
+                           (Status.FINISHED, game['players']))
             if winner == '-':
                 chat.send_text(
                     _('Game over.\nIt is a draw!\n\n{}').format(b.pretty_str()))
@@ -95,7 +97,7 @@ class TicTacToe(Plugin):
                 chat = cls.bot.create_group(
                     '❎ {} Vs {} [{}]'.format(p1, p2, cls.name), [ctx.msg.get_sender_contact(), p2])
                 cls.db.insert(
-                    (players, chat.id, INVITED_STATUS, p1, str(Board()), p1))
+                    (players, chat.id, Status.INVITED, p1, str(Board()), p1))
                 chat.send_text(_('Hello {},\nYou had been invited by {} to play {}, to start playing send a message in this group with the command:\n{}').format(
                     p2, p1, cls.name, cls.commands[0][0]))
             else:
@@ -113,9 +115,9 @@ class TicTacToe(Plugin):
                 chat.send_text(
                     _('You are not allowed to do that, if you are trying to invite a new friend, please provide the email of the friend you want to play with'))
             # accept the invitation and start playing
-            elif game['status'] == INVITED_STATUS:
+            elif game['status'] == Status.INVITED:
                 cls.db.execute('UPDATE games SET status=? WHERE players=?',
-                               (PLAYING_STATUS, game['players']))
+                               (Status.PLAYING, game['players']))
                 chat = cls.bot.get_chat(ctx.msg)
                 chat.send_text(_('Game started!'))
                 cls.run_turn(chat, game['players'], ctx)
@@ -134,11 +136,11 @@ class TicTacToe(Plugin):
         if game is None or loser not in game['players'].split(','):
             chat.send_text(
                 _('This is not your game group, please send that command in the game group you want to surrender'))
-        elif game['status'] != FINISHED_STATUS:
+        elif game['status'] != Status.FINISHED:
             p1, p2 = game['players'].split(',')
             x = p1 if p1 != loser else p2
             cls.db.execute('UPDATE games SET status=?, turn=?, x=? WHERE players=?',
-                           (FINISHED_STATUS, x, x, game['players']))
+                           (Status.FINISHED, x, x, game['players']))
             chat.send_text(_('Game Over.\n{} Wins!!!').format(game['turn']))
         else:
             chat.send_text(
@@ -154,11 +156,11 @@ class TicTacToe(Plugin):
         if game is None or sender not in game['players'].split(','):
             chat.send_text(
                 _('This is not your game group, please send that command in the game group you want to start a new game'))
-        elif game['status'] == FINISHED_STATUS:
+        elif game['status'] == Status.FINISHED:
             p1, p2 = game['players'].split(',')
             x = p1 if p1 != game['x'] else p2
             cls.db.execute('UPDATE games SET status=?, turn=?, x=?, board=? WHERE players=?',
-                           (PLAYING_STATUS, x, x, str(Board()), game['players']))
+                           (Status.PLAYING, x, x, str(Board()), game['players']))
             chat = cls.bot.get_chat(ctx.msg)
             chat.send_text(_('Game started!'))
             cls.run_turn(chat, game['players'], ctx)

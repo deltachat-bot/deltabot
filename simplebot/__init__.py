@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from abc import ABC, abstractmethod
-from enum import Enum
+from enum import IntEnum
 import configparser
 import logging
 import os
@@ -16,7 +16,7 @@ import pkg_resources
 __version__ = '0.9.0'
 
 
-class Mode(Enum):
+class Mode(IntEnum):
     TEXT = 1
     HTML = 2
     HTMLZIP = 3
@@ -187,11 +187,11 @@ class SimpleBot(DeltaBot):
                     'INSERT INTO preferences VALUES (?,?,?)', (addr, value, None))
         elif prop == 'mode':
             if value == 'text':
-                mode = Mode.TEXT.value
+                mode = Mode.TEXT
             elif value == 'html':
-                mode = Mode.HTML.value
+                mode = Mode.HTML
             elif value == 'html.zip':
-                mode = Mode.HTMLZIP.value
+                mode = Mode.HTMLZIP
             else:
                 self.get_chat(ctx.msg).send_text(
                     'Invalid value: {}'.format(value))

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from enum import IntEnum
 from urllib.parse import quote_plus
 import gettext
 import os
@@ -11,10 +12,13 @@ from simplebot import Plugin, Mode
 import deltachat as dc
 
 
-PUBLIC = 1
-PRIVATE = 0
 GROUP_URL = 'http://delta.chat/group/'
 MGROUP_URL = 'http://delta.chat/mega-group/'
+
+
+class Status(IntEnum):
+    PRIVATE = 0
+    PUBLIC = 1
 
 
 class GroupMaster(Plugin):
@@ -134,7 +138,7 @@ class GroupMaster(Plugin):
         info = cls.db.execute(
             'SELECT pid,topic,status FROM groups WHERE id=?', (gid,)).fetchone()
         if info is None:
-            info = (cls.generate_pid(), '', PRIVATE)
+            info = (cls.generate_pid(), '', Status.PRIVATE)
             cls.db.execute(
                 'INSERT INTO groups VALUES (?,?,?,?)', (gid, *info))
         else:
@@ -148,7 +152,7 @@ class GroupMaster(Plugin):
         for chat in cls.bot.get_chats():
             if cls.bot.is_group(chat):
                 if me in chat.get_contacts():
-                    if public_only and cls.get_info(chat.id)[2] != PUBLIC:
+                    if public_only and cls.get_info(chat.id)[2] != Status.PUBLIC:
                         continue
                     groups.append(chat)
         return groups
@@ -216,7 +220,7 @@ class GroupMaster(Plugin):
         if cls.bot.is_group(chat):
             mg = cls.get_mgroup(chat.id)
             if mg:
-                if mg['status'] == PUBLIC:
+                if mg['status'] == Status.PUBLIC:
                     status = _('Group status: {}').format(_('Public'))
                     gid = '{}{}'.format(MGROUP_URL, mg['id'])
                 else:
@@ -225,7 +229,7 @@ class GroupMaster(Plugin):
             else:
                 url = GROUP_URL
                 pid, topic, status = cls.get_info(chat.id)
-                if status == PUBLIC:
+                if status == Status.PUBLIC:
                     status = _('Group status: {}').format(_('Public'))
                     gid = '{}{}'.format(url, chat.id)
                 else:
@@ -242,17 +246,17 @@ class GroupMaster(Plugin):
         addr = ctx.msg.get_sender_contact().addr
         mg = cls.get_mgroup(chat.id)
         if mg:
-            if mg['status'] != PUBLIC:
+            if mg['status'] != Status.PUBLIC:
                 cls.db.execute(
-                    'UPDATE mgroups SET status=? WHERE id=?', (PUBLIC, mg['id'],))
+                    'UPDATE mgroups SET status=? WHERE id=?', (Status.PUBLIC, mg['id'],))
                 text = _('** {} changed group status to: {}').format(
                     cls.get_nick(addr), _('Public'))
                 for chat in cls.get_mchats(mg['id']):
                     chat.send_text(text)
         else:
-            if cls.get_info(chat.id)[2] != PUBLIC:
+            if cls.get_info(chat.id)[2] != Status.PUBLIC:
                 cls.db.execute(
-                    'UPDATE groups SET status=? WHERE id=?', (PUBLIC, chat.id))
+                    'UPDATE groups SET status=? WHERE id=?', (Status.PUBLIC, chat.id))
                 chat.send_text(
                     _('** {} changed group status to: {}').format(addr, _('Public')))
 
@@ -262,17 +266,17 @@ class GroupMaster(Plugin):
         addr = ctx.msg.get_sender_contact().addr
         mg = cls.get_mgroup(chat.id)
         if mg:
-            if mg['status'] != PRIVATE:
+            if mg['status'] != Status.PRIVATE:
                 cls.db.execute(
-                    'UPDATE mgroups SET status=? WHERE id=?', (PRIVATE, mg['id'],))
+                    'UPDATE mgroups SET status=? WHERE id=?', (Status.PRIVATE, mg['id'],))
                 text = _('** {} changed group status to: {}').format(
                     cls.get_nick(addr), _('Private'))
                 for chat in cls.get_mchats(mg['id']):
                     chat.send_text(text)
         else:
-            if cls.get_info(chat.id)[2] != PRIVATE:
+            if cls.get_info(chat.id)[2] != Status.PRIVATE:
                 cls.db.execute(
-                    'UPDATE groups SET status=? WHERE id=?', (PRIVATE, chat.id))
+                    'UPDATE groups SET status=? WHERE id=?', (Status.PRIVATE, chat.id))
                 chat.send_text(
                     _('** {} changed group status to: {}').format(addr, _('Private')))
 
@@ -321,7 +325,7 @@ class GroupMaster(Plugin):
             if is_mgroup:
                 mg = cls.db.execute(
                     'SELECT * FROM mgroups WHERE id=?', (gid,)).fetchone()
-                if mg and (mg['status'] == PUBLIC or mg['pid'] == pid):
+                if mg and (mg['status'] == Status.PUBLIC or mg['pid'] == pid):
                     for g in cls.get_mchats(mg['id']):
                         if sender in g.get_contacts():
                             chat.send_text(
@@ -343,7 +347,7 @@ class GroupMaster(Plugin):
                 for g in cls.get_groups():
                     if g.id == gid:
                         pid1, topic, status = cls.get_info(gid)
-                        if status == PUBLIC or pid1 == pid:
+                        if status == Status.PUBLIC or pid1 == pid:
                             if sender in g.get_contacts():
                                 chat.send_text(
                                     _('You are already a member of that group'))
@@ -430,7 +434,7 @@ class GroupMaster(Plugin):
             groups[i] = [g.get_name(), topic, '{}{}'.format(
                 GROUP_URL, g.id), len(g.get_contacts())]
         mgroups = []
-        for mg in cls.db.execute('SELECT * FROM mgroups WHERE status=?', (PUBLIC,)):
+        for mg in cls.db.execute('SELECT * FROM mgroups WHERE status=?', (Status.PUBLIC,)):
             count = sum(map(lambda g: len(g.get_contacts())-1,
                             cls.get_mchats(mg['id'])))
             if count == 0:

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from enum import IntEnum
 from threading import Thread, RLock, Event
 import functools
 import gettext
@@ -12,10 +13,9 @@ import deltachat as dc
 import requests
 
 
-G_DISABLED = 0
-G_ENABLED = 1
-U_DISABLED = 0
-U_ENABLED = 1
+class Status(IntEnum):
+    DISABLED = 0
+    ENABLED = 1
 
 
 class FacebookBridge(Plugin):
@@ -85,7 +85,7 @@ class FacebookBridge(Plugin):
         def _on2fa():
             onlogin.set()
             cls.db.execute(
-                'UPDATE users SET status=? WHERE addr=?', (U_DISABLED, addr))
+                'UPDATE users SET status=? WHERE addr=?', (Status.DISABLED, addr))
             code_ev = Event()
             cls.code_events[addr] = code_ev
             cls.bot.get_chat(addr).send_text(
@@ -112,7 +112,7 @@ class FacebookBridge(Plugin):
                     'UPDATE users SET cookie=? WHERE addr=?', (cookie, addr))
         except FBchatException as ex:
             cls.db.execute(
-                'UPDATE users SET status=? WHERE addr=?', (U_DISABLED, addr))
+                'UPDATE users SET status=? WHERE addr=?', (Status.DISABLED, addr))
             cls.bot.logger.exception(ex)
             cls.bot.get_chat(addr).send_text(
                 _('Failed to login in Facebook, try enabling 2FA for your account and check your password is correct'))
@@ -123,7 +123,7 @@ class FacebookBridge(Plugin):
     def _create_group(cls, user, t, addr):
         name = t.name if t.name else _('(NO NAME)')
         g = cls.bot.create_group('🇫 ' + name, [addr])
-        cls.db.insert_group((g.id, t.uid, t.type.value, addr, G_ENABLED))
+        cls.db.insert_group((g.id, t.uid, t.type.value, addr, Status.ENABLED))
         g.send_text(_('Name: {}').format(name))
 
         if t.photo:
@@ -159,7 +159,7 @@ class FacebookBridge(Plugin):
         old_user = cls.db.execute(
             'SELECT * FROM users WHERE addr=?', (addr,), 'one')
         if not old_user:
-            cls.db.insert_user((addr, uname, passwd, None, U_DISABLED))
+            cls.db.insert_user((addr, uname, passwd, None, Status.DISABLED))
             Thread(target=create_chats, args=(addr,), daemon=True).start()
         else:
             cls.bot.get_chat(ctx.msg).send_text(
@@ -205,7 +205,7 @@ class FacebookBridge(Plugin):
         addr = ctx.msg.get_sender_contact().addr
         chat = cls.bot.get_chat(ctx.msg)
         cls.db.execute('UPDATE users SET status=? WHERE addr=?',
-                       (U_DISABLED, addr))
+                       (Status.DISABLED, addr))
         chat.send_text(
             _('Account disabled'))
 
@@ -214,7 +214,7 @@ class FacebookBridge(Plugin):
         addr = ctx.msg.get_sender_contact().addr
         chat = cls.bot.get_chat(ctx.msg)
         cls.db.execute('UPDATE users SET status=? WHERE addr=?',
-                       (U_ENABLED, addr))
+                       (Status.ENABLED, addr))
         chat.send_text(_('Account enabled'))
 
     @classmethod
@@ -230,7 +230,7 @@ class FacebookBridge(Plugin):
         addr = ctx.msg.get_sender_contact().addr
         chat = cls.bot.get_chat(ctx.msg)
         cls.db.execute('UPDATE groups SET status=? WHERE group_id=? AND addr=?',
-                       (G_ENABLED, chat.id, addr))
+                       (Status.ENABLED, chat.id, addr))
         chat.send_text(_('Group unmuted'))
 
     @classmethod
@@ -284,7 +284,7 @@ class FacebookBridge(Plugin):
             return
         if group['status'] == G_DISABLED:
             cls.db.execute(
-                'UPDATE groups SET status=? WHERE group_id=?', (G_ENABLED, chat.id))
+                'UPDATE groups SET status=? WHERE group_id=?', (Status.ENABLED, chat.id))
 
         Thread(target=cls._send_dc2fb, args=(
             group, ctx.text, ctx.msg.filename), daemon=True).start()
@@ -387,7 +387,7 @@ class FacebookBridge(Plugin):
             if cls.worker.deactivated.is_set():
                 return
             cls.bot.logger.debug('Checking Facebook')
-            for addr in map(lambda u: u[0], cls.db.execute('SELECT addr FROM users WHERE status=?', (U_ENABLED,))):
+            for addr in map(lambda u: u[0], cls.db.execute('SELECT addr FROM users WHERE status=?', (Status.ENABLED,))):
                 if cls.worker.deactivated.is_set():
                     return
                 try:
