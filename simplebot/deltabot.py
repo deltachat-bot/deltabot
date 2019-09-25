@@ -173,7 +173,7 @@ class DeltaBot:
                 self.account._evlogger.get_matching(
                     "DC_EVENT_CONFIGURE_PROGRESS")
             if data1 >= target or data1 == 0:
-                self.logger.info("CONFIG PROGRESS {}".format(target))
+                self.logger.info("CONFIG PROGRESS {}".format(data1))
                 return data1
 
 
