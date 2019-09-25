@@ -348,7 +348,10 @@ class SimpleBot(DeltaBot):
 
     def load_plugins(self):
         self.plugins = []
+        plugins = self.get_config(__name__).get('plugins', '').split()
         for ep in pkg_resources.iter_entry_points('simplebot.plugins'):
+            if plugins and ep.module_name not in plugins:
+                continue
             try:
                 self.plugins.append(ep.load())
             except Exception as ex:
