@@ -3,11 +3,13 @@ from urllib.parse import quote_plus, unquote_plus, quote
 import gettext
 import os
 import re
+import mimetypes
 
-from simplebot import Plugin
-import bs4
-import requests
 from jinja2 import Environment, PackageLoader, select_autoescape
+from simplebot import Plugin, Mode
+import bs4
+import html2text
+import requests
 
 
 EQUAL_TOKEN = 'simplebot_e_token'
@@ -48,6 +50,7 @@ class WebGrabber(Plugin):
             ('/wttr', ['<text>'],
              _('Search weather info from wttr.in'), cls.wttr_cmd),
             ('/web', ['<url>'], _('Get a webpage or file'), cls.web_cmd),
+            ('/url', ['<url>'], _('Get a webpage as text'), cls.url_cmd),
             ('/web/app', [], _('Sends an html app to help you to use the plugin.'), cls.app_cmd)]
         cls.bot.add_commands(cls.commands)
 
@@ -146,20 +149,39 @@ class WebGrabber(Plugin):
                             fname = re.findall(
                                 "filename=(.+)", d)[0].strip('"')
                         else:
-                            fname = r.url.split('/').pop().split('?')[0]
-                            content_type = r.headers.get(
-                                'content-type', '').lower()
+                            fname = r.url.split(
+                                '/').pop().split('?')[0].split('#')[0]
                             if '.' not in fname:
-                                if 'image/png' in content_type:
-                                    fname += '.png'
-                                elif 'image/jpeg' in content_type:
-                                    fname += '.jpg'
-                                elif 'image/gif' in content_type:
-                                    fname += '.gif'
+                                if not fname:
+                                    fname = 'file'
+                                ctype = r.headers.get(
+                                    'content-type', '').split(';')[0].strip().lower()
+                                if 'text/plain' == ctype:
+                                    ext = '.txt'
+                                else:
+                                    ext = mimetypes.guess_extension(ctype)
+                                if ext:
+                                    fname += ext
                         fpath = cls.bot.get_blobpath(fname)
                         with open(fpath, 'wb') as fd:
                             fd.write(chunks)
                         chat.send_file(fpath)
+        except Exception as ex:      # TODO: too much generic, change this
+            cls.bot.logger.exception(ex)
+            chat.send_text(_('Falied to get url:\n{}').format(url))
+
+    @classmethod
+    def _send_text(cls, chat, url):
+        if not url.startswith('http'):
+            url = 'http://'+url
+        try:
+            with requests.get(url, headers=HEADERS, stream=True) as r:
+                r.raise_for_status()
+                r.encoding = 'utf-8'
+                cls.bot.logger.debug(
+                    'Content type: {}'.format(r.headers['content-type']))
+                if 'text/html' in r.headers['content-type']:
+                    chat.send_text(html2text.html2text(r.text))
         except Exception as ex:      # TODO: too much generic, change this
             cls.bot.logger.exception(ex)
             chat.send_text(_('Falied to get url:\n{}').format(url))
@@ -172,24 +194,43 @@ class WebGrabber(Plugin):
         cls.bot.send_html(chat, html, cls.name, ctx.mode)
 
     @classmethod
+    def url_cmd(cls, ctx):
+        url = ctx.text.replace(EQUAL_TOKEN, '=').replace(AMP_TOKEN, '&')
+        cls._send_text(cls.bot.get_chat(ctx.msg), url)
+
+    @classmethod
     def web_cmd(cls, ctx):
         url = ctx.text.replace(EQUAL_TOKEN, '=').replace(AMP_TOKEN, '&')
         cls.send_page(cls.bot.get_chat(ctx.msg), url, ctx.mode)
 
     @classmethod
     def ddg_cmd(cls, ctx):
-        cls.send_page(cls.bot.get_chat(
-            ctx.msg), "https://duckduckgo.com/lite?q={}".format(quote_plus(ctx.text)), ctx.mode)
+        chat = cls.bot.get_chat(ctx.msg)
+        url = "https://duckduckgo.com/lite?q={}".format(quote_plus(ctx.text))
+        if ctx.mode == Mode.TEXT:
+            cls._send_text(chat, url)
+        else:
+            cls.send_page(chat, url, ctx.mode)
 
     @classmethod
     def w_cmd(cls, ctx):
-        cls.send_page(cls.bot.get_chat(ctx.msg), "https://{}.m.wikipedia.org/wiki/?search={}".format(
-            ctx.locale, quote_plus(ctx.text)), ctx.mode)
+        chat = cls.bot.get_chat(ctx.msg)
+        url = "https://{}.m.wikipedia.org/wiki/?search={}".format(
+            ctx.locale, quote_plus(ctx.text))
+        if ctx.mode == Mode.TEXT:
+            cls._send_text(chat, url)
+        else:
+            cls.send_page(chat, url, ctx.mode)
 
     @classmethod
     def wt_cmd(cls, ctx):
-        cls.send_page(cls.bot.get_chat(ctx.msg), "https://{}.m.wiktionary.org/wiki/?search={}".format(
-            ctx.locale, quote_plus(ctx.text)), ctx.mode)
+        chat = cls.bot.get_chat(ctx.msg)
+        url = "https://{}.m.wiktionary.org/wiki/?search={}".format(
+            ctx.locale, quote_plus(ctx.text))
+        if ctx.mode == Mode.TEXT:
+            cls._send_text(chat, url)
+        else:
+            cls.send_page(chat, url, ctx.mode)
 
     @classmethod
     def wttr_cmd(cls, ctx):
