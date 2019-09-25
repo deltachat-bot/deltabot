@@ -26,9 +26,12 @@ class DeltaBot:
     def configure(self, email, password):
         self.account.configure(addr=email, mail_pw=password)
         self.account.start_threads()
-        self._wait_configuration_progress(1000)
+        configured = self._wait_configuration_progress(1000) >= 1000
         self.account.stop_threads()
-        self.logger.info('Bot configured successfully!')
+        if configured:
+            self.logger.info('Bot configured successfully!')
+        else:
+            self.logger.info('Configuration failed')
 
     def get_blobdir(self):
         return self.account.get_blobdir()
@@ -169,7 +172,7 @@ class DeltaBot:
             evt_name, data1, data2 = \
                 self.account._evlogger.get_matching(
                     "DC_EVENT_CONFIGURE_PROGRESS")
-            if data1 >= target:
+            if data1 >= target or data1 == 0:
                 self.logger.info("CONFIG PROGRESS {}".format(target))
                 return data1
 
