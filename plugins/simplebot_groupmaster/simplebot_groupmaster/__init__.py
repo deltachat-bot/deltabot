@@ -442,7 +442,7 @@ class GroupMaster(Plugin):
             mgroups.append(
                 [mg['name'], mg['topic'], '{}{}'.format(MGROUP_URL, mg['id']), count])
         groups.extend(mgroups)
-        groups.sort(key=lambda g: g[0])
+        groups.sort(key=lambda g: g[-1])
         chat = cls.bot.get_chat(ctx.msg)
         gcount = len(groups)
         if ctx.mode == Mode.TEXT:
