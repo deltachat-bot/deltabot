@@ -5,6 +5,7 @@ import configparser
 import logging
 import os
 import re
+import sqlite3
 import zipfile
 import zlib
 
