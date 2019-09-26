@@ -55,6 +55,8 @@ class GroupMaster(Plugin):
             ('/group/id', [], _('Show the id of the group (or mega-group) where it is sent.'), cls.id_cmd),
             ('/group/list', [],
              _('Show the list of public groups and mega-groups.'), cls.list_cmd),
+            ('/group/me', [],
+             _('Show the list of public groups/mega-groups you are in.'), cls.me_cmd),
             ('/group/members', [],
              _('Show the list of members in the mega-group it is sent.'), cls.members_cmd),
             ('/group/join',
@@ -457,6 +459,28 @@ class GroupMaster(Plugin):
             html = template.render(
                 plugin=cls, bot_addr=cls.bot.get_address(), groups=groups)
             cls.bot.send_html(chat, html, cls.name, ctx.mode)
+
+    @classmethod
+    def me_cmd(cls, ctx):
+        sender = ctx.msg.get_sender_contact()
+        groups = []
+        for g in cls.get_groups(public_only=True):
+            if sender in g.get_contacts():
+                groups.append((g.get_name(), '{}{}'.format(GROUP_URL, g.id)))
+        mgroups = []
+        for mg in cls.db.execute('SELECT * FROM mgroups WHERE status=?', (Status.PUBLIC,)):
+            for g in cls.get_mchats(mg['id']):
+                if sender in g.get_contacts():
+                    mgroups.append(
+                        (mg['name'], '{}{}'.format(MGROUP_URL, mg['id'])))
+                    break
+        groups.extend(mgroups)
+
+        text = ''
+        for g in groups:
+            text += _('{0}:\nID: {1}\n\n').format(*g)
+        chat = cls.bot.get_chat(ctx.msg)
+        chat.send_text(text)
 
     @classmethod
     def members_cmd(cls, ctx):
