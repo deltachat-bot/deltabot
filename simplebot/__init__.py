@@ -258,10 +258,13 @@ class SimpleBot(DeltaBot):
 
         self.logger.debug('Received message from {}'.format(addr,))
 
-        if ctx.msg.get_mime_headers()['chat-version'] is None:
-            self.logger.debug('Classic email rejected')
-            self.account.delete_messages((ctx.msg,))
-            return
+        try:
+            if ctx.msg.get_mime_headers()['chat-version'] is None:
+                self.logger.debug('Classic email rejected')
+                self.account.delete_messages((ctx.msg,))
+                return
+        except UnicodeDecodeError as ex:
+            self.logger.exception(ex)
 
         for listener in self._mdl:
             try:
@@ -305,10 +308,13 @@ class SimpleBot(DeltaBot):
 
         self.logger.debug('Received command from {}'.format(addr,))
 
-        if ctx.msg.get_mime_headers()['chat-version'] is None:
-            self.logger.debug('Classic email rejected')
-            self.account.delete_messages((ctx.msg,))
-            return
+        try:
+            if ctx.msg.get_mime_headers()['chat-version'] is None:
+                self.logger.debug('Classic email rejected')
+                self.account.delete_messages((ctx.msg,))
+                return
+        except UnicodeDecodeError as ex:
+            self.logger.exception(ex)
 
         for listener in self._cdl:
             try:
