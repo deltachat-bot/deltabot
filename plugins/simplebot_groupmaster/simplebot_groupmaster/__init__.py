@@ -369,6 +369,8 @@ class GroupMaster(Plugin):
         try:
             gid, addr = ctx.text.split(maxsplit=1)
             addr = addr.rstrip()
+            if addr == cls.bot.get_address():
+                raise ValueError('Tried to remove bot from mega-group')
             if gid.startswith(MGROUP_URL):
                 _mgid = gid.lstrip(MGROUP_URL).split('-')[-1]
                 mgroup = cls.db.execute(
