@@ -1,9 +1,13 @@
 .PHONY: all
-all: simplebot friends groupmaster help tictactoe translator webgrabber wikiquote xkcd admin shortcuts rss facebook
+all: simplebot echo friends groupmaster help tictactoe translator webgrabber wikiquote xkcd admin shortcuts rss facebook 
 
 .PHONY: simplebot
 simplebot:
 	echo y | pip uninstall simplebot; pip install .
+
+.PHONY: echo
+echo:
+	echo y | pip uninstall simplebot_echo; pip install plugins/simplebot_echo
 
 .PHONY: friends
 friends:
