@@ -2,7 +2,7 @@
 import gettext
 import os
 
-from simplebot import Plugin
+from simplebot import Plugin, Mode
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 
