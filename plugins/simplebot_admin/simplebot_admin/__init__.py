@@ -121,12 +121,12 @@ class Admin(Plugin):
                 private += 1
             messages += len(c.get_messages())
         contacts = len(cls.bot.account.get_contacts())
-        text += _('Groups: {}\nPrivate Chats: {}\nContacts: {}\nMessages: {}\n\n').format(
+        text += _('Groups: {:,}\nPrivate Chats: {:,}\nContacts: {:,}\nMessages: {:,}\n\n').format(
             groups, private, contacts, messages)
 
         mem = psutil.Process(os.getpid()).memory_info().rss
         disk = get_size(cls.bot.basedir)
-        text += _('RAM usage: {}\nDisk usage: {}\n').format(mem, disk)
+        text += _('RAM usage: {:,}\nDisk usage: {:,}\n').format(mem, disk)
 
         chat.send_text(text)
 
