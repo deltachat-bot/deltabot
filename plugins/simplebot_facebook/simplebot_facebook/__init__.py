@@ -106,7 +106,7 @@ class FacebookBridge(Plugin):
             cookie = json.dumps(onlogin.user.getSession())
             if onlogin.is_set():
                 cls.db.execute(
-                    'UPDATE users SET cookie=?, status=? WHERE addr=?', (cookie, U_ENABLED, addr))
+                    'UPDATE users SET cookie=?, status=? WHERE addr=?', (cookie, Status.ENABLED, addr))
             else:
                 cls.db.execute(
                     'UPDATE users SET cookie=? WHERE addr=?', (cookie, addr))
@@ -222,7 +222,7 @@ class FacebookBridge(Plugin):
         addr = ctx.msg.get_sender_contact().addr
         chat = cls.bot.get_chat(ctx.msg)
         cls.db.execute('UPDATE groups SET status=? WHERE group_id=? AND addr=?',
-                       (G_DISABLED, chat.id, addr))
+                       (Status.DISABLED, chat.id, addr))
         chat.send_text(_('Group muted'))
 
     @classmethod
@@ -278,11 +278,11 @@ class FacebookBridge(Plugin):
         addr = ctx.msg.get_sender_contact().addr
         u = cls.db.execute(
             'SELECT * FROM users WHERE addr=?', (addr,), 'one')
-        if u['status'] == U_DISABLED:
+        if u['status'] == Status.DISABLED:
             chat.send_text(
                 _('Your account is disabled, use /fb/enable to enable it.'))
             return
-        if group['status'] == G_DISABLED:
+        if group['status'] == Status.DISABLED:
             cls.db.execute(
                 'UPDATE groups SET status=? WHERE group_id=?', (Status.ENABLED, chat.id))
 
@@ -327,7 +327,7 @@ class FacebookBridge(Plugin):
                 g = cls._create_group(user, t, addr)
                 thread_type = t.type
             else:
-                if row['status'] == G_DISABLED:
+                if row['status'] == Status.DISABLED:
                     continue
                 g = cls.bot.get_chat(row['group_id'])
                 members = g.get_contacts()
