@@ -245,107 +245,109 @@ class SimpleBot(DeltaBot):
     # def on_message_delivered(self, msg):
     #     self.account.delete_messages((msg,))
 
-    def on_message(self, msg, context=None):
-        addr = msg.get_sender_contact().addr
+    def on_message(self, msg, ctx=None):
+        if ctx is None:
+            addr = msg.get_sender_contact().addr
+            ctx = Context(msg, msg.text, self.locale, Mode.TEXT)
+            row = self._db.execute(
+                'SELECT locale, mode FROM preferences WHERE addr=?', (addr,)).fetchone()
+            if row:
+                ctx.locale, ctx.mode = row
+        else:
+            addr = ctx.msg.get_sender_contact().addr
+
         self.logger.debug('Received message from {}'.format(addr,))
 
         try:
-            if msg.get_mime_headers()['chat-version'] is None:
+            if ctx.msg.get_mime_headers()['chat-version'] is None:
                 self.logger.debug('Classic email rejected')
-                self.account.delete_messages((msg,))
+                self.account.delete_messages((ctx.msg,))
                 return
         except UnicodeDecodeError as ex:
             self.logger.exception(ex)
 
-        if context is None:
-            context = Context(msg, msg.text, self.locale, Mode.TEXT)
-            row = self._db.execute(
-                'SELECT locale, mode FROM preferences WHERE addr=?', (addr,)).fetchone()
-            if row:
-                context.locale = row[0]
-                context.mode = Mode(row[1])
-
         for listener in self._mdl:
             try:
-                listener(context)
-                if context.rejected:
+                listener(ctx)
+                if ctx.rejected:
                     self.logger.debug('Message rejected')
-                    self.account.delete_messages((msg,))
+                    self.account.delete_messages((ctx.msg,))
                     return
             except Exception as ex:
                 self.logger.exception(ex)
 
         for f in self.filters:
             try:
-                f(context)
-                if context.processed:
+                f(ctx)
+                if ctx.processed:
                     self.logger.debug('Message processed')
             except Exception as ex:
                 self.logger.exception(ex)
 
-        if not context.processed:
+        if not ctx.processed:
             self.logger.debug('Message was not processed')
 
         for listener in self._mpl:
             try:
-                listener(context)
+                listener(ctx)
             except Exception as ex:
                 self.logger.exception(ex)
 
-        self.account.mark_seen_messages([msg])
+        self.account.mark_seen_messages([ctx.msg])
 
-    def on_command(self, msg, context=None):
-        addr = msg.get_sender_contact().addr
+    def on_command(self, msg, ctx=None):
+        if ctx is None:
+            addr = msg.get_sender_contact().addr
+            ctx = Context(msg, msg.text, self.locale, Mode.TEXT)
+            row = self._db.execute(
+                'SELECT locale, mode FROM preferences WHERE addr=?', (addr,)).fetchone()
+            if row:
+                ctx.locale, ctx.mode = row
+        else:
+            addr = ctx.msg.get_sender_contact().addr
+
         self.logger.debug('Received command from {}'.format(addr,))
 
         try:
-            if msg.get_mime_headers()['chat-version'] is None:
+            if ctx.msg.get_mime_headers()['chat-version'] is None:
                 self.logger.debug('Classic email rejected')
-                self.account.delete_messages((msg,))
+                self.account.delete_messages((ctx.msg,))
                 return
         except UnicodeDecodeError as ex:
             self.logger.exception(ex)
 
-        if context is None:
-            context = Context(msg, msg.text, self.locale, Mode.TEXT)
-            row = self._db.execute(
-                'SELECT locale, mode FROM preferences WHERE addr=?', (addr,)).fetchone()
-            if row:
-                context.locale = row[0]
-                context.mode = Mode(row[1])
-
         for listener in self._cdl:
             try:
-                listener(context)
-                if context.rejected:
+                listener(ctx)
+                if ctx.rejected:
                     self.logger.debug('Command rejected')
-                    self.account.delete_messages((msg,))
+                    self.account.delete_messages((ctx.msg,))
                     return
             except Exception as ex:
                 self.logger.exception(ex)
 
         for cmd in self.commands:
-            args = self.get_args(cmd, context.text)
+            args = self.get_args(cmd, ctx.text)
             if args is not None:
-                context.text = args
+                ctx.text = args
                 try:
-                    self.commands[cmd][-1](context)
-                    context.processed = True
+                    self.commands[cmd][-1](ctx)
+                    ctx.processed = True
                     self.logger.debug('Command processed: {}'.format(cmd))
                     break
                 except Exception as ex:
                     self.logger.exception(ex)
 
-        if not context.processed:
+        if not ctx.processed:
             self.logger.debug('Command was not processed')
 
         for listener in self._cpl:
             try:
-                listener(context)
+                listener(ctx)
             except Exception as ex:
                 self.logger.exception(ex)
 
-        self.account.mark_seen_messages([msg])
+        self.account.mark_seen_messages([ctx.msg])
 
     def load_plugins(self):
         self.plugins = []
