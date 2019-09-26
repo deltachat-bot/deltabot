@@ -180,10 +180,10 @@ class SimpleBot(DeltaBot):
                 'SELECT locale FROM preferences WHERE addr=?', (addr,)).fetchone()
             if row:
                 if row[0] != value:
-                    self.db.execute(
+                    self._db.execute(
                         'UPDATE preferences SET locale=? WHERE addr=?', (value, addr))
             else:
-                self.db.execute(
+                self._db.execute(
                     'INSERT INTO preferences VALUES (?,?,?)', (addr, value, None))
         elif prop == 'mode':
             if value == 'text':
@@ -200,10 +200,10 @@ class SimpleBot(DeltaBot):
                 'SELECT mode FROM preferences WHERE addr=?', (addr,)).fetchone()
             if row:
                 if row[0] != mode:
-                    self.db.execute(
+                    self._db.execute(
                         'UPDATE preferences SET mode=? WHERE addr=?', (mode, addr))
             else:
-                self.db.execute(
+                self._db.execute(
                     'INSERT INTO preferences VALUES (?,?,?)', (addr, None, mode))
         else:
             self.get_chat(ctx.msg).send_text(
