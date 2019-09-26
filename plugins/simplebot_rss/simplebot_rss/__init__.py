@@ -261,7 +261,7 @@ class RSS(Plugin):
                             continue
 
                         entries = d.entries[-50:]
-                        if ctx.mode == Mode.TEXT:
+                        if True:  # ctx.mode == Mode.TEXT:
                             text = ''
                             for e in entries:
                                 text += '{}:\n({})\n'.format(e.get('title',
