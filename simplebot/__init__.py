@@ -48,9 +48,9 @@ class Context:
     rejected = False
     processed = False
 
-    def __init__(self, msg, text, locale, mode):
+    def __init__(self, msg, text=None, locale='en', mode=Mode.TEXT):
         self.msg = msg
-        self.text = text
+        self.text = msg.text if text is None else text
         self.locale = locale
         self.mode = mode
 
@@ -248,11 +248,12 @@ class SimpleBot(DeltaBot):
     def on_message(self, msg, ctx=None):
         if ctx is None:
             addr = msg.get_sender_contact().addr
-            ctx = Context(msg, msg.text, self.locale, Mode.TEXT)
+            ctx = Context(msg)
             row = self._db.execute(
                 'SELECT locale, mode FROM preferences WHERE addr=?', (addr,)).fetchone()
             if row:
-                ctx.locale, ctx.mode = row
+                ctx.locale = self.locale if row[0] is None else row[0]
+                ctx.mode = Mode.TEXT if row[1] is None else row[1]
         else:
             addr = ctx.msg.get_sender_contact().addr
 
@@ -298,11 +299,12 @@ class SimpleBot(DeltaBot):
     def on_command(self, msg, ctx=None):
         if ctx is None:
             addr = msg.get_sender_contact().addr
-            ctx = Context(msg, msg.text, self.locale, Mode.TEXT)
+            ctx = Context(msg)
             row = self._db.execute(
                 'SELECT locale, mode FROM preferences WHERE addr=?', (addr,)).fetchone()
             if row:
-                ctx.locale, ctx.mode = row
+                ctx.locale = self.locale if row[0] is None else row[0]
+                ctx.mode = Mode.TEXT if row[1] is None else row[1]
         else:
             addr = ctx.msg.get_sender_contact().addr
 
