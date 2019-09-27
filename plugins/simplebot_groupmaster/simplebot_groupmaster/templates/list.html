@@ -25,7 +25,7 @@
 {% block content %}
 {% for name,topic,gid,mcount  in groups %}
 <div class="group-card w3-card-2">
-  <header class="w3-container main-color">
+  <header class="w3-container {{ 'w3-red' if '/group/' in gid else 'main-color' }}">
     <h3>{{ name }}</h3>
   </header>
   <div class="w3-container">
