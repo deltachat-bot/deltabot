@@ -446,15 +446,16 @@ class GroupMaster(Plugin):
             mgroups.append(
                 [mg['name'], mg['topic'], '{}{}'.format(MGROUP_URL, mg['id']), count])
         groups.extend(mgroups)
-        groups.sort(key=lambda g: g[-1])
         chat = cls.bot.get_chat(ctx.msg)
         gcount = len(groups)
         if ctx.mode == Mode.TEXT:
+            groups.sort(key=lambda g: g[-1])
             text = '{0} ({1}):\n\n'.format(cls.name, gcount)
             for g in groups:
                 text += _('{0}:\n* {3} 👤\nTopic: {1}\nID: {2}\n\n').format(*g)
             chat.send_text(text)
         else:
+            groups.sort(key=lambda g: g[-1], reverse=True)
             for i in range(gcount):
                 groups[i][2] = quote_plus(groups[i][2])
             template = cls.env.get_template('list.html')
