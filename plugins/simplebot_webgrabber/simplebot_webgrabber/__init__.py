@@ -207,30 +207,21 @@ class WebGrabber(Plugin):
     def ddg_cmd(cls, ctx):
         chat = cls.bot.get_chat(ctx.msg)
         url = "https://duckduckgo.com/lite?q={}".format(quote_plus(ctx.text))
-        if ctx.mode == Mode.TEXT:
-            cls._send_text(chat, url)
-        else:
-            cls.send_page(chat, url, ctx.mode)
+        cls.send_page(chat, url, ctx.mode)
 
     @classmethod
     def w_cmd(cls, ctx):
         chat = cls.bot.get_chat(ctx.msg)
         url = "https://{}.m.wikipedia.org/wiki/?search={}".format(
             ctx.locale, quote_plus(ctx.text))
-        if ctx.mode == Mode.TEXT:
-            cls._send_text(chat, url)
-        else:
-            cls.send_page(chat, url, ctx.mode)
+        cls.send_page(chat, url, ctx.mode)
 
     @classmethod
     def wt_cmd(cls, ctx):
         chat = cls.bot.get_chat(ctx.msg)
         url = "https://{}.m.wiktionary.org/wiki/?search={}".format(
             ctx.locale, quote_plus(ctx.text))
-        if ctx.mode == Mode.TEXT:
-            cls._send_text(chat, url)
-        else:
-            cls.send_page(chat, url, ctx.mode)
+        cls.send_page(chat, url, ctx.mode)
 
     @classmethod
     def wttr_cmd(cls, ctx):
