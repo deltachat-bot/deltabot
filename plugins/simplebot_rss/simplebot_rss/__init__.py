@@ -261,32 +261,32 @@ class RSS(Plugin):
                             continue
 
                         entries = d.entries[-50:]
-                        if True:  # ctx.mode == Mode.TEXT:
-                            text = ''
-                            for e in entries:
-                                text += '{}:\n({})\n'.format(e.get('title',
-                                                                   _('NO TITLE')), e.get('link', '-'))
-                                pub_date = e.get('published')
-                                if pub_date:
-                                    text += '**{}**\n'.format(pub_date)
-                                desc = e.get('description')
-                                if desc:
-                                    text += '{}\n'.format(html2text.html2text(desc))
-                                else:
-                                    text += '\n\n'
+                        html = cls.env.get_template('items.html').render(
+                            plugin=cls, title=feed['title'], entries=entries)
+                        text = ''
+                        for e in entries:
+                            text += '{}:\n({})\n'.format(e.get('title',
+                                                               _('NO TITLE')), e.get('link', '-'))
+                            pub_date = e.get('published')
+                            if pub_date:
+                                text += '**{}**\n'.format(pub_date)
+                            desc = e.get('description')
+                            if desc:
+                                text += '{}\n'.format(html2text.html2text(desc))
+                            else:
+                                text += '\n\n'
 
-                            def send_response(g): return g.send_text(text)
-                        else:
-                            html = cls.env.get_template('items.html').render(
-                                plugin=cls, title=feed['title'], entries=entries)
-
-                            def send_response(g): return cls.bot.send_html(
-                                g, html, cls.name, ctx.mode)
                         for gid in feed['chats'].split():
                             g = cls.bot.get_chat(int(gid))
                             members = g.get_contacts()
                             if me in members and len(members) > 1:
-                                send_response(g)
+                                members.remove(me)
+                                pref = cls.bot.get_preferences(members[0].addr)
+                                if pref['mode'] == Mode.TEXT:
+                                    g.send_text(text)
+                                else:
+                                    cls.bot.send_html(
+                                        g, html, cls.name, pref['mode'])
                             else:
                                 ids = feed['chats'].split()
                                 ids.remove(gid)
