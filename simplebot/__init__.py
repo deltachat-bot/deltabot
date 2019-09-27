@@ -249,11 +249,9 @@ class SimpleBot(DeltaBot):
         if ctx is None:
             addr = msg.get_sender_contact().addr
             ctx = Context(msg)
-            row = self._db.execute(
-                'SELECT locale, mode FROM preferences WHERE addr=?', (addr,)).fetchone()
-            if row:
-                ctx.locale = self.locale if row[0] is None else row[0]
-                ctx.mode = Mode.TEXT if row[1] is None else row[1]
+            prefs = self.get_preferences(addr)
+            ctx.locale = prefs['locale']
+            ctx.mode = prefs['mode']
         else:
             addr = ctx.msg.get_sender_contact().addr
 
@@ -300,11 +298,9 @@ class SimpleBot(DeltaBot):
         if ctx is None:
             addr = msg.get_sender_contact().addr
             ctx = Context(msg)
-            row = self._db.execute(
-                'SELECT locale, mode FROM preferences WHERE addr=?', (addr,)).fetchone()
-            if row:
-                ctx.locale = self.locale if row[0] is None else row[0]
-                ctx.mode = Mode.TEXT if row[1] is None else row[1]
+            prefs = self.get_preferences(addr)
+            ctx.locale = prefs['locale']
+            ctx.mode = prefs['mode']
         else:
             addr = ctx.msg.get_sender_contact().addr
 
@@ -350,6 +346,17 @@ class SimpleBot(DeltaBot):
                 self.logger.exception(ex)
 
         self.account.mark_seen_messages([ctx.msg])
+
+    def get_preferences(self, addr):
+        prefs = {'locale': self.locale, 'mode': Mode.TEXT}
+        row = self._db.execute(
+            'SELECT locale, mode FROM preferences WHERE addr=?', (addr,)).fetchone()
+        if row:
+            if row[0] is not None:
+                prefs['locale'] = row[0]
+            if row[1] is not None:
+                prefs['mode'] = row[1]
+        return prefs
 
     def load_plugins(self):
         self.plugins = []
