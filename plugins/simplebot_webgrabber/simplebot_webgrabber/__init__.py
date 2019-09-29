@@ -120,15 +120,15 @@ class WebGrabber(Plugin):
                                     break
                             else:
                                 del t['id']
-                    script = r'for(let a of document.getElementsByTagName("a"))if(a.href&&-1===a.href.indexOf("mailto:")){const b=encodeURIComponent(`${a.getAttribute("href").replace(/^(?!https?:\/\/|\/\/)\.?\/?(.*)/,`${simplebot_url}/$1`)}`);a.href=`mailto:${"' + cls.bot.get_address(
-                    ) + r'"}?body=/web%20${b}`}'
-                    t = soup.new_tag('script')
                     index = r.url.find('/', 8)
-                    if index >= 0:
-                        url = r.url[:index]
+                    if index == -1:
+                        root = url = r.url
                     else:
-                        url = r.url
-                    t.string = 'var simplebot_url = "{}";'.format(url)+script
+                        root = r.url[:index]
+                        url = r.url.rsplit('/', 1)[0]
+                    t = soup.new_tag('script')
+                    t.string = cls.env.get_template('page.js').render(
+                        bot_addr=cls.bot.get_address(), root=root, url=url)
                     soup.body.append(t)
                     cls.bot.send_html(
                         chat, str(soup), cls.name, mode)
