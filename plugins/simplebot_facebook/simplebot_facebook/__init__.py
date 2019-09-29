@@ -8,7 +8,7 @@ import os
 import sqlite3
 
 from fbchat import Client, Message, ThreadType, FBchatException, ImageAttachment, FileAttachment, AudioAttachment, VideoAttachment
-from simplebot import Plugin
+from simplebot import Plugin, PluginCommand, PluginFilter
 import deltachat as dc
 import requests
 
@@ -49,27 +49,27 @@ class FacebookBridge(Plugin):
 
         cls.long_description = _(
             'Allows to chat with your friends from Facebook right from Delta Chat.\nIt is recommended you enable 2FA in your Facebook account for this plugin to work correctly, otherwise your account could get disabled.')
-        cls.filters = [cls.process_messages]
+        cls.filters = [PluginFilter(cls.process_messages)]
         cls.bot.add_filters(cls.filters)
         cls.commands = [
-            ('/fb/login', ['<user>', '<password>'],
-             _('Login in Facebook and start receiving messages'), cls.login_cmd),
-            ('/fb/code', ['<code>'],
-             _('Send verification code'), cls.code_cmd),
-            ('/fb/password', ['<password>'],
-             _('Update your password'), cls.password_cmd),
-            ('/fb/logout', [],
-             _('Logout from Facebook, your credentials and all Facebook groups will be forgotten by the bot'), cls.logout_cmd),
-            ('/fb/disable', [],
-             _('Ignore messages from Facebook until the account is enabled again'), cls.disable_cmd),
-            ('/fb/enable', [],
-             _('Start receiving messages from Facebook again'), cls.enable_cmd),
-            ('/fb/mute', [],
-             _('Stop receiving messages from the Facebook group this command is sent'), cls.mute_cmd),
-            ('/fb/unmute', [],
-             _('Start receiving messages again from the Facebook group this command is sent'), cls.unmute_cmd),
-            ('/fb/more', [],
-             _('Every time you send this command, up to 20 more Facebook chats will be loaded in Delta Chat'), cls.more_cmd),
+            PluginCommand('/fb/login', ['<user>', '<password>'],
+                          _('Login in Facebook and start receiving messages'), cls.login_cmd),
+            PluginCommand('/fb/code', ['<code>'],
+                          _('Send verification code'), cls.code_cmd),
+            PluginCommand('/fb/password', ['<password>'],
+                          _('Update your password'), cls.password_cmd),
+            PluginCommand('/fb/logout', [],
+                          _('Logout from Facebook, your credentials and all Facebook groups will be forgotten by the bot'), cls.logout_cmd),
+            PluginCommand('/fb/disable', [],
+                          _('Ignore messages from Facebook until the account is enabled again'), cls.disable_cmd),
+            PluginCommand('/fb/enable', [],
+                          _('Start receiving messages from Facebook again'), cls.enable_cmd),
+            PluginCommand('/fb/mute', [],
+                          _('Stop receiving messages from the Facebook group this command is sent'), cls.mute_cmd),
+            PluginCommand('/fb/unmute', [],
+                          _('Start receiving messages again from the Facebook group this command is sent'), cls.unmute_cmd),
+            PluginCommand('/fb/more', [],
+                          _('Every time you send this command, up to 20 more Facebook chats will be loaded in Delta Chat'), cls.more_cmd),
         ]
         cls.bot.add_commands(cls.commands)
 

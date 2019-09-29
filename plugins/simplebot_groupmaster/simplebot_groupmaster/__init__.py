@@ -8,7 +8,7 @@ import string
 import sqlite3
 
 from jinja2 import Environment, PackageLoader, select_autoescape
-from simplebot import Plugin, Mode
+from simplebot import Plugin, Mode, PluginFilter, PluginCommand
 import deltachat as dc
 
 
@@ -45,29 +45,30 @@ class GroupMaster(Plugin):
 
         cls.description = _(
             'Extends the capabilities of DeltaChat groups.')
-        cls.filters = [cls.process_messages]
+        cls.filters = [PluginFilter(cls.process_messages)]
         cls.bot.add_filters(cls.filters)
         cls.commands = [
-            ('/group/mega', [], _(
+            PluginCommand('/group/mega', [], _(
                 'Convert the group where it is sent in a mega-group.'), cls.mega_cmd),
-            ('/nick', ['[nick]'], _(
+            PluginCommand('/nick', ['[nick]'], _(
                 'Show your current nick or set your nick to be shown in mega-groups.'), cls.nick_cmd),
-            ('/group/id', [], _('Show the id of the group (or mega-group) where it is sent.'), cls.id_cmd),
-            ('/group/list', [],
-             _('Show the list of public groups and mega-groups.'), cls.list_cmd),
-            ('/group/me', [],
-             _('Show the list of public groups/mega-groups you are in.'), cls.me_cmd),
-            ('/group/members', [],
-             _('Show the list of members in the mega-group it is sent.'), cls.members_cmd),
-            ('/group/join',
-             ['<id>'], _('Joins you to the group (or mega-group) with the given id.'), cls.join_cmd),
-            ('/group/public', [],
-             _('Send it in a group (or mega-group) to make it public.'), cls.public_cmd),
-            ('/group/private', [],
-             _('Send it in a group (or mega-group) to make it private.'), cls.private_cmd),
-            ('/group/topic', ['[topic]'],
-             _('Send it in a group (or mega-group) to show the current topic or replace it.'), cls.topic_cmd),
-            ('/group/remove', ['<id>', '<addr>'], _(
+            PluginCommand(
+                '/group/id', [], _('Show the id of the group (or mega-group) where it is sent.'), cls.id_cmd),
+            PluginCommand(
+                '/group/list', [], _('Show the list of public groups and mega-groups.'), cls.list_cmd),
+            PluginCommand(
+                '/group/me', [], _('Show the list of public groups/mega-groups you are in.'), cls.me_cmd),
+            PluginCommand('/group/members', [], _(
+                'Show the list of members in the mega-group it is sent.'), cls.members_cmd),
+            PluginCommand('/group/join', ['<id>'], _(
+                'Joins you to the group (or mega-group) with the given id.'), cls.join_cmd),
+            PluginCommand(
+                '/group/public', [], _('Send it in a group (or mega-group) to make it public.'), cls.public_cmd),
+            PluginCommand('/group/private', [], _(
+                'Send it in a group (or mega-group) to make it private.'), cls.private_cmd),
+            PluginCommand('/group/topic', ['[topic]'], _(
+                'Send it in a group (or mega-group) to show the current topic or replace it.'), cls.topic_cmd),
+            PluginCommand('/group/remove', ['<id>', '<addr>'], _(
                 'Remove the member with the given address from the group (or mega-group) with the given id.'), cls.remove_cmd)]
         cls.bot.add_commands(cls.commands)
 

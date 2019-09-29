@@ -8,7 +8,7 @@ import sqlite3
 import time
 
 from jinja2 import Environment, PackageLoader
-from simplebot import Plugin, Mode
+from simplebot import Plugin, Mode, PluginCommand
 import deltachat as dc
 import feedparser
 import html2text
@@ -56,14 +56,14 @@ class RSS(Plugin):
 
         cls.description = _('Subscribe to RSS and Atom links.')
         cls.commands = [
-            ('/rss/subscribe', ['<url>'],
-             _('Subscribe you to the given feed url'), cls.subscribe_cmd),
-            ('/rss/unsubscribe', ['<url>'],
-             _('Unsubscribe you from the given feed'), cls.unsubscribe_cmd),
-            ('/rss/list', [],
-             _('List feeds users are subscribed'), cls.list_cmd),
-            ('/rss/info', [],
-             _('Send this on a feed group to see the feed info'), cls.info_cmd),
+            PluginCommand('/rss/subscribe', ['<url>'], _(
+                'Subscribe you to the given feed url'), cls.subscribe_cmd),
+            PluginCommand('/rss/unsubscribe', ['<url>'], _(
+                'Unsubscribe you from the given feed'), cls.unsubscribe_cmd),
+            PluginCommand('/rss/list', [], _(
+                'List feeds users are subscribed'), cls.list_cmd),
+            PluginCommand('/rss/info', [], _(
+                'Send this on a feed group to see the feed info'), cls.info_cmd),
         ]
         cls.bot.add_commands(cls.commands)
 

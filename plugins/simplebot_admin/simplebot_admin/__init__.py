@@ -4,7 +4,7 @@ import os
 import re
 import sqlite3
 
-from simplebot import Plugin
+from simplebot import Plugin, PluginCommand
 import psutil
 
 
@@ -37,13 +37,13 @@ class Admin(Plugin):
         cls.bot.add_on_msg_detected_listener(cls.msg_detected)
         cls.bot.add_on_cmd_detected_listener(cls.msg_detected)
         cls.commands = [
-            ('/admin/ban', ['<rule>'],
-             _('Ignore addresses matching the give regular expression'), cls.ban_cmd),
-            ('/admin/unban', ['<rule>'],
-             _('Remove the given rule'), cls.unban_cmd),
-            ('/admin/banlist', [],
-             _('Display the list of rules'), cls.banlist_cmd),
-            ('/admin/stats', [], _('Show statistics about the bot'), cls.stats_cmd)]
+            PluginCommand('/admin/ban', ['<rule>'],
+                          _('Ignore addresses matching the give regular expression'), cls.ban_cmd),
+            PluginCommand('/admin/unban', ['<rule>'],
+                          _('Remove the given rule'), cls.unban_cmd),
+            PluginCommand('/admin/banlist', [],
+                          _('Display the list of rules'), cls.banlist_cmd),
+            PluginCommand('/admin/stats', [], _('Show statistics about the bot'), cls.stats_cmd)]
         cls.bot.add_commands(cls.commands)
 
     @classmethod

@@ -4,7 +4,7 @@ import os
 import re
 import sqlite3
 
-from simplebot import Plugin, Mode
+from simplebot import Plugin, Mode, PluginCommand
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 
@@ -34,16 +34,15 @@ class DeltaFriends(Plugin):
 
         cls.description = _('Provides a directory of Delta Chat users.')
         cls.commands = [
-            ('/friends/join', ['<bio>'],
-             _('Will add you to the list or update your bio, <bio> is up to {0} characters of text describing yourself').format(
-                 cls.MAX_BIO_LEN),
-             cls.join_cmd),
-            ('/friends/leave', [], _('Will remove you from the DeltaFriends list'),
-             cls.leave_cmd),
-            ('/friends/list', [],
-             _('Will return the list of users wanting to make new friends'), cls.list_cmd),
-            ('/friends/me', [], _('Sends your biography'), cls.me_cmd),
-            ('/friends/app', [], _('Sends an html app to help you to use the plugin'), cls.app_cmd)]
+            PluginCommand('/friends/join', ['<bio>'],
+                          _('Will add you to the list or update your bio, <bio> is up to {0} characters of text describing yourself').format(cls.MAX_BIO_LEN), cls.join_cmd),
+            PluginCommand('/friends/leave', [], _('Will remove you from the DeltaFriends list'),
+                          cls.leave_cmd),
+            PluginCommand('/friends/list', [],
+                          _('Will return the list of users wanting to make new friends'), cls.list_cmd),
+            PluginCommand('/friends/me', [],
+                          _('Sends your biography'), cls.me_cmd),
+            PluginCommand('/friends/app', [], _('Sends an html app to help you to use the plugin'), cls.app_cmd)]
         cls.bot.add_commands(cls.commands)
 
         cls.NOSCRIPT = _(

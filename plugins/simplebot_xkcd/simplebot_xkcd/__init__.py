@@ -2,7 +2,7 @@
 import gettext
 import os
 
-from simplebot import Plugin
+from simplebot import Plugin, PluginCommand
 import xkcd
 
 
@@ -22,8 +22,9 @@ class XKCD(Plugin):
 
         cls.description = _('See xkcd.com comics in Delta Chat.')
         cls.commands = [
-            ('/xkcd', ['[num]'], _('Sends the comic with the give number or a ramdom comic if no number is provided.'), cls.xkcd_cmd),
-            ('/xkcd/l', [], _('Sends the latest comic released in xkcd.'), cls.latest_cmd), ]
+            PluginCommand('/xkcd', ['[num]'], _(
+                'Sends the comic with the give number or a ramdom comic if no number is provided.'), cls.xkcd_cmd),
+            PluginCommand('/xkcd/l', [], _('Sends the latest comic released in xkcd.'), cls.latest_cmd), ]
         cls.bot.add_commands(cls.commands)
 
     @classmethod
