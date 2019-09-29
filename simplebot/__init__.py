@@ -260,15 +260,16 @@ class SimpleBot(DeltaBot):
     # def on_message_delivered(self, msg):
     #     self.account.delete_messages((msg,))
 
-    def on_message(self, msg, ctx=None):
-        if ctx is None:
+    def on_message(self, msg):
+        if type(msg) is Context:
+            ctx = msg
+            addr = ctx.msg.get_sender_contact().addr
+        else:
             addr = msg.get_sender_contact().addr
             ctx = Context(msg)
             prefs = self.get_preferences(addr)
             ctx.locale = prefs['locale']
             ctx.mode = prefs['mode']
-        else:
-            addr = ctx.msg.get_sender_contact().addr
 
         self.logger.debug('Received message from {}'.format(addr,))
 
@@ -309,15 +310,16 @@ class SimpleBot(DeltaBot):
 
         self.account.mark_seen_messages([ctx.msg])
 
-    def on_command(self, msg, ctx=None):
-        if ctx is None:
+    def on_command(self, msg):
+        if type(msg) is Context:
+            ctx = msg
+            addr = ctx.msg.get_sender_contact().addr
+        else:
             addr = msg.get_sender_contact().addr
             ctx = Context(msg)
             prefs = self.get_preferences(addr)
             ctx.locale = prefs['locale']
             ctx.mode = prefs['mode']
-        else:
-            addr = ctx.msg.get_sender_contact().addr
 
         self.logger.debug('Received command from {}'.format(addr,))
 
