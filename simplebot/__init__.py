@@ -20,6 +20,7 @@ class Mode(IntEnum):
     TEXT = 1
     HTML = 2
     HTMLZIP = 3
+    TEXT_HTMLZIP = 4
 
 
 class Plugin(ABC):
@@ -99,7 +100,7 @@ class SimpleBot(DeltaBot):
 
         self.buildin_commands = [
             ('/settings', ['<property>', '<value>'],
-             'Set your preferences, "property" can be "locale"(values: en, es, de, etc) or "mode"(values: text, html, html.zip)', self._settings_cmd),
+             'Set your preferences, "property" can be "locale"(values: en, es, de, etc) or "mode"(values: text, html, html.zip, text/html.zip)', self._settings_cmd),
             ('/start', [],
              'Show an information message', self._start_cmd)]
         self.add_commands(self.buildin_commands)
@@ -114,7 +115,7 @@ class SimpleBot(DeltaBot):
             self.deactivate_plugins()
 
     def send_html(self, chat, html, basename, mode):
-        if mode == Mode.HTMLZIP:
+        if mode in (Mode.HTMLZIP, Mode.TEXT_HTMLZIP):
             file_path = self.get_blobpath(basename+'.html.zip')
             zlib.Z_DEFAULT_COMPRESSION = 9
             with zipfile.ZipFile(file_path, 'w', compression=zipfile.ZIP_DEFLATED) as fd:
@@ -192,6 +193,8 @@ class SimpleBot(DeltaBot):
                 mode = Mode.HTML
             elif value == 'html.zip':
                 mode = Mode.HTMLZIP
+            elif value == 'text/html.zip':
+                mode = Mode.TEXT_HTMLZIP
             else:
                 self.get_chat(ctx.msg).send_text(
                     'Invalid value: {}'.format(value))
