@@ -51,8 +51,11 @@ class PluginCommand(Command):
 
 
 class PluginFilter(Filter):
+    def __init__(self, action):
+        self._action = action
+
     def __call__(self, ctx):
-        return False
+        self._action(ctx)
 
 
 class Context:

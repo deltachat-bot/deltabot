@@ -98,11 +98,11 @@ class Shortcuts(Plugin):
         for sc, cmd in cls.db.execute('SELECT shortcut, cmd FROM shortcuts WHERE addr=?', (addr,)):
             if sc.endswith('{}') and shortcut.startswith(sc[:-3]):
                 ctx.text = cmd.format(shortcut.lstrip(sc[:-3]).lstrip())
-                cls.bot.on_command(ctx.msg, ctx)
+                cls.bot.on_command(None, ctx)
                 ctx.processed = True
                 break
             elif shortcut == sc:
                 ctx.text = cmd
-                cls.bot.on_command(ctx.msg, ctx)
+                cls.bot.on_command(None, ctx)
                 ctx.processed = True
                 break

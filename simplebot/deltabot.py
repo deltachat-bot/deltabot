@@ -31,8 +31,8 @@ class Filter():
 
 class DeltaBot:
     def __init__(self, basedir):
-        self.commands = set()
-        self.filters = set()
+        self.commands = []
+        self.filters = []
         self.basedir = os.path.abspath(os.path.expanduser(basedir))
         self.logger = _get_logger()
         self.account = _get_account(self.basedir)
@@ -61,28 +61,30 @@ class DeltaBot:
         self.account.set_config('displayname', name)
 
     def add_commands(self, commands):
-        self.commands.update(commands)
+        self.commands.extend(commands)
 
     def remove_commands(self, commands):
-        self.commands.difference_update(commands)
+        for c in commands:
+            self.commands.remove(c)
 
     def add_command(self, cmd):
-        self.commands.add(cmd)
+        self.commands.append(cmd)
 
     def remove_command(self, cmd):
-        self.commands.discard(cmd)
+        self.commands.remove(cmd)
 
     def add_filters(self, filters):
-        self.filters.update(filters)
+        self.filters.extend(filters)
 
     def remove_filters(self, filters):
-        self.filters.difference_update(filters)
+        for f in filters:
+            self.filters.remove(f)
 
     def add_filter(self, f):
-        self.filters.add(f)
+        self.filters.append(f)
 
     def remove_filter(self, f):
-        self.filters.discard(f)
+        self.filters.remove(f)
 
     @staticmethod
     def get_args(cmd, msg):
