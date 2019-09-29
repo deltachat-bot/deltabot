@@ -6,7 +6,7 @@ import re
 import mimetypes
 
 from jinja2 import Environment, PackageLoader, select_autoescape
-from simplebot import Plugin, Mode
+from simplebot import Plugin, Mode, PluginCommand
 import bs4
 import html2text
 import requests
@@ -44,14 +44,19 @@ class WebGrabber(Plugin):
 
         cls.description = _('Access the web using DeltaChat.')
         cls.commands = [
-            ('/ddg', ['<text>'], _('Search in DuckDuckGo'), cls.ddg_cmd),
-            ('/wt', ['<text>'], _('Search in Wiktionary'), cls.wt_cmd),
-            ('/w', ['<text>'], _('Search in Wikipedia'), cls.w_cmd),
-            ('/wttr', ['<text>'],
-             _('Search weather info from wttr.in'), cls.wttr_cmd),
-            ('/web', ['<url>'], _('Get a webpage or file'), cls.web_cmd),
-            ('/url', ['<url>'], _('Get a webpage as text'), cls.url_cmd),
-            ('/web/app', [], _('Sends an html app to help you to use the plugin.'), cls.app_cmd)]
+            PluginCommand('/ddg', ['<text>'],
+                          _('Search in DuckDuckGo'), cls.ddg_cmd),
+            PluginCommand('/wt', ['<text>'],
+                          _('Search in Wiktionary'), cls.wt_cmd),
+            PluginCommand('/w', ['<text>'],
+                          _('Search in Wikipedia'), cls.w_cmd),
+            PluginCommand('/wttr', ['<text>'],
+                          _('Search weather info from wttr.in'), cls.wttr_cmd),
+            PluginCommand('/web', ['<url>'],
+                          _('Get a webpage or file'), cls.web_cmd),
+            PluginCommand('/url', ['<url>'],
+                          _('Get a webpage as text'), cls.url_cmd),
+            PluginCommand('/web/app', [], _('Sends an html app to help you to use the plugin.'), cls.app_cmd)]
         cls.bot.add_commands(cls.commands)
 
         cls.NOSCRIPT = _(

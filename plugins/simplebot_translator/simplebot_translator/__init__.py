@@ -2,7 +2,7 @@
 import gettext
 import os
 
-from simplebot import Plugin
+from simplebot import Plugin, PluginCommand
 import translators as ts
 
 
@@ -19,8 +19,8 @@ class Translator(Plugin):
                                    languages=[bot.locale], fallback=True)
         lang.install()
         cls.description = _('Translate text. Example: /tr en es hello world')
-        cls.commands = [('/tr', ['<lang1>', '<lang2>', '<text>'],
-                         _('Translate text from lang1 to lang2'), cls.tr_cmd)]
+        cls.commands = [
+            PluginCommand('/tr', ['<lang1>', '<lang2>', '<text>'], _('Translate text from lang1 to lang2'), cls.tr_cmd)]
         cls.bot.add_commands(cls.commands)
 
     @classmethod

@@ -4,7 +4,7 @@ import gettext
 import os
 import sqlite3
 
-from simplebot import Plugin
+from simplebot import Plugin, PluginCommand
 from deltachat.chatting import Chat
 from jinja2 import Environment, PackageLoader, select_autoescape
 
@@ -39,14 +39,15 @@ class TicTacToe(Plugin):
 
         cls.description = _('Tic Tac Toe game to play with friends')
         cls.commands = [
-            ('/toe/play', ['[email]'],
-             _('Invite a friend to play or accept an invitation to play.'), cls.play_cmd),
-            ('/toe/surrender', [],
-             _('End the game in the group it is sent.'), cls.surrender_cmd),
-            ('/toe/new', [], _('Start a new game in the current game group.'), cls.new_cmd)]
+            PluginCommand('/toe/play', ['[email]'],
+                          _('Invite a friend to play or accept an invitation to play.'), cls.play_cmd),
+            PluginCommand('/toe/surrender', [],
+                          _('End the game in the group it is sent.'), cls.surrender_cmd),
+            PluginCommand(
+                '/toe/new', [], _('Start a new game in the current game group.'), cls.new_cmd),
+            PluginCommand('/toe/move', ['<id>', '<cell>'],
+                          _('Move to the given cell in the game with the given id.'), cls.move_cmd)]
         cls.bot.add_commands(cls.commands)
-        cls.bot.add_command('/toe/move', ['<id>', '<cell>'],
-                            _('Move to the given cell in the game with the given id.'), cls.move_cmd)
 
     @classmethod
     def deactivate(cls):

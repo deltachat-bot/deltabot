@@ -2,7 +2,7 @@
 import gettext
 import os
 
-from simplebot import Plugin, Mode
+from simplebot import Plugin, Mode, PluginCommand
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 
@@ -26,8 +26,8 @@ class Helper(Plugin):
         lang.install()
 
         cls.description = _('Provides help.')
-        cls.commands = [
-            ('/help', [], _('Will send you a list of installed plugins and their help.'), cls.help_cmd)]
+        cls.commands = [PluginCommand(
+            '/help', [], _('Will send you a list of installed plugins and their help.'), cls.help_cmd)]
         cls.bot.add_commands(cls.commands)
         cls.bot.add_on_cmd_processed_listener(cls.on_cmd_processed)
         cls.bot.add_on_msg_processed_listener(cls.on_msg_processed)
@@ -48,9 +48,9 @@ class Helper(Plugin):
         chat = cls.bot.get_chat(ctx.msg)
         if ctx.mode == Mode.TEXT:
             text = _('Commands:\n\n')
-            for cmd, data in sorted(cls.bot.commands.items()):
+            for c in cls.bot.commands:
                 text += '{0} {1}\n{2}\n\n'.format(
-                    cmd, ' '.join(data[0]), data[1])
+                    c.cmd, ' '.join(c.args), c.description)
             chat.send_text(text)
         else:
             plugins = sorted(cls.bot.plugins, key=lambda p: p.name)

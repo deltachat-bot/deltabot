@@ -4,7 +4,7 @@ import os
 import re
 import sqlite3
 
-from simplebot import Plugin
+from simplebot import Plugin, PluginFilter, PluginCommand
 
 
 class Shortcuts(Plugin):
@@ -36,14 +36,15 @@ class Shortcuts(Plugin):
 
         cls.description = _('Allows to create custom shortcuts for commands.')
         cls.long_description = _('')
-        cls.filters = [cls.process_shortcuts]
+        cls.filters = [PluginFilter(cls.process_shortcuts)]
         cls.bot.add_filters(cls.filters)
         cls.commands = [
-            ('/shortcut', ['"<shortcut>"', '"<cmd>"'],
-             _('Create a shortcut for the given command, if the shortcut ends with {}, then in the associated command, {} will be replaced with the arguments passed to the shortcut, for example: /shortcut "say hello to {}" "/echo hello {}!!!"'), cls.shortcut_cmd),
-            ('/shortcut/del', ['<shortcut>'],
-             _('Delete a shortcut you had created'), cls.del_cmd),
-            ('/shortcut/list', [], _('List your shortcuts'), cls.list_cmd),
+            PluginCommand('/shortcut', ['"<shortcut>"', '"<cmd>"'],
+                          _('Create a shortcut for the given command, if the shortcut ends with {}, then in the associated command, {} will be replaced with the arguments passed to the shortcut, for example: /shortcut "say hello to {}" "/echo hello {}!!!"'), cls.shortcut_cmd),
+            PluginCommand('/shortcut/del', ['<shortcut>'],
+                          _('Delete a shortcut you had created'), cls.del_cmd),
+            PluginCommand('/shortcut/list', [],
+                          _('List your shortcuts'), cls.list_cmd),
         ]
         cls.bot.add_commands(cls.commands)
 

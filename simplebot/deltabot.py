@@ -8,9 +8,30 @@ import deltachat as dc
 _CMD_PREFIX = '/'
 
 
+class Command():
+    def __init__(self, cmd, args, description, action):
+        if not cmd.startswith(_CMD_PREFIX):
+            raise ValueError('Commands must start with {}'.format(_CMD_PREFIX))
+        self.cmd = cmd
+        self.args = args
+        self.description = description
+        self._action = action
+
+    def __call__(self, msg, args):
+        return self._action(msg, args)
+
+    def __eq__(self, c):
+        return c.cmd == self.cmd
+
+
+class Filter():
+    def __call__(self, msg):
+        return False
+
+
 class DeltaBot:
     def __init__(self, basedir):
-        self.commands = dict()
+        self.commands = set()
         self.filters = set()
         self.basedir = os.path.abspath(os.path.expanduser(basedir))
         self.logger = _get_logger()
@@ -40,20 +61,16 @@ class DeltaBot:
         self.account.set_config('displayname', name)
 
     def add_commands(self, commands):
-        for cmd in commands:
-            self.add_command(*cmd)
+        self.commands.update(commands)
 
     def remove_commands(self, commands):
-        for cmd in commands:
-            self.remove_command(cmd[0])
+        self.commands.difference_update(commands)
 
-    def add_command(self, cmd, args, description, action):
-        if not cmd.startswith(_CMD_PREFIX):
-            raise ValueError('Commands must start with {}'.format(_CMD_PREFIX))
-        self.commands[cmd] = (args, description, action)
+    def add_command(self, cmd):
+        self.commands.add(cmd)
 
     def remove_command(self, cmd):
-        self.commands.pop(cmd)
+        self.commands.discard(cmd)
 
     def add_filters(self, filters):
         self.filters.update(filters)
@@ -94,11 +111,11 @@ class DeltaBot:
         return processed
 
     def on_command(self, msg):
-        for cmd in self.commands:
-            args = self.get_args(cmd, msg)
+        for c in self.commands:
+            args = self.get_args(c.cmd, msg)
             if args is not None:
                 try:
-                    self.commands[cmd][-1](msg, args)
+                    c(msg, args)
                     return True
                 except Exception as ex:
                     self.logger.exception(ex)

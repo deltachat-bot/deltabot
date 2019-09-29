@@ -9,7 +9,7 @@ import sqlite3
 import zipfile
 import zlib
 
-from .deltabot import DeltaBot
+from .deltabot import DeltaBot, Command, Filter
 import pkg_resources
 
 
@@ -43,6 +43,16 @@ class Plugin(ABC):
         """Deactivate the plugin, this method is called before the plugin is disabled/removed, do clean up here."""
         cls.bot.remove_commands(cls.commands)
         cls.bot.remove_filters(cls.filters)
+
+
+class PluginCommand(Command):
+    def __call__(self, ctx):
+        return self._action(ctx)
+
+
+class PluginFilter(Filter):
+    def __call__(self, ctx):
+        return False
 
 
 class Context:
@@ -327,14 +337,14 @@ class SimpleBot(DeltaBot):
             except Exception as ex:
                 self.logger.exception(ex)
 
-        for cmd in self.commands:
-            args = self.get_args(cmd, ctx.text)
+        for c in self.commands:
+            args = self.get_args(c.cmd, ctx.text)
             if args is not None:
                 ctx.text = args
                 try:
-                    self.commands[cmd][-1](ctx)
+                    c(ctx)
                     ctx.processed = True
-                    self.logger.debug('Command processed: {}'.format(cmd))
+                    self.logger.debug('Command processed: {}'.format(c.cmd))
                     break
                 except Exception as ex:
                     self.logger.exception(ex)

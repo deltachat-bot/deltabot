@@ -3,7 +3,7 @@ import gettext
 import os
 import random
 
-from simplebot import Plugin
+from simplebot import Plugin, PluginCommand
 import wikiquote as wq
 
 
@@ -24,8 +24,8 @@ class Wikiquote(Plugin):
                                    languages=[bot.locale], fallback=True)
         lang.install()
         cls.description = _('Access Wikiquote content on Delta Chat.')
-        cls.commands = [('/quote', ['[text]'], _(
-            'Search in Wikiquote or get the quote of the day if no text is given.'), cls.quote_cmd)]
+        cls.commands = [
+            PluginCommand('/quote', ['[text]'], _('Search in Wikiquote or get the quote of the day if no text is given.'), cls.quote_cmd)]
         cls.bot.add_commands(cls.commands)
 
     @classmethod

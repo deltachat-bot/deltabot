@@ -2,7 +2,7 @@
 import gettext
 import os
 
-from simplebot import Plugin
+from simplebot import Plugin, PluginCommand
 
 
 class Echo(Plugin):
@@ -23,7 +23,7 @@ class Echo(Plugin):
         cls.long_description = _(
             'To use it you can simply send a message starting with the command /echo. For example:\n/echo hello world')
         cls.commands = [
-            ('/echo', ['[text]'], _('Echoes back the given text'), cls.on_echo)]
+            PluginCommand('/echo', ['[text]'], _('Echoes back the given text'), cls.on_echo)]
         cls.bot.add_commands(cls.commands)
 
     @classmethod
