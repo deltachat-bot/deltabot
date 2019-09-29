@@ -109,10 +109,9 @@ class SimpleBot(DeltaBot):
         self._cpl = set()
 
         self.buildin_commands = [
-            ('/settings', ['<property>', '<value>'],
-             'Set your preferences, "property" can be "locale"(values: en, es, de, etc) or "mode"(values: text, html, html.zip, text/html.zip)', self._settings_cmd),
-            ('/start', [],
-             'Show an information message', self._start_cmd)]
+            PluginCommand('/settings', ['<property>', '<value>'],
+                          'Set your preferences, "property" can be "locale"(values: en, es, de, etc) or "mode"(values: text, html, html.zip, text/html.zip)', self._settings_cmd),
+            PluginCommand('/start', [], 'Show an information message', self._start_cmd)]
         self.add_commands(self.buildin_commands)
 
         self.load_plugins()
