@@ -487,6 +487,8 @@ class GroupMaster(Plugin):
         text = ''
         for g in groups:
             text += _('{0}:\nID: {1}\n\n').format(*g)
+        if not text:
+            text = _('Empty list')
         chat = cls.bot.get_chat(ctx.msg)
         chat.send_text(text)
 
