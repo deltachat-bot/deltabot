@@ -173,11 +173,13 @@ class SimpleBot(DeltaBot):
         botcfg.setdefault('displayname', 'SimpleBot🤖')
         botcfg.setdefault('mdns_enabled', '0')
         botcfg.setdefault('mvbox_move', '1')
+        botcfg.setdefault('e2ee_enabled', '1')
         self.save_config()
 
         self.set_name(botcfg['displayname'])
         self.account.set_config('mdns_enabled', botcfg['mdns_enabled'])
         self.account.set_config('mvbox_move', botcfg['mvbox_move'])
+        self.account.set_config('e2ee_enabled', botcfg['e2ee_enabled'])
 
     def _start_cmd(self, ctx):
         botcfg = self.get_config(__name__)
