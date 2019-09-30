@@ -132,7 +132,7 @@ class RSS(Plugin):
                 d.entries = cls.get_old_entries(d, latest)
                 entries = d.entries[-10:]
                 if ctx.mode == Mode.TEXT:
-                    text = '{}:\n\n'.format(feed['title'])
+                    text = ''
                     for e in entries:
                         text += '{}:\n({})\n'.format(e.get('title',
                                                            _('NO TITLE')), e.get('link', '-'))
@@ -144,6 +144,7 @@ class RSS(Plugin):
                             text += '{}\n'.format(html2text.html2text(desc))
                         else:
                             text += '\n\n'
+                    group.send_text(text)
                 else:
                     html = cls.env.get_template('items.html').render(
                         plugin=cls, title=feed['title'], entries=entries)
