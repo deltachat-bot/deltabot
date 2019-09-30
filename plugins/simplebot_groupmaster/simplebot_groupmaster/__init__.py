@@ -68,8 +68,8 @@ class GroupMaster(Plugin):
                 'Send it in a group (or mega-group) to make it private.'), cls.private_cmd),
             PluginCommand('/group/topic', ['[topic]'], _(
                 'Send it in a group (or mega-group) to show the current topic or replace it.'), cls.topic_cmd),
-            PluginCommand('/group/remove', ['<id>', '<addr>'], _(
-                'Remove the member with the given address from the group (or mega-group) with the given id.'), cls.remove_cmd)]
+            PluginCommand('/group/remove', ['<id>', '[addr]'], _(
+                'Remove the member with the given address from the group (or mega-group) with the given id. If no address is provided, removes yourself'), cls.remove_cmd)]
         cls.bot.add_commands(cls.commands)
 
         cls.LIST_BTN = _('Groups List')
@@ -368,10 +368,14 @@ class GroupMaster(Plugin):
     def remove_cmd(cls, ctx):
         sender = ctx.msg.get_sender_contact()
         try:
-            gid, addr = ctx.text.split(maxsplit=1)
-            addr = addr.rstrip()
-            if addr == cls.bot.get_address():
-                raise ValueError('Tried to remove bot from mega-group')
+            gid = ctx.text.split(maxsplit=1)
+            if len(gid) == 2:
+                gid, addr = gid
+                if addr == cls.bot.get_address():
+                    raise ValueError('Tried to remove bot from mega-group')
+            else:
+                gid = gid[0]
+                addr = sender.addr
             if gid.startswith(MGROUP_URL):
                 _mgid = gid.lstrip(MGROUP_URL).split('-')[-1]
                 mgroup = cls.db.execute(
