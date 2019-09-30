@@ -162,9 +162,9 @@ class RSS(Plugin):
     @classmethod
     def list_cmd(cls, ctx):
         feeds = cls.db.execute('SELECT * FROM feeds')
-        feeds.sort(key=lambda f: len(f['chats'].split()), reverse=True)
         chat = cls.bot.get_chat(ctx.msg)
         if ctx.mode == Mode.TEXT:
+            feeds.sort(key=lambda f: len(f['chats'].split()))
             text = '{0} ({1}):\n\n'.format(cls.name, len(feeds))
             for f in feeds:
                 scount = len(f['chats'].split())
@@ -172,6 +172,7 @@ class RSS(Plugin):
                     f['title'], f['url'], scount, f['description'])
             chat.send_text(text)
         else:
+            feeds.sort(key=lambda f: len(f['chats'].split()), reverse=True)
             feeds = [(*f, quote_plus(f['url'])) for f in feeds]
             template = cls.env.get_template('feeds.html')
             addr = cls.bot.get_address()
