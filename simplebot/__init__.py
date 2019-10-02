@@ -172,7 +172,7 @@ class SimpleBot(DeltaBot):
             'start_msg', 'This is SimpleBot, a free software bot for the Delta Chat aplication.\n\nSource code: https://github.com/adbenitez/simplebot')
         botcfg.setdefault('displayname', 'SimpleBot🤖')
         botcfg.setdefault('mdns_enabled', '0')
-        botcfg.setdefault('mvbox_move', '1')
+        botcfg.setdefault('mvbox_move', '0')
         botcfg.setdefault('e2ee_enabled', '1')
         self.save_config()
 
