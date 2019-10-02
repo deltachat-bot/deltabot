@@ -26,33 +26,36 @@
 {% endblock %}
 
 {% block content %}
-<a class="w3-btn-block w3-teal w3-large w3-center" onclick="document.getElementById('profile').style.display='block'">{{ plugin.JOIN_BTN }}</a></br></br>
-<a class="w3-btn-block w3-teal w3-large w3-center" href="mailto:{{ bot_addr }}?body=/friends/leave">{{ plugin.LEAVE_BTN }} ❯</a></br></br>
-<a class="w3-btn-block w3-teal w3-large w3-center" href="mailto:{{ bot_addr }}?body=/friends/list">{{ plugin.LIST_BTN }} ❯</a>
+<noscript><div class="w3-container w3-section w3-red"><p>{{ plugin.NOSCRIPT }}<p></div></noscript>
 
-<div id="profile" class="w3-modal">
-  <div class="w3-modal-content">
-    <header class="w3-container w3-teal">
-      <span onclick="document.getElementById('profile').style.display='none'"
-	    class="w3-closebtn">&times;</span>
-      <h2>{{ plugin.PROFILE_HEADER }}</h2>
-    </header>
-    <div class="w3-container">
-      <p>      
-	<label class="w3-text-grey">{{ plugin.BIO }}</label>
-	<textarea class="w3-input" style="resize:none" oninput="setBtn(this)">{{ bio }}</textarea>
-      </p>
-      <p>
-	<a id="join-btn" class="w3-btn w3-teal w3-large w3-center" href="">{{ plugin.JOIN_BTN }} ❯</a>
-      </p>
+<div id="content" style="display: none;">
+  <a class="w3-btn-block w3-teal w3-large w3-center" onclick="document.getElementById('profile').style.display='block'">{{ plugin.JOIN_BTN }}</a></br></br>
+  <a class="w3-btn-block w3-teal w3-large w3-center" href="mailto:{{ bot_addr }}?body=/friends/leave">{{ plugin.LEAVE_BTN }} ❯</a></br></br>
+  <a class="w3-btn-block w3-teal w3-large w3-center" href="mailto:{{ bot_addr }}?body=/friends/list">{{ plugin.LIST_BTN }} ❯</a>
+
+  <div id="profile" class="w3-modal">
+    <div class="w3-modal-content">
+      <header class="w3-container w3-teal">
+	<span onclick="document.getElementById('profile').style.display='none'"
+	      class="w3-closebtn">&times;</span>
+	<h2>{{ plugin.PROFILE_HEADER }}</h2>
+      </header>
+      <div class="w3-container">
+	<p>      
+	  <label class="w3-text-grey">{{ plugin.BIO }}</label>
+	  <textarea class="w3-input" style="resize:none" oninput="setBtn(this)">{{ bio }}</textarea>
+	</p>
+	<p>
+	  <a id="join-btn" class="w3-btn w3-teal w3-large w3-center" href="">{{ plugin.JOIN_BTN }} ❯</a>
+	</p>
+      </div>
+      <footer class="w3-container w3-teal">
+      </footer>
     </div>
-    <footer class="w3-container w3-teal">
-    </footer>
   </div>
 </div>
-{% endblock %}
-{% block js %}
 <script>
+  document.getElementById("content").style.display = "block";
   var mailto = "mailto:{{ bot_addr }}?body=/friends/join%20";
   var join_btn = document.getElementById("join-btn");
   function setBtn(i){

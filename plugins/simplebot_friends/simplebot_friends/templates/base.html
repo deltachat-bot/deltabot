@@ -26,14 +26,7 @@
   <body>
     <div id="topbar" class="w3-container main-color">
       <h1>{% block header %}{{ plugin.name }}{% endblock %}</h1>
-    </div>
-    <noscript><div class="w3-container w3-section w3-red"><p>{{ plugin.NOSCRIPT }}<p></div></noscript>
-    <div id="content" style="display: none;">
-      {% block content %}{% endblock %}
-    </div>
-    <script>
-      document.getElementById("content").style.display = "block";
-    </script>
-    {% block js %}{% endblock %}
+    </div>    
+    {% block content %}{% endblock %}
   </body>
 </html>
