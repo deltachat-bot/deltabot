@@ -163,6 +163,8 @@ class WebGrabber(Plugin):
                                     'content-type', '').split(';')[0].strip().lower()
                                 if 'text/plain' == ctype:
                                     ext = '.txt'
+                                elif 'image/jpeg' == ctype:
+                                    ext = '.jpg'
                                 else:
                                     ext = mimetypes.guess_extension(ctype)
                                 if ext:
