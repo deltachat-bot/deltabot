@@ -98,16 +98,6 @@ class WebGrabber(Plugin):
                                         parent.string = t.string+'(LINK)'
                         else:
                             t.extract()
-                    if r.url.startswith('https://www.startpage.com'):
-                        for a in soup('a', href=True):
-                            url = a['href'].split(
-                                'startpage.com/cgi-bin/serveimage?url=')
-                            if len(url) == 2:
-                                a['href'] = unquote_plus(url[1])
-                    for a in soup('a', href=True):
-                        if not a['href'].startswith('mailto:'):
-                            a['href'] = a['href'].replace('=', EQUAL_TOKEN)
-                            a['href'] = a['href'].replace('&', AMP_TOKEN)
                     styles = [str(s) for s in soup.find_all('style')]
                     for t in soup(lambda t: t.has_attr('class') or t.has_attr('id')):
                         classes = []
@@ -125,16 +115,37 @@ class WebGrabber(Plugin):
                                     break
                             else:
                                 del t['id']
+                    if r.url.startswith('https://www.startpage.com'):
+                        for a in soup('a', href=True):
+                            url = a['href'].split(
+                                'startpage.com/cgi-bin/serveimage?url=')
+                            if len(url) == 2:
+                                a['href'] = unquote_plus(url[1])
+
                     index = r.url.find('/', 8)
                     if index == -1:
                         root = url = r.url
                     else:
                         root = r.url[:index]
                         url = r.url.rsplit('/', 1)[0]
-                    t = soup.new_tag('script')
-                    t.string = cls.env.get_template('page.js').render(
-                        bot_addr=cls.bot.get_address(), root=root, url=url)
-                    soup.body.append(t)
+                    bot_addr = cls.bot.get_address()
+                    for a in soup('a', href=True):
+                        if not a['href'].startswith('mailto:'):
+                            a['href'] = a['href'].replace('=', EQUAL_TOKEN)
+                            a['href'] = a['href'].replace('&', AMP_TOKEN)
+                            a['href'] = re.sub(
+                                r'^(//.*)', r'{}:\1'.format(root.split(':', 1)[0]), a['href'])
+                            a['href'] = re.sub(
+                                r'^(/.*)', r'{}\1'.format(root), a['href'])
+                            if not re.match(r'^https?://', a['href']):
+                                a['href'] = re.sub(
+                                    r'(?:\./)?(.*)', r'{}/\1'.format(url), a['href'])
+                            a['href'] = 'mailto:{}?body=/web {}'.format(
+                                bot_addr, quote_plus(a['href']))
+                    # t = soup.new_tag('script')
+                    # t.string = cls.env.get_template('page.js').render(
+                    #     bot_addr=cls.bot.get_address(), root=root, url=url)
+                    # soup.body.append(t)
                     cls.bot.send_html(
                         chat, str(soup), cls.name, mode)
                 else:
