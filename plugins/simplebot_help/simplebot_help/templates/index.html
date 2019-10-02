@@ -52,8 +52,8 @@
 	  <div class="w3-hide">
 	    <p>{{ p.long_description.replace('\n', '<br>') }}</p>
 	    <ul>
-	      {% for cmd, args, desc, action in p.commands %}
-	      <li><a class="w3-btn w3-white w3-border w3-border-green w3-round" href="mailto:{{ bot_addr }}?body={{ cmd }}">{{ cmd }} {{ ' '.join(args) }}</a> <p>{{ desc }}</p></li>
+	      {% for c in p.commands %}
+	      <li><a class="w3-btn w3-white w3-border w3-border-green w3-round" href="mailto:{{ bot_addr }}?body={{ c.cmd }}">{{ c.cmd }} {{ ' '.join(c.args) }}</a> <p>{{ c.description }}</p></li>
 	      {% endfor %}
 	    </ul>
 	  </div><a class="w3-btn w3-dark-gray w3-large w3-left" onclick="toogleMore(this)">{{ plugin.MORE }}</a>
