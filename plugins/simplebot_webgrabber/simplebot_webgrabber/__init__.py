@@ -161,7 +161,7 @@ class WebGrabber(Plugin):
                             return
                     else:
                         d = r.headers.get('content-disposition')
-                        if d is not None:
+                        if d is not None and re.findall("filename=(.+)", d):
                             fname = re.findall(
                                 "filename=(.+)", d)[0].strip('"')
                         else:
