@@ -32,8 +32,6 @@ class Helper(Plugin):
         cls.bot.add_on_cmd_processed_listener(cls.on_cmd_processed)
         cls.bot.add_on_msg_processed_listener(cls.on_msg_processed)
 
-        cls.NOSCRIPT = _(
-            'You need a browser with JavaScript support for this page to work correctly.')
         cls.MORE = _('More')
         cls.LESS = _('Less')
 
