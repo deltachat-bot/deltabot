@@ -41,7 +41,7 @@
       <h1>SimpleBot</h1>
     </div>
     <noscript><div class="w3-container w3-section w3-red"><p>{{ plugin.NOSCRIPT }}<p></div></noscript>
-    <div id="content" style="display: none;">
+    <div id="content">
       {% for p in plugins %}
       <div class="plugin-card w3-card-2">
 	<header class="w3-container w3-blue-gray">
@@ -64,7 +64,6 @@
     </div>
   </body>
   <script>
-    document.getElementById("content").style.display = "block";
     function toogleMore(btn) {
 	var section = btn.previousSibling;
         if (section.className.indexOf("w3-show") == -1) {
