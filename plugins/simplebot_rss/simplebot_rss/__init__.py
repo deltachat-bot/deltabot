@@ -71,7 +71,6 @@ class RSS(Plugin):
         Thread(target=cls._subscribe_cmd, args=(ctx,)).start()
 
     @classmethod
-    @with_dblock
     def _subscribe_cmd(cls, ctx):
         url = ctx.text
         if not url.startswith('http'):
@@ -177,7 +176,6 @@ class RSS(Plugin):
         Thread(target=cls._unsubscribe_cmd, args=(ctx,)).start()
 
     @classmethod
-    @with_dblock
     def _unsubscribe_cmd(cls, ctx):
         url = ctx.text
         if not url.startswith('http'):
