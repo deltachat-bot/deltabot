@@ -15,10 +15,7 @@ class Wikiquote(Plugin):
     @classmethod
     def activate(cls, bot):
         super().activate(bot)
-        if bot.locale in wq.supported_languages():
-            cls.LANG = bot.locale
-        else:
-            cls.LANG = None
+
         localedir = os.path.join(os.path.dirname(__file__), 'locale')
         lang = gettext.translation('simplebot_wikiquote', localedir=localedir,
                                    languages=[bot.locale], fallback=True)
@@ -31,16 +28,20 @@ class Wikiquote(Plugin):
     @classmethod
     def quote_cmd(cls, ctx):
         chat = cls.bot.get_chat(ctx.msg)
+        if ctx.locale in wq.supported_languages():
+            lang = ctx.locale
+        else:
+            lang = None
         if ctx.text:
-            pages = wq.search(ctx.text, lang=cls.LANG)
+            pages = wq.search(ctx.text, lang=lang)
             if pages:
                 author = pages[0]
-                quote = '"%s"\n\n― %s' % (random.choice(
-                    wq.quotes(author, max_quotes=100, lang=cls.LANG)), author)
+                quote = '"{}"\n\n― {}'.format(random.choice(
+                    wq.quotes(author, max_quotes=100, lang=lang)), author)
             else:
                 quote = _('No quote found for: {}').format(ctx.text)
             chat.send_text(quote)
         else:
-            quote, author = wq.quote_of_the_day(lang=cls.LANG)
+            quote, author = wq.quote_of_the_day(lang=lang)
             quote = '"{}"\n\n― {}'.format(quote, author)
             chat.send_text(quote)
