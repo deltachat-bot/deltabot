@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from threading import Thread, RLock, Event
+from threading import Thread, Event
 from urllib.parse import quote_plus
 import functools
 import gettext
@@ -16,14 +16,6 @@ import requests
 
 
 feedparser.USER_AGENT = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
-
-
-def with_dblock(f):
-    @functools.wraps(f)
-    def inner(*args, **kargs):
-        with args[0].db.lock:
-            f(*args, **kargs)
-    return inner
 
 
 class RSS(Plugin):
@@ -244,63 +236,62 @@ class RSS(Plugin):
             if cls.worker.deactivated.is_set():
                 return
             cls.bot.logger.debug('Checking feeds')
-            with cls.db.lock:
-                feeds = cls.db.execute('SELECT * FROM feeds')
-                if feeds:
-                    me = cls.bot.get_contact()
-                    for feed in feeds:
-                        if cls.worker.deactivated.is_set():
-                            return
-                        if not feed[5].strip():
-                            cls.db.delete(feed['url'])
-                            continue
-                        d = feedparser.parse(
-                            feed['url'], etag=feed['etag'], modified=feed['modified'])
-                        if d.entries and feed['latest']:
-                            latest = tuple(map(int, feed['latest'].split()))
-                            d.entries = cls.get_new_entries(d, latest)
-                        if not d.entries:
-                            continue
+            feeds = cls.db.execute('SELECT * FROM feeds')
+            if feeds:
+                me = cls.bot.get_contact()
+                for feed in feeds:
+                    if cls.worker.deactivated.is_set():
+                        return
+                    if not feed[5].strip():
+                        cls.db.delete(feed['url'])
+                        continue
+                    d = feedparser.parse(
+                        feed['url'], etag=feed['etag'], modified=feed['modified'])
+                    if d.entries and feed['latest']:
+                        latest = tuple(map(int, feed['latest'].split()))
+                        d.entries = cls.get_new_entries(d, latest)
+                    if not d.entries:
+                        continue
 
-                        entries = d.entries[-50:]
-                        html = cls.env.get_template('items.html').render(
-                            plugin=cls, title=feed['title'], entries=entries)
-                        text = ''
-                        for e in entries:
-                            text += '{}:\n({})\n'.format(e.get('title',
-                                                               _('NO TITLE')), e.get('link', '-'))
-                            pub_date = e.get('published')
-                            if pub_date:
-                                text += '**{}**\n'.format(pub_date)
-                            desc = e.get('description')
-                            if desc:
-                                text += '{}\n'.format(html2text.html2text(desc))
-                            else:
-                                text += '\n\n'
+                    entries = d.entries[-50:]
+                    html = cls.env.get_template('items.html').render(
+                        plugin=cls, title=feed['title'], entries=entries)
+                    text = ''
+                    for e in entries:
+                        text += '{}:\n({})\n'.format(e.get('title',
+                                                           _('NO TITLE')), e.get('link', '-'))
+                        pub_date = e.get('published')
+                        if pub_date:
+                            text += '**{}**\n'.format(pub_date)
+                        desc = e.get('description')
+                        if desc:
+                            text += '{}\n'.format(html2text.html2text(desc))
+                        else:
+                            text += '\n\n'
 
-                        for gid in feed['chats'].split():
-                            g = cls.bot.get_chat(int(gid))
-                            members = g.get_contacts()
-                            if me in members and len(members) > 1:
-                                members.remove(me)
-                                pref = cls.bot.get_preferences(members[0].addr)
-                                if pref['mode'] == Mode.TEXT:
-                                    g.send_text(text)
-                                else:
-                                    cls.bot.send_html(
-                                        g, html, cls.name, pref['mode'])
+                    for gid in feed['chats'].split():
+                        g = cls.bot.get_chat(int(gid))
+                        members = g.get_contacts()
+                        if me in members and len(members) > 1:
+                            members.remove(me)
+                            pref = cls.bot.get_preferences(members[0].addr)
+                            if pref['mode'] == Mode.TEXT:
+                                g.send_text(text)
                             else:
-                                ids = feed['chats'].split()
-                                ids.remove(gid)
-                                cls.db.execute(
-                                    'UPDATE feeds SET chats=? WHERE url=?', (' '.join(ids), feed['url']))
-                        latest = cls.get_latest_date(d)
-                        if latest is not None:
-                            latest = ' '.join(map(str, latest))
-                        args = (d.get('etag'), d.get('modified', d.get('updated')),
-                                latest, feed['url'])
-                        cls.db.execute(
-                            'UPDATE feeds SET etag=?, modified=?, latest=? WHERE url=?', args)
+                                cls.bot.send_html(
+                                    g, html, cls.name, pref['mode'])
+                        else:
+                            ids = feed['chats'].split()
+                            ids.remove(gid)
+                            cls.db.execute(
+                                'UPDATE feeds SET chats=? WHERE url=?', (' '.join(ids), feed['url']))
+                    latest = cls.get_latest_date(d)
+                    if latest is not None:
+                        latest = ' '.join(map(str, latest))
+                    args = (d.get('etag'), d.get('modified', d.get('updated')),
+                            latest, feed['url'])
+                    cls.db.execute(
+                        'UPDATE feeds SET etag=?, modified=?, latest=? WHERE url=?', args)
             cls.worker.deactivated.wait(cls.cfg.getint('delay'))
 
     @classmethod
@@ -342,7 +333,6 @@ class DBManager:
     def __init__(self, db_path):
         self.db = sqlite3.connect(db_path, check_same_thread=False)
         self.db.row_factory = sqlite3.Row
-        self.lock = RLock()
         with self.db:
             self.db.execute(
                 '''CREATE TABLE IF NOT EXISTS feeds
@@ -356,7 +346,7 @@ class DBManager:
                         PRIMARY KEY(url))''')
 
     def execute(self, statement, args=(), get='all'):
-        with self.lock, self.db:
+        with self.db:
             r = self.db.execute(statement, args)
             return r.fetchall() if get == 'all' else r.fetchone()
 
