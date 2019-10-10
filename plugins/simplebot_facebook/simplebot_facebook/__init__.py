@@ -27,9 +27,15 @@ class FacebookBridge(Plugin):
     def activate(cls, bot):
         super().activate(bot)
 
+        save = False
         cls.cfg = cls.bot.get_config(__name__)
         if not cls.cfg.get('delay'):
             cls.cfg['delay'] = '10'
+            save = True
+        if not cls.cfg.get('max-size'):
+            cls.cfg['max-size'] = '1048576'
+            save = True
+        if save:
             cls.bot.save_config()
 
         cls.db = DBManager(os.path.join(
@@ -350,15 +356,15 @@ class FacebookBridge(Plugin):
             for msg in reversed(messages):
                 if msg.author == user.uid:
                     continue
-                images = []
+                attachments = []
                 if msg.sticker:
-                    images.append(msg.sticker.url)
+                    attachments.append(msg.sticker.url)
                 elif msg.attachments:
                     for a in msg.attachments:
                         if type(a) in (ImageAttachment, VideoAttachment):
-                            images.append(a.preview_url)
+                            attachments.append(a.preview_url)
                         elif type(a) in (FileAttachment, AudioAttachment):
-                            images.append(a.url)
+                            attachments.append(a.url)
                 elif not msg.text:
                     cls.bot.logger.warning('Unsuported message, ignored.')
                     return
@@ -372,14 +378,23 @@ class FacebookBridge(Plugin):
                 if text:
                     g.send_text(text)
 
-                for img_url in images:
-                    r = requests.get(img_url)
-                    file_name = os.path.basename(img_url).split('?')[
+                max_size = cls.cfg.getint('max-size')
+                for url in attachments:
+                    file_name = os.path.basename(url).split('?')[
                         0].split('#')[0].lower()
                     file_path = cls.bot.get_blobpath(file_name)
-                    with open(file_path, 'wb') as fd:
-                        fd.write(r.content)
-                    g.send_image(file_path)
+                    with requests.get(url, stream=True) as r:
+                        chunks = b''
+                        size = 0
+                        for chunk in r.iter_content(chunk_size=10240):
+                            chunks += chunk
+                            size += len(chunk)
+                            if size > max_size:
+                                break
+                        else:
+                            with open(file_path, 'wb') as fd:
+                                fd.write(chunks)
+                            g.send_file(file_path)
 
     @classmethod
     def listen_to_fb(cls):
