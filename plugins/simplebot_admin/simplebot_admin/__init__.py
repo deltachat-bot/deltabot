@@ -161,7 +161,10 @@ def get_size(path):
         for f in files:
             fp = os.path.join(root, f)
             if not os.path.islink(fp):
-                total_size += os.path.getsize(fp)
+                try:
+                    total_size += os.path.getsize(fp)
+                except FileNotFoundError:
+                    pass
         for d in dirs.copy():
             if os.path.islink(os.path.join(root, d)):
                 dirs.remove(d)
