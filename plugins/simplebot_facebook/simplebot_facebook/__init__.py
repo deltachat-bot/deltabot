@@ -96,7 +96,7 @@ class FacebookBridge(Plugin):
             cls.code_events[addr] = code_ev
             cls.bot.get_chat(addr).send_text(
                 _('A verification code should have been sent to you, use /fb/code to send the code'))
-            if code_ev.wait(60*60):
+            if code_ev.wait(60*20):
                 del cls.code_events[addr]
                 return code_ev.code
             if addr in cls.code_events and cls.code_events[addr] is code_ev:
