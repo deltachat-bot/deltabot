@@ -164,7 +164,7 @@ class FacebookBridge(Plugin):
         passwd = passwd.rstrip()
         old_user = cls.db.execute(
             'SELECT * FROM users WHERE addr=?', (addr,), 'one')
-        if not old_user:
+        if not (old_user and old_user['cookie']):
             cls.db.insert_user((addr, uname, passwd, None, Status.DISABLED))
             Thread(target=create_chats, args=(addr,), daemon=True).start()
         else:
