@@ -159,7 +159,7 @@ class FacebookBridge(Plugin):
         if onlogin.user is not None:
             r = onlogin.user._state._session.get(
                 'https://m.facebook.com/buddylist.php')
-            cls.send_html(cls.get_chat(sender), r.text, ctx.mode)
+            cls.bot.send_html(cls.get_chat(sender), r.text, ctx.mode)
 
     @classmethod
     def login_cmd(cls, ctx):
