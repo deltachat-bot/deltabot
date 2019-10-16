@@ -162,7 +162,7 @@ class FacebookBridge(Plugin):
                 'https://m.facebook.com/buddylist.php')
             soup = bs4.BeautifulSoup(r.text, 'html').find(id='root')
             text = ''
-            for img in soup('img'):
+            for img in soup('img')[1:]:
                 if img['width'] == '7' and img['height'] == '14':
                     status = '✅'
                 else:
