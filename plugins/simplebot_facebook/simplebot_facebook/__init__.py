@@ -159,8 +159,16 @@ class FacebookBridge(Plugin):
         if onlogin.user is not None:
             r = onlogin.user._state._session.get(
                 'https://m.facebook.com/buddylist.php')
-            cls.bot.send_html(cls.bot.get_chat(sender),
-                              r.text, cls.name, ctx.mode)
+            soup = bs4.BeautifulSoup(r.text, 'html.parser')
+            text = ''
+            for t in soup.find_all('table', attrs={'class': 'cc'}):
+                img = t.img
+                if img['width'] == '7' and img['height'] == '14':
+                    status = '✅'
+                else:
+                    status = '📴'
+                text += '{} {}\n'.format(status, t.a.string)
+            cls.bot.get_chat(sender).sent_text(text)
 
     @classmethod
     def login_cmd(cls, ctx):
