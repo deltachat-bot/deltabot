@@ -77,10 +77,10 @@ class FacebookBridge(Plugin):
                           _('Start receiving messages again from the Facebook group this command is sent'), cls.unmute_cmd),
             PluginCommand('/fb/more', [],
                           _('Every time you send this command, up to 20 more Facebook chats will be loaded in Delta Chat'), cls.more_cmd),
+            PluginCommand('/fb/buddylist', [],
+                          _('Sends the buddy list'), cls.buddylist_cmd),
         ]
         cls.bot.add_commands(cls.commands)
-        cls.bot.add_command(PluginCommand(
-            '/fb/buddylist', [], _('Sends the buddy list'), cls.buddylist_cmd))
 
     @classmethod
     def deactivate(cls):
