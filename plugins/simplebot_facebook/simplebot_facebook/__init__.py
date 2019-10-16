@@ -169,7 +169,7 @@ class FacebookBridge(Plugin):
                 else:
                     status = '📴'
                 text += '{} {}\n'.format(status, t.a.string)
-            cls.bot.get_chat(sender).sent_text(text)
+            cls.bot.get_chat(sender).send_text(text)
 
     @classmethod
     def login_cmd(cls, ctx):
