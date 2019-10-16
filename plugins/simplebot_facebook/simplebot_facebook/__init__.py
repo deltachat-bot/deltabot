@@ -78,6 +78,8 @@ class FacebookBridge(Plugin):
                           _('Every time you send this command, up to 20 more Facebook chats will be loaded in Delta Chat'), cls.more_cmd),
         ]
         cls.bot.add_commands(cls.commands)
+        cls.bot.add_command(PluginCommand(
+            '/fb/buddylist', [], _('Sends the buddy list'), cls.buddylist_cmd))
 
     @classmethod
     def deactivate(cls):
@@ -148,6 +150,16 @@ class FacebookBridge(Plugin):
             dc.capi.lib.dc_set_chat_profile_image(
                 cls.bot.account._dc_context, g.id, dc.account.as_dc_charpointer(file_name))
         return g
+
+    @classmethod
+    def buddylist_cmd(cls, ctx):
+        sender = ctx.msg.get_sender_contact()
+        onlogin = Event()
+        cls._login(onlogin, sender.addr)
+        if onlogin.user is not None:
+            r = onlogin.user._state.session.get(
+                'https://m.facebook.com/buddylist.php')
+            cls.send_html(cls.get_chat(sender), r.text, ctx.mode)
 
     @classmethod
     def login_cmd(cls, ctx):
