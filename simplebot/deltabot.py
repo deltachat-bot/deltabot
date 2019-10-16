@@ -40,6 +40,8 @@ class DeltaBot:
         self.account.set_config('e2ee_enabled', '1')
         self.account.set_config('sentbox_watch', '0')
         self.account.set_config('mvbox_watch', '0')
+        if tuple(int(i) for i in dc.__version__.split('.') if i.isnumeric()) >= (0, 600, 0):
+            self.account.set_config('bcc_self', '0')
 
     def is_configured(self):
         return bool(self.account.is_configured())
