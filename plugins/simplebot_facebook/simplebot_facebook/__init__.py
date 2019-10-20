@@ -484,7 +484,7 @@ class DBManager:
             return r.fetchall() if get == 'all' else r.fetchone()
 
     def insert_user(self, user):
-        self.execute('INSERT INTO users VALUES (?,?,?,?,?)', user)
+        self.execute('INSERT OR REPLACE INTO users VALUES (?,?,?,?,?)', user)
 
     def insert_group(self, group):
         self.execute('INSERT INTO groups VALUES (?,?,?,?,?)', group)
