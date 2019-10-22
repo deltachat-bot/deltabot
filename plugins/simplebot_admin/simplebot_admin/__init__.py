@@ -45,6 +45,8 @@ class Admin(Plugin):
                           _('Display the list of rules'), cls.banlist_cmd),
             PluginCommand('/admin/rssinfo', ['<feed>'],
                           _('Display information from the given feed (needs simplebot_rss plugin)'), cls.rssinfo_cmd),
+            PluginCommand('/admin/delrss', ['<feed>'],
+                          _('Delete the RSS with the give url from the RSS data base (needs simplebot_rss plugin)'), cls.delrss_cmd),
             PluginCommand('/admin/stats', [], _('Show statistics about the bot'), cls.stats_cmd)]
         cls.bot.add_commands(cls.commands)
 
