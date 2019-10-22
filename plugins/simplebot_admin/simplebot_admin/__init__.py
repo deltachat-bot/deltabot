@@ -144,7 +144,7 @@ class Admin(Plugin):
 
         from simplebot_rss import RSS
         f = RSS.db.execute(
-            'SELECT * FROM feeds WHERE url=?', (ctx.text,), 'one')
+            'SELECT * FROM feeds WHERE url=?', (ctx.text.strip(),), 'one')
         if f:
             me = cls.bot.get_contact()
             text = 'Subscribers:\n'
@@ -155,6 +155,8 @@ class Admin(Plugin):
                     if c != me:
                         text += '{}\n'.format(c.addr)
             chat.send_text(text)
+        else:
+            chat.send_text('Unknow feed')
 
     @classmethod
     def delrss_cmd(cls, ctx):
