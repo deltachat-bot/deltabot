@@ -43,6 +43,8 @@ class Admin(Plugin):
                           _('Remove the given rule'), cls.unban_cmd),
             PluginCommand('/admin/banlist', [],
                           _('Display the list of rules'), cls.banlist_cmd),
+            PluginCommand('/admin/rssinfo', ['<feed>'],
+                          _('Display information from the given feed (needs simplebot_rss plugin)'), cls.rssinfo_cmd),
             PluginCommand('/admin/stats', [], _('Show statistics about the bot'), cls.stats_cmd)]
         cls.bot.add_commands(cls.commands)
 
@@ -129,6 +131,40 @@ class Admin(Plugin):
         text += _('RAM usage: {:,}\nDisk usage: {:,}\n').format(mem, disk)
 
         chat.send_text(text)
+
+    @classmethod
+    def rssinfo_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+
+        if ctx.msg.get_sender_contact().addr not in cls.cfg['admins'].split():
+            chat.send_text(_('You are not an administrator'))
+            return
+
+        from simplebot_rss import RSS
+        f = RSS.db.execute(
+            'SELECT * FROM feeds WHERE url=?', (ctx.text,), 'one')
+        if f:
+            text = 'Subscribers:\n'
+            for gid in map(int, f['chats'].split()):
+                g = cls.bot.get_chat(int(gid))
+                m = g.get_contacts()
+                for c in m:
+                    if c != me:
+                        text += '{}\n'.format(c.addr)
+            chat.send_text(text)
+
+    @classmethod
+    def delrss_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+
+        if ctx.msg.get_sender_contact().addr not in cls.cfg['admins'].split():
+            chat.send_text(_('You are not an administrator'))
+            return
+
+        from simplebot_rss import RSS
+        RSS.db.execute(
+            'DELETE FROM feeds WHERE url=?', (ctx.text,))
+        chat.send_text('Feed deleted')
 
 
 class DBManager:
