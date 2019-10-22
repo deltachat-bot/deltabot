@@ -146,6 +146,7 @@ class Admin(Plugin):
         f = RSS.db.execute(
             'SELECT * FROM feeds WHERE url=?', (ctx.text,), 'one')
         if f:
+            me = cls.bot.get_contact()
             text = 'Subscribers:\n'
             for gid in map(int, f['chats'].split()):
                 g = cls.bot.get_chat(int(gid))
