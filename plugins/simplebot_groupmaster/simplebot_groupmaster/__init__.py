@@ -368,8 +368,8 @@ class GroupMaster(Plugin):
                     'SELECT channel FROM cchats WHERE id=?', (chat.id,)).fetchone()
                 if not ch:
                     topic = cls.get_info(chat.id)[1]
-            else:
-                return
+                else:
+                    return
             chat.send_text(_('Topic:\n{}').format(topic))
 
     @classmethod
