@@ -7,6 +7,10 @@ import sqlite3
 from simplebot import Plugin, PluginFilter, PluginCommand
 
 
+def rmprefix(text, prefix):
+    return text[text.startswith(prefix) and len(prefix):]
+
+
 class Shortcuts(Plugin):
 
     name = 'Shortcuts'
@@ -97,7 +101,7 @@ class Shortcuts(Plugin):
         shortcut = ctx.text.strip().lower()
         for sc, cmd in cls.db.execute('SELECT shortcut, cmd FROM shortcuts WHERE addr=?', (addr,)):
             if sc.endswith('{}') and shortcut.startswith(sc[:-3]):
-                ctx.text = cmd.format(shortcut.lstrip(sc[:-3]).lstrip())
+                ctx.text = cmd.format(rmprefix(shortcut, sc[:-3]).lstrip())
                 cls.bot.on_command(ctx)
                 ctx.processed = True
                 break

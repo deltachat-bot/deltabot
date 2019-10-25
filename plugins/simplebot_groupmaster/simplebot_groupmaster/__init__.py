@@ -16,6 +16,10 @@ MGROUP_URL = 'http://delta.chat/mega-group/'
 CHANNEL_URL = 'http://delta.chat/channel/'
 
 
+def rmprefix(text, prefix):
+    return text[text.startswith(prefix) and len(prefix):]
+
+
 class Status(IntEnum):
     PRIVATE = 0
     PUBLIC = 1
@@ -380,7 +384,7 @@ class GroupMaster(Plugin):
             pid = ''
             banner = _('Added to {}\n(ID:{})\n\nTopic:\n{}')
             if ctx.text.startswith(MGROUP_URL):
-                gid = ctx.text.lstrip(MGROUP_URL).split('-')
+                gid = rmprefix(ctx.text, MGROUP_URL).split('-')
                 if len(gid) == 2:
                     pid = gid[0]
                 gid = int(gid[-1])
@@ -405,7 +409,7 @@ class GroupMaster(Plugin):
                         mg['name'], ctx.text, mg['topic']))
                     return
             elif ctx.text.startswith(GROUP_URL):
-                gid = ctx.text.lstrip(GROUP_URL).split('-')
+                gid = rmprefix(ctx.text, GROUP_URL).split('-')
                 if len(gid) == 2:
                     pid = gid[0]
                 gid = int(gid[-1])
@@ -423,7 +427,7 @@ class GroupMaster(Plugin):
                             return
                         break
             elif ctx.text.startswith(CHANNEL_URL):
-                gid = ctx.text.lstrip(CHANNEL_URL).split('-')
+                gid = rmprefix(ctx.text, CHANNEL_URL).split('-')
                 if len(gid) == 2:
                     pid = gid[0]
                 gid = int(gid[-1])
@@ -464,14 +468,14 @@ class GroupMaster(Plugin):
                 gid = gid[0]
                 addr = sender.addr
             if gid.startswith(MGROUP_URL):
-                _mgid = gid.lstrip(MGROUP_URL).split('-')[-1]
+                _mgid = rmprefix(gid, MGROUP_URL).split('-')[-1]
                 mgroup = cls.db.execute(
                     'SELECT * FROM mgroups WHERE id=?', (_mgid,)).fetchone()
                 if not mgroup:
                     raise ValueError('Wrong syntax')
             elif gid.startswith(GROUP_URL):
                 mgroup = None
-                gid = int(gid.lstrip(GROUP_URL).split('-')[-1])
+                gid = int(rmprefix(gid, GROUP_URL).split('-')[-1])
                 for g in cls.get_groups():
                     if g.id == gid:
                         group = g
