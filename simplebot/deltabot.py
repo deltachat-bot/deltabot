@@ -40,8 +40,7 @@ class DeltaBot:
         self.account.set_config('e2ee_enabled', '1')
         self.account.set_config('sentbox_watch', '0')
         self.account.set_config('mvbox_watch', '0')
-        if tuple(int(i) for i in dc.__version__.split('.') if i.isnumeric()) >= (0, 600, 0):
-            self.account.set_config('bcc_self', '0')
+        self.account.set_config('bcc_self', '0')
 
     def is_configured(self):
         return bool(self.account.is_configured())
@@ -160,16 +159,13 @@ class DeltaBot:
     def get_chat(self, ref):
         if type(ref) is dc.message.Message:
             return self.account.create_chat_by_message(ref)
-        elif type(ref) is dc.chatting.Contact:
+        elif type(ref) is dc.chat.Contact:
             return self.account.create_chat_by_contact(ref)
         elif type(ref) is str and '@' in ref:
             c = self.account.create_contact(ref.strip())
             return self.account.create_chat_by_contact(c)
         elif type(ref) is int:
-            if tuple(int(i) for i in dc.__version__.split('.') if i.isnumeric()) >= (0, 600, 0):
-                return dc.chatting.Chat(self.account, ref)
-            else:
-                return dc.chatting.Chat(self.account._dc_context, ref)
+            return dc.chat.Chat(self.account, ref)
 
     def get_chats(self):
         return self.account.get_chats()
