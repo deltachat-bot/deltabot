@@ -159,7 +159,7 @@ class DeltaBot:
     def get_chat(self, ref):
         if type(ref) is dc.message.Message:
             return self.account.create_chat_by_message(ref)
-        elif type(ref) is dc.chat.Contact:
+        elif type(ref) is dc.contact.Contact:
             return self.account.create_chat_by_contact(ref)
         elif type(ref) is str and '@' in ref:
             c = self.account.create_contact(ref.strip())
