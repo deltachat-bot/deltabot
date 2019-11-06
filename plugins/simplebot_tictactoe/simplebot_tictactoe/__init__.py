@@ -5,7 +5,6 @@ import os
 import sqlite3
 
 from simplebot import Plugin, PluginCommand
-from deltachat.chatting import Chat
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 
