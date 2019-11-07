@@ -137,7 +137,7 @@ class Admin(Plugin):
         imap.login(user, password)
         r = imap.select()
         if r[0] == 'OK':
-            text += _('INBOX: {:,}\n').format(r[1][0].decode())
+            text += _('INBOX: {}\n').format(r[1][0].decode())
 
         mem = psutil.Process(os.getpid()).memory_info().rss
         disk = get_size(cls.bot.basedir)
