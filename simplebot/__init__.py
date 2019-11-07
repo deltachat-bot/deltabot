@@ -62,7 +62,7 @@ class Context:
     rejected = False
     processed = False
 
-    def __init__(self, msg, text=None, locale='en', mode=Mode.TEXT):
+    def __init__(self, msg, text=None, locale='en', mode=Mode.HTML):
         self.msg = msg
         self.text = msg.text if text is None else text
         self.locale = locale
@@ -367,7 +367,7 @@ class SimpleBot(DeltaBot):
         self.account.mark_seen_messages([ctx.msg])
 
     def get_preferences(self, addr):
-        prefs = {'locale': self.locale, 'mode': Mode.TEXT}
+        prefs = {'locale': self.locale, 'mode': Mode.HTML}
         row = self._db.execute(
             'SELECT locale, mode FROM preferences WHERE addr=?', (addr,)).fetchone()
         if row:
