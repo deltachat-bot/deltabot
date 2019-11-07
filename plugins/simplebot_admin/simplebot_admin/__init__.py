@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import gettext
+import imaplib
 import os
 import re
 import sqlite3
