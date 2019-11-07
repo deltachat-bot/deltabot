@@ -616,7 +616,7 @@ class GroupMaster(Plugin):
 
     @classmethod
     def channel_cmd(cls, ctx):
-        if cls.db.execute('SELECT * FROM channels WHERE name=?', (ctx.text)).fetchone():
+        if cls.db.execute('SELECT * FROM channels WHERE name=?', (ctx.text,)).fetchone():
             cls.bot.get_chat(ctx.msg).send_text(
                 _('There is already a channel with that name'))
             return
