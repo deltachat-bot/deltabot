@@ -121,6 +121,12 @@ class GroupMaster(Plugin):
                 chat.send_text(
                     _('Only text messages are supported in channels'))
             ctx.processed = True
+            return
+        subscriber = cls.db.execute(
+            'SELECT id FROM cchats WHERE id=?', (chat.id,)).fetchone()
+        if subscriber:
+            ctx.processed = True
+            chat.send_text(_('You can NOT chat in channels'))
 
     @classmethod
     def generate_pid(cls):
@@ -159,6 +165,7 @@ class GroupMaster(Plugin):
         admins = admin.get_contacts()
         if me not in admins or len(admins) == 1:
             invalid_chats = old_chats
+            cls.db.execute('DELETE FROM channels WHERE id=?', (cgid,))
         else:
             for chat in old_chats:
                 contacts = chat.get_contacts()
@@ -169,10 +176,6 @@ class GroupMaster(Plugin):
         for chat in invalid_chats:
             cls.db.execute('DELETE FROM cchats WHERE id=?', (chat.id,))
             chat.remove_contact(me)
-        if not chats:
-            cls.db.execute('DELETE FROM channels WHERE id=?', (cgid,))
-        else:
-            chats.remove(admin)
         return chats
 
     @classmethod
