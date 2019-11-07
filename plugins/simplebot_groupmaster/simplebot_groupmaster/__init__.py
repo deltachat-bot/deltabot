@@ -55,23 +55,23 @@ class GroupMaster(Plugin):
             PluginCommand('/group/mega', [], _(
                 'Convert the group where it is sent in a mega-group.'), cls.mega_cmd),
             PluginCommand('/nick', ['[nick]'], _(
-                'Show your current nick or set your nick to be shown in mega-groups.'), cls.nick_cmd),
+                'Show your current nick or set your nick to be shown in mega-groups or channels.'), cls.nick_cmd),
             PluginCommand(
-                '/group/id', [], _('Show the id of the group (or mega-group) where it is sent.'), cls.id_cmd),
+                '/group/id', [], _('Show the id of the group, mega-group or channel where it is sent.'), cls.id_cmd),
             PluginCommand(
-                '/group/list', [], _('Show the list of public groups and mega-groups.'), cls.list_cmd),
+                '/group/list', [], _('Show the list of public groups, mega-groups and channels.'), cls.list_cmd),
             PluginCommand(
-                '/group/me', [], _('Show the list of public groups/mega-groups you are in.'), cls.me_cmd),
+                '/group/me', [], _('Show the list of public groups,mega-groups and channels you are in.'), cls.me_cmd),
             PluginCommand('/group/members', [], _(
                 'Show the list of members in the mega-group it is sent.'), cls.members_cmd),
             PluginCommand('/group/join', ['<id>'], _(
-                'Joins you to the group (or mega-group) with the given id.'), cls.join_cmd),
+                'Joins you to the group, mega-group or channel with the given id.'), cls.join_cmd),
             PluginCommand(
                 '/group/public', [], _('Send it in a group (or mega-group) to make it public.'), cls.public_cmd),
             PluginCommand('/group/private', [], _(
                 'Send it in a group (or mega-group) to make it private.'), cls.private_cmd),
             PluginCommand('/group/topic', ['[topic]'], _(
-                'Send it in a group (or mega-group) to show the current topic or replace it.'), cls.topic_cmd),
+                'Send it in a group, mega-group or channel to show the current topic or replace it.'), cls.topic_cmd),
             PluginCommand('/group/remove', ['<id>', '[addr]'], _(
                 'Remove the member with the given address from the group (or mega-group) with the given id. If no address is provided, removes yourself'), cls.remove_cmd),
             PluginCommand('/channel', ['<name>'], _(
@@ -284,7 +284,19 @@ class GroupMaster(Plugin):
                 return
             r = cls.db.execute(
                 'SELECT channel FROM cchats WHERE id=?', (chat.id,)).fetchone()
-            if not r:
+            # TODO: command doesn't work if this is the admin group
+            if r:
+                ch = cls.db.execute(
+                    'SELECT * FROM channels WHERE id=?', (r[0],)).fetchone()
+                if ch['status'] == Status.PUBLIC:
+                    status = _('Channel status: {}').format(_('Public'))
+                    gid = '{}{}'.format(CHANNEL_URL, ch['id'])
+                else:
+                    status = _('Channel status: {}').format(_('Private'))
+                    gid = '{}{}-{}'.format(CHANNEL_URL, ch['pid'], ch['id'])
+                text = '{}\nID: {}'.format(status, gid)
+                chat.send_text(text)
+            else:
                 url = GROUP_URL
                 pid, topic, status = cls.get_info(chat.id)
                 if status == Status.PUBLIC:
@@ -362,21 +374,32 @@ class GroupMaster(Plugin):
                     chat.send_text(text)
             else:
                 ch = cls.db.execute(
-                    'SELECT channel FROM cchats WHERE id=?', (chat.id,)).fetchone()
-                if not ch:
+                    'SELECT id FROM channels WHERE admin=?', (chat.id,)).fetchone()
+                if ch:
                     cls.db.execute(
-                        'UPDATE groups SET topic=? WHERE id=?', (new_topic, chat.id))
-                    chat.send_text(banner.format(addr, new_topic))
+                        'UPDATE channels SET topic=? WHERE id=?', (new_topic, ch['id']))
+                    text = banner.format(cls.get_nick(addr), new_topic)
+                    for chat in cls.get_cchats(ch['id']):
+                        chat.send_text(text)
+                else:
+                    ch = cls.db.execute(
+                        'SELECT channel FROM cchats WHERE id=?', (chat.id,)).fetchone()
+                    if not ch:
+                        cls.db.execute(
+                            'UPDATE groups SET topic=? WHERE id=?', (new_topic, chat.id))
+                        chat.send_text(banner.format(addr, new_topic))
         else:
             if mg:
                 topic = mg['topic']
             else:
                 ch = cls.db.execute(
                     'SELECT channel FROM cchats WHERE id=?', (chat.id,)).fetchone()
-                if not ch:
-                    topic = cls.get_info(chat.id)[1]
+                if ch:
+                    ch = cls.db.execute(
+                        'SELECT topic FROM channels WHERE id=?', (ch[0],)).fetchone()
+                    topic = ch[0]
                 else:
-                    return
+                    topic = cls.get_info(chat.id)[1]
             chat.send_text(_('Topic:\n{}').format(topic))
 
     @classmethod
@@ -590,6 +613,14 @@ class GroupMaster(Plugin):
                     break
         groups.extend(mgroups)
 
+        channels = []
+        for ch in cls.db.execute('SELECT * FROM channels WHERE status=?', (Status.PUBLIC,)):
+            for c in cls.get_cchats(ch['id']):
+                if sender in c.get_contacts():
+                    channels.append(
+                        (ch['name'], '{}{}'.format(CHANNEL_URL, ch['id'])))
+                    break
+        groups.extend(channels)
         text = ''
         for g in groups:
             text += _('{0}:\nID: {1}\n\n').format(*g)
