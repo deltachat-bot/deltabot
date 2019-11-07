@@ -43,8 +43,8 @@ class Admin(Plugin):
                           _('Remove the given rule'), cls.unban_cmd),
             PluginCommand('/admin/banlist', [],
                           _('Display the list of rules'), cls.banlist_cmd),
-            PluginCommand('/admin/rssinfo', ['<feed>'],
-                          _('Display information from the given feed (needs simplebot_rss plugin)'), cls.rssinfo_cmd),
+            PluginCommand('/admin/rmmsg', ['<id>'],
+                          _('Remove the given message or message range from the INBOX'), cls.rmmsg_cmd),
             PluginCommand('/admin/delrss', ['<feed>'],
                           _('Delete the RSS with the give url from the RSS data base (needs simplebot_rss plugin)'), cls.delrss_cmd),
             PluginCommand('/admin/stats', [], _('Show statistics about the bot'), cls.stats_cmd)]
@@ -128,6 +128,16 @@ class Admin(Plugin):
         text += _('Groups: {:,}\nPrivate Chats: {:,}\nContacts: {:,}\nMessages: {:,}\n\n').format(
             groups, private, contacts, messages)
 
+        # TODO: check server flags
+        imap = imaplib.IMAP4_SSL(
+            cls.bot.account.get_config('configured_mail_server'))
+        user = cls.bot.account.get_config('configured_mail_user')
+        password = cls.bot.account.get_config('configured_mail_pw')
+        imap.login(user, password)
+        r = imap.select()
+        if r[0] == 'OK':
+            text += _('INBOX: {:,}\n').format(r[1][0].decode())
+
         mem = psutil.Process(os.getpid()).memory_info().rss
         disk = get_size(cls.bot.basedir)
         text += _('RAM usage: {:,}\nDisk usage: {:,}\n').format(mem, disk)
@@ -135,28 +145,17 @@ class Admin(Plugin):
         chat.send_text(text)
 
     @classmethod
-    def rssinfo_cmd(cls, ctx):
-        chat = cls.bot.get_chat(ctx.msg)
-
-        if ctx.msg.get_sender_contact().addr not in cls.cfg['admins'].split():
-            chat.send_text(_('You are not an administrator'))
-            return
-
-        from simplebot_rss import RSS
-        f = RSS.db.execute(
-            'SELECT * FROM feeds WHERE url=?', (ctx.text.strip(),), 'one')
-        if f:
-            me = cls.bot.get_contact()
-            text = 'Subscribers:\n'
-            for gid in map(int, f['chats'].split()):
-                g = cls.bot.get_chat(int(gid))
-                m = g.get_contacts()
-                for c in m:
-                    if c != me:
-                        text += '{}\n'.format(c.addr)
-            chat.send_text(text)
-        else:
-            chat.send_text('Unknow feed')
+    def rmmsg_cmd(cls, ctx):
+        # TODO: check server flags
+        imap = imaplib.IMAP4_SSL(
+            cls.bot.account.get_config('configured_mail_server'))
+        user = cls.bot.account.get_config('configured_mail_user')
+        password = cls.bot.account.get_config('configured_mail_pw')
+        imap.login(user, password)
+        r = imap.select()
+        if r[0] == 'OK':
+            imap.store(ctx.text, '+FLAGS', r'\Deleted')
+            imap.expunge()
 
     @classmethod
     def delrss_cmd(cls, ctx):
