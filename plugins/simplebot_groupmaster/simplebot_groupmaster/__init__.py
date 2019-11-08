@@ -110,9 +110,8 @@ class GroupMaster(Plugin):
                     _('Only text messages are supported in mega-groups'))
             ctx.processed = True
             return
-        ch = cls.db.execute(
-            'SELECT * FROM channels WHERE admin=?', (chat.id,)).fetchone()
-        if ch:
+        ch = cls.get_channel(chat.id)
+        if ch and ch['admin'] == chat.id:
             if ctx.msg.is_text():
                 nick = cls.get_nick(ctx.msg.get_sender_contact().addr)
                 for g in cls.get_cchats(ch['id']):
@@ -121,12 +120,9 @@ class GroupMaster(Plugin):
                 chat.send_text(
                     _('Only text messages are supported in channels'))
             ctx.processed = True
-            return
-        subscriber = cls.db.execute(
-            'SELECT id FROM cchats WHERE id=?', (chat.id,)).fetchone()
-        if subscriber:
+        elif ch:
             ctx.processed = True
-            chat.send_text(_('You can NOT chat in channels'))
+            chat.send_text(_('Only channel operators can do that.'))
 
     @classmethod
     def generate_pid(cls):
@@ -141,7 +137,7 @@ class GroupMaster(Plugin):
             'SELECT id FROM mchats WHERE mgroup=?', (mgid,)))
         for chat in old_chats:
             contacts = chat.get_contacts()
-            if me not in contacts or len(contacts) < 2:
+            if me not in contacts or len(contacts) == 1:
                 invalid_chats.append(chat)
             else:
                 chats.append(chat)
@@ -187,13 +183,24 @@ class GroupMaster(Plugin):
         return None
 
     @classmethod
-    def get_info(cls, gid):
+    def get_channel(cls, gid):
+        r = cls.db.execute(
+            'SELECT channel FROM cchats WHERE id=?', (gid,)).fetchone()
+        if r:
+            return cls.db.execute(
+                'SELECT * FROM channels WHERE id=?', (r[0],)).fetchone()
+        return cls.db.execute(
+            'SELECT * FROM channels WHERE admin=?', (gid,)).fetchone()
+
+    @classmethod
+    def get_info(cls, gid, create=False):
         info = cls.db.execute(
             'SELECT pid,topic,status FROM groups WHERE id=?', (gid,)).fetchone()
         if info is None:
             info = (cls.generate_pid(), '', Status.PRIVATE)
-            cls.db.execute(
-                'INSERT INTO groups VALUES (?,?,?,?)', (gid, *info))
+            if create:
+                cls.db.execute(
+                    'INSERT INTO groups VALUES (?,?,?,?)', (gid, *info))
         else:
             info = tuple(info)
         return info
@@ -282,12 +289,8 @@ class GroupMaster(Plugin):
                 text = '{}\nID: {}'.format(status, gid)
                 chat.send_text(text)
                 return
-            r = cls.db.execute(
-                'SELECT channel FROM cchats WHERE id=?', (chat.id,)).fetchone()
-            # TODO: command doesn't work if this is the admin group
-            if r:
-                ch = cls.db.execute(
-                    'SELECT * FROM channels WHERE id=?', (r[0],)).fetchone()
+            ch = cls.get_channel(chat.id)
+            if ch:
                 if ch['status'] == Status.PUBLIC:
                     status = _('Channel status: {}').format(_('Public'))
                     gid = '{}{}'.format(CHANNEL_URL, ch['id'])
@@ -298,7 +301,7 @@ class GroupMaster(Plugin):
                 chat.send_text(text)
             else:
                 url = GROUP_URL
-                pid, topic, status = cls.get_info(chat.id)
+                pid, topic, status = cls.get_info(chat.id, create=True)
                 if status == Status.PUBLIC:
                     status = _('Group status: {}').format(_('Public'))
                     gid = '{}{}'.format(url, chat.id)
@@ -324,10 +327,9 @@ class GroupMaster(Plugin):
                 for chat in cls.get_mchats(mg['id']):
                     chat.send_text(text)
         else:
-            r = cls.db.execute(
-                'SELECT channel FROM cchats WHERE id=?', (chat.id,)).fetchone()
-            if not r:
-                if cls.get_info(chat.id)[2] != Status.PUBLIC:
+            ch = cls.get_channel(chat.id)
+            if not ch:
+                if cls.get_info(chat.id, create=True)[2] != Status.PUBLIC:
                     cls.db.execute(
                         'UPDATE groups SET status=? WHERE id=?', (Status.PUBLIC, chat.id))
                     chat.send_text(
@@ -347,10 +349,9 @@ class GroupMaster(Plugin):
                 for chat in cls.get_mchats(mg['id']):
                     chat.send_text(text)
         else:
-            r = cls.db.execute(
-                'SELECT channel FROM cchats WHERE id=?', (chat.id,)).fetchone()
-            if not r:
-                if cls.get_info(chat.id)[2] != Status.PRIVATE:
+            ch = cls.get_channel(chat.id)
+            if not ch:
+                if cls.get_info(chat.id, create=True)[2] != Status.PRIVATE:
                     cls.db.execute(
                         'UPDATE groups SET status=? WHERE id=?', (Status.PRIVATE, chat.id))
                     chat.send_text(
@@ -373,31 +374,26 @@ class GroupMaster(Plugin):
                 for chat in cls.get_mchats(mg['id']):
                     chat.send_text(text)
             else:
-                ch = cls.db.execute(
-                    'SELECT id FROM channels WHERE admin=?', (chat.id,)).fetchone()
-                if ch:
+                ch = cls.get_channel(chat.id)
+                if not ch:
+                    cls.db.execute(
+                        'UPDATE groups SET topic=? WHERE id=?', (new_topic, chat.id))
+                    chat.send_text(banner.format(addr, new_topic))
+                elif ch['admin'] == chat.id:
                     cls.db.execute(
                         'UPDATE channels SET topic=? WHERE id=?', (new_topic, ch['id']))
                     text = banner.format(cls.get_nick(addr), new_topic)
                     for chat in cls.get_cchats(ch['id']):
                         chat.send_text(text)
                 else:
-                    ch = cls.db.execute(
-                        'SELECT channel FROM cchats WHERE id=?', (chat.id,)).fetchone()
-                    if not ch:
-                        cls.db.execute(
-                            'UPDATE groups SET topic=? WHERE id=?', (new_topic, chat.id))
-                        chat.send_text(banner.format(addr, new_topic))
+                    chat.send_text(_('Only channel operators can do that.'))
         else:
             if mg:
                 topic = mg['topic']
             else:
-                ch = cls.db.execute(
-                    'SELECT channel FROM cchats WHERE id=?', (chat.id,)).fetchone()
+                ch = cls.get_channel(chat.id)
                 if ch:
-                    ch = cls.db.execute(
-                        'SELECT topic FROM channels WHERE id=?', (ch[0],)).fetchone()
-                    topic = ch[0]
+                    topic = ch['topic']
                 else:
                     topic = cls.get_info(chat.id)[1]
             chat.send_text(_('Topic:\n{}').format(topic))
@@ -460,7 +456,7 @@ class GroupMaster(Plugin):
                 ch = cls.db.execute(
                     'SELECT * FROM channels WHERE id=?', (gid,)).fetchone()
                 if ch and (ch['status'] == Status.PUBLIC or ch['pid'] == pid):
-                    if sender in cls.bot.get_chat(ch[admin]).get_contacts():
+                    if sender in cls.bot.get_chat(ch['admin']).get_contacts():
                         chat.send_text(
                             _('You are already a member of that channel'))
                         return
@@ -574,8 +570,6 @@ class GroupMaster(Plugin):
         for ch in cls.db.execute('SELECT * FROM channels WHERE status=?', (Status.PUBLIC,)):
             count = sum(map(lambda g: len(g.get_contacts())-1,
                             cls.get_cchats(ch['id'])))
-            if count == 0:
-                continue
             channels.append(
                 [ch['name'], ch['topic'], '{}{}'.format(CHANNEL_URL, ch['id']), count])
         groups.extend(channels)
