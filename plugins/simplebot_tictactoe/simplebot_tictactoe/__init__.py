@@ -98,12 +98,12 @@ class TicTacToe(Plugin):
                     '❎ {} Vs {} [{}]'.format(p1, p2, cls.name), [ctx.msg.get_sender_contact(), p2])
                 cls.db.insert(
                     (players, chat.id, Status.INVITED, p1, str(Board()), p1))
-                chat.send_text(_('Hello {},\nYou had been invited by {} to play {}, to start playing send a message in this group with the command:\n{}').format(
-                    p2, p1, cls.name, cls.commands[0][0]))
+                chat.send_text(
+                    _('Hello {},\nYou had been invited by {} to play {}, to start playing send a message in this group with the command:\n/toe/play').format(p2, p1, cls.name))
             else:
                 chat = cls.bot.get_chat(ctx.msg)
                 chat.send_text(
-                    _('You already has a game group with {}, to start a new game just go to the game group and send:\n{}').format(p2, cls.commands[2][0]))
+                    _('You already has a game group with {}, to start a new game just go to the game group and send:\n/toe/new').format(p2))
         else:    # accepting a game
             p2 = ctx.msg.get_sender_contact().addr
             chat = cls.bot.get_chat(ctx.msg)
@@ -124,7 +124,7 @@ class TicTacToe(Plugin):
             else:  # p2 already accepted the game
                 chat = cls.bot.get_chat(ctx.msg)
                 chat.send_text(
-                    _('You alredy accepted to play. To start a new game use {}').format(cls.commands[2][0]))
+                    _('You alredy accepted to play. To start a new game use /toe/new'))
 
     @classmethod
     def surrender_cmd(cls, ctx):
@@ -144,7 +144,7 @@ class TicTacToe(Plugin):
             chat.send_text(_('Game Over.\n{} Wins!!!').format(game['turn']))
         else:
             chat.send_text(
-                _('There are no game running. To start a new game use {}').format(cls.commands[2][0]))
+                _('There are no game running. To start a new game use /toe/new'))
 
     @classmethod
     def new_cmd(cls, ctx):
