@@ -72,6 +72,8 @@ class GroupMaster(Plugin):
                 'Send it in a group (or mega-group) to make it private.'), cls.private_cmd),
             PluginCommand('/group/topic', ['[topic]'], _(
                 'Send it in a group, mega-group or channel to show the current topic or replace it.'), cls.topic_cmd),
+            PluginCommand('/group/name', ['<name>'], _(
+                'Send it in a mega-group to change its name.'), cls.name_cmd),
             PluginCommand('/group/remove', ['<id>', '[addr]'], _(
                 'Remove the member with the given address from the group (or mega-group) with the given id. If no address is provided, removes yourself'), cls.remove_cmd),
             PluginCommand('/channel', ['<name>'], _(
@@ -397,6 +399,21 @@ class GroupMaster(Plugin):
                 else:
                     topic = cls.get_info(chat.id)[1]
             chat.send_text(_('Topic:\n{}').format(topic))
+
+    @classmethod
+    def name_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        mg = cls.get_mgroup(chat.id)
+        if mg and ctx.text:
+            addr = ctx.msg.get_sender_contact().addr
+            text = _('** {} changed group name').format(cls.get_nick(addr))
+            cls.db.execute(
+                'UPDATE mgroups SET name=? WHERE id=?', (ctx.text, mg['id']))
+            for chat in cls.get_mchats(mg['id']):
+                chat.set_name(ctx.text)
+                chat.send_text(text)
+        else:
+            chat.send_text(_('Wrong syntax'))
 
     @classmethod
     def join_cmd(cls, ctx):
