@@ -1,5 +1,5 @@
 .PHONY: all
-all: simplebot echo friends groupmaster help tictactoe translator webgrabber wikiquote xkcd admin shortcuts rss facebook 
+all: simplebot echo friends groupmaster help tictactoe translator webgrabber wikiquote xkcd admin shortcuts rss facebook mastodon
 
 .PHONY: simplebot
 simplebot:
@@ -56,3 +56,7 @@ rss:
 .PHONY: facebook
 facebook:
 	echo y | pip uninstall simplebot_facebook; pip install plugins/simplebot_facebook
+
+.PHONY: mastodon
+mastodon:
+	echo y | pip uninstall simplebot_mastodon; pip install plugins/simplebot_mastodon

@@ -183,7 +183,6 @@ class FacebookBridge(Plugin):
 
         addr = ctx.msg.get_sender_contact().addr
         uname, passwd = ctx.text.split(maxsplit=1)
-        passwd = passwd.rstrip()
         old_user = cls.db.execute(
             'SELECT * FROM users WHERE addr=?', (addr,), 'one')
         if not (old_user and old_user['cookie']):
