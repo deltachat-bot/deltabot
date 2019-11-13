@@ -84,7 +84,10 @@ class WebGrabber(Plugin):
                         if src:
                             t.name = 'a'
                             t['href'] = src
-                            t.string = '[{}]'.format(t.get('alt', 'IMAGE'))
+                            alt = t.get('alt')
+                            if not alt:
+                                alt = 'IMAGE'
+                            t.string = '[{}]'.format(alt)
                             del t['src'], t['alt']
 
                             parent = t.find_parent('a')
