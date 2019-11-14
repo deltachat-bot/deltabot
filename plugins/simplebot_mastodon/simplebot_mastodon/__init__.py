@@ -57,9 +57,13 @@ class MastodonBridge(Plugin):
             if account['status'] == Status.DISABLED:
                 chat.send_text(
                     _('Your account is disabled, use /masto/enable to enable it.'))
+                return
+            m = cls.get_session(account)
+            if ctx.msg.is_image() or ctx.msg.is_gif() or ctx.msg.is_video() or ctx.msg.is_audio():
+                media = m.media_post(ctx.msg.filename)
+                m.status_post(ctx.text, media_ids=media)
             elif ctx.text:
-                m = cls.get_session(account)
-                m.toot(ctx.text)
+                m.status_post(ctx.text)
 
     @classmethod
     def login_cmd(cls, ctx):
