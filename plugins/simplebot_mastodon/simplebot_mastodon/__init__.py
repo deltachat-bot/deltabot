@@ -86,6 +86,16 @@ class MastodonBridge(Plugin):
             cls.bot.get_chat(ctx.msg).send_text(_('Unsuported message type'))
 
     @classmethod
+    def delete_account(cls, acc):
+        me = cls.bot.get_contact()
+        for pv in cls.db.execute('SELECT * FROM priv_chats WHERE api_url=? AND username=?', (acc['api_url'], acc['username'])):
+            cls.bot.get_chat(pv['id']).remove_contact(me)
+        cls.bot.get_chat(acc['toots']).remove_contact(me)
+        cls.bot.get_chat(acc['notifications']).remove_contact(me)
+        cls.bot.get_chat(acc['settings']).remove_contact(me)
+        cls.db.delete_account(acc)
+
+    @classmethod
     def listen_to_mastodon(cls):
         while True:
             if cls.worker.deactivated.is_set():
@@ -165,6 +175,14 @@ class MastodonBridge(Plugin):
                 account = cls.db.execute(
                     'SELECT * FROM accounts WHERE api_url=? AND username=?', (pv['api_url'], pv['username'])).fetchone()
                 cls.toot(ctx, account, visibility=Visibility.DIRECT)
+            return
+
+        account = cls.db.execute(
+            'SELECT * FROM accounts WHERE settings=?', (chat.id,)).fetchone()
+        if account:
+            ctx.processed = True
+            if len(chat.get_contacts()) == 1:
+                cls.delete_account(account)
 
     @classmethod
     def login_cmd(cls, ctx):
@@ -193,7 +211,7 @@ class MastodonBridge(Plugin):
                 (api_url, uname, access_token, addr, Status.ENABLED, tgroup.id, ngroup.id, sgroup.id, last_notification))
 
             sgroup.send_text(
-                _('Here you can send commands for account: {} at {}').format(uname, api_url))
+                _('Here you can send commands for account: {} at {}\n\nTo logout from the bridge just leave this group').format(uname, api_url))
             tgroup.send_text(
                 _('Messages you send here will be tooted to {}\nAccount: {}').format(api_url, uname))
             ngroup.send_text(
@@ -213,13 +231,7 @@ class MastodonBridge(Plugin):
                 'SELECT * FROM accounts WHERE settings=?', (chat.id,)).fetchone()
 
         if acc:
-            me = cls.bot.get_contact()
-            for pv in cls.db.execute('SELECT * FROM priv_chats WHERE api_url=? AND username=?', (acc['api_url'], acc['username'])):
-                cls.bot.get_chat(pv['id']).remove_contact(me)
-            cls.bot.get_chat(acc['toots']).remove_contact(me)
-            cls.bot.get_chat(acc['notifications']).remove_contact(me)
-            cls.bot.get_chat(acc['settings']).remove_contact(me)
-            cls.db.delete_user(acc)
+            cls.delete_account(acc)
             cls.bot.get_chat(contact).send_text(_('You have logged out'))
         else:
             cls.bot.get_chat(ctx.msg).send_text(_('Unknow account'))
@@ -238,7 +250,7 @@ class MastodonBridge(Plugin):
                 _('You must send that command in you Mastodon account settings chat'))
             return
 
-        ctx.text = ctx.text.lstrip('@')
+        ctx.text = ctx.text.lstrip('@').lower()
 
         pv = cls.db.execute(
             'SELECT * FROM priv_chats WHERE api_url=? AND username=? AND contact=?', (acc['api_url'], acc['username'], ctx.text)).fetchone()
@@ -250,7 +262,8 @@ class MastodonBridge(Plugin):
                 '🇲 {} ({})'.format(ctx.text, acc['api_url']), [acc['addr']])
             cls.db.execute(
                 'INSERT OR REPLACE INTO priv_chats VALUES (?,?,?,?)', (g.id, ctx.text, acc['api_url'], acc['username']))
-            g.send_text(_('Private chat with {}').format(ctx.text))
+            g.send_text(_('Private chat with {}\nYour account: {} ({})').format(
+                ctx.text, acc['username'], acc['api_url']))
 
 
 class DBManager:
@@ -287,9 +300,11 @@ class DBManager:
         self.execute(
             'INSERT OR REPLACE INTO accounts VALUES (?,?,?,?,?,?,?,?,?)', user)
 
-    def delete_user(self, account):
-        self.execute(
-            'DELETE FROM accounts WHERE api_url=? AND username=?', (account['api_url'], account['username']))
+    def delete_account(self, account):
+        self.execute('DELETE FROM priv_chats WHERE api_url=? AND username=?',
+                     (account['api_url'], account['username']))
+        self.execute('DELETE FROM accounts WHERE api_url=? AND username=?',
+                     (account['api_url'], account['username']))
 
     def close(self):
         self.db.close()
