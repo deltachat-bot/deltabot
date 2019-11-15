@@ -128,7 +128,7 @@ class MastodonBridge(Plugin):
                     pv = cls.db.execute(
                         'SELECT * FROM priv_chats WHERE api_url=? AND username=? AND contact=?', (acc['api_url'], acc['username'], acct)).fetchone()
                     if pv:
-                        g = cl.bot.get_chat(pv['id'])
+                        g = cls.bot.get_chat(pv['id'])
                     else:
                         g = cls.bot.create_group(
                             '[M] {} ({})'.format(acct, acc['api_url']), [acc['addr']])
