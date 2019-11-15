@@ -247,7 +247,7 @@ class MastodonBridge(Plugin):
                 _('Chat already exists, send direct messages here'))
         else:
             g = cls.bot.create_group(
-                '[M] {} ({})'.format(ctx.text, acc['api_url']), acc['addr'])
+                '[M] {} ({})'.format(ctx.text, acc['api_url']), [acc['addr']])
             cls.db.execute(
                 'INSERT OR REPLACE INTO priv_chats VALUES (?,?,?,?)', (g.id, ctx.text, acc['api_url'], acc['username']))
             g.send_text(_('Private chat with {}').format(ctx.text))
