@@ -189,7 +189,7 @@ class WebGrabber(Plugin):
                         chat.send_file(fpath)
         except Exception as ex:      # TODO: too much generic, change this
             cls.bot.logger.exception(ex)
-            chat.send_text(_('Falied to get url:\n{}').format(url))
+            chat.send_text(_('Failed to get url:\n{}').format(url))
 
     @classmethod
     def _send_text(cls, chat, url):
@@ -205,7 +205,7 @@ class WebGrabber(Plugin):
                     chat.send_text(html2text.html2text(r.text))
         except Exception as ex:      # TODO: too much generic, change this
             cls.bot.logger.exception(ex)
-            chat.send_text(_('Falied to get url:\n{}').format(url))
+            chat.send_text(_('Failed to get url:\n{}').format(url))
 
     @classmethod
     def app_cmd(cls, ctx):
