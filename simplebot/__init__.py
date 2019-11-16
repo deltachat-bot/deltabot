@@ -215,6 +215,8 @@ class SimpleBot(DeltaBot):
                 mode = Mode.HTMLZIP
             elif value == 'text/html.zip':
                 mode = Mode.TEXT_HTMLZIP
+            elif value == 'md':
+                mode = Mode.MD
             else:
                 self.get_chat(ctx.msg).send_text(
                     'Invalid value: {}'.format(value))
