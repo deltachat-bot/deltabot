@@ -56,7 +56,7 @@
 </div>
 <script>
   document.getElementById("content").style.display = "block";
-  var mailto = "mailto:{{ bot_addr }}?body=/friends/join%20";
+  var mailto = "mailto:{{ bot_addr }}?body=/friends/join+";
   var join_btn = document.getElementById("join-btn");
   function setBtn(i){
       join_btn.href = mailto+encodeURIComponent(i.value);
