@@ -114,14 +114,18 @@ class GroupMaster(Plugin):
             return
         ch = cls.get_channel(chat.id)
         if ch and ch['admin'] == chat.id:
-            if ctx.msg.is_text():
+            ctx.processed = True
+            if ctx.msg.filename:
+                if os.path.getsize(ctx.msg.filename) <= 102400:
+                    for g in cls.get_cchats(ch['id']):
+                        ctx.bot.account.forward_messages([ctx.msg], g)
+                else:
+                    chat.send_text(
+                        _('Message is too big, only up to 100KB are allowed'))
+            else:
                 nick = cls.get_nick(ctx.msg.get_sender_contact().addr)
                 for g in cls.get_cchats(ch['id']):
                     g.send_text('{}:\n{}'.format(nick, ctx.text))
-            else:
-                chat.send_text(
-                    _('Only text messages are supported in channels'))
-            ctx.processed = True
         elif ch:
             ctx.processed = True
             chat.send_text(_('Only channel operators can do that.'))
