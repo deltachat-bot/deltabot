@@ -10,10 +10,11 @@ import zipfile
 import zlib
 
 from .deltabot import DeltaBot, Command, Filter
+from html2text import html2text
 import pkg_resources
 
 
-__version__ = '0.9.0'
+__version__ = '0.9.1'
 
 
 class Mode(IntEnum):
@@ -21,6 +22,7 @@ class Mode(IntEnum):
     HTML = 2
     HTMLZIP = 3
     TEXT_HTMLZIP = 4
+    MD = 5
 
 
 class Plugin(ABC):
@@ -113,7 +115,7 @@ class SimpleBot(DeltaBot):
 
         self.buildin_commands = [
             PluginCommand('/settings', ['<property>', '<value>'],
-                          'Set your preferences, "property" can be "locale"(values: en, es, de, etc) or "mode"(values: text, html, html.zip, text/html.zip)', self._settings_cmd),
+                          'Set your preferences, "property" can be "locale"(values: en, es, de, etc) or "mode"(values: text, md, html, html.zip, text/html.zip)', self._settings_cmd),
             PluginCommand('/start', [], 'Show an information message', self._start_cmd)]
         self.add_commands(self.buildin_commands)
 
@@ -134,10 +136,14 @@ class SimpleBot(DeltaBot):
                 fd.writestr('index.html', html)
             chat.send_file(file_path)
         else:
-            file_path = self.get_blobpath(basename+'.html')
+            if mode in Mode.MD:
+                file_path = self.get_blobpath(basename+'.md')
+                html = html2text(html)
+            else:
+                file_path = self.get_blobpath(basename+'.html')
             with open(file_path, 'w') as fd:
                 fd.write(html)
-            chat.send_file(file_path, mime_type='text/html')
+            chat.send_file(file_path)
         return file_path
 
     def get_blobpath(self, basename):
