@@ -8,7 +8,6 @@ import mimetypes
 from jinja2 import Environment, PackageLoader, select_autoescape
 from simplebot import Plugin, Mode, PluginCommand
 import bs4
-import html2text
 import requests
 
 

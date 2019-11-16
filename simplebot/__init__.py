@@ -10,11 +10,12 @@ import zipfile
 import zlib
 
 from .deltabot import DeltaBot, Command, Filter
-from html2text import html2text
+import html2text
 import pkg_resources
 
 
 __version__ = '0.9.1'
+html2text.config.WRAP_LINKS = False
 
 
 class Mode(IntEnum):
@@ -139,7 +140,7 @@ class SimpleBot(DeltaBot):
             if mode == Mode.MD:
                 file_path = self.get_blobpath(basename+'.md')
                 mime_type = 'text/markdown'
-                html = html2text(html)
+                html = html2text.html2text(html)
             else:
                 file_path = self.get_blobpath(basename+'.html')
                 mime_type = 'text/html'
