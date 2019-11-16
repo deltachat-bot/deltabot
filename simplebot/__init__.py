@@ -134,16 +134,18 @@ class SimpleBot(DeltaBot):
             zlib.Z_DEFAULT_COMPRESSION = 9
             with zipfile.ZipFile(file_path, 'w', compression=zipfile.ZIP_DEFLATED) as fd:
                 fd.writestr('index.html', html)
-            chat.send_file(file_path)
+            chat.send_file(file_path, mime_type='application/zip')
         else:
             if mode in Mode.MD:
                 file_path = self.get_blobpath(basename+'.md')
+                mime_type = 'text/markdown'
                 html = html2text(html)
             else:
                 file_path = self.get_blobpath(basename+'.html')
+                mime_type = 'text/html'
             with open(file_path, 'w') as fd:
                 fd.write(html)
-            chat.send_file(file_path)
+            chat.send_file(file_path, mime_type=mime_type)
         return file_path
 
     def get_blobpath(self, basename):
