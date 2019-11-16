@@ -136,7 +136,7 @@ class SimpleBot(DeltaBot):
                 fd.writestr('index.html', html)
             chat.send_file(file_path, mime_type='application/zip')
         else:
-            if mode in Mode.MD:
+            if mode == Mode.MD:
                 file_path = self.get_blobpath(basename+'.md')
                 mime_type = 'text/markdown'
                 html = html2text(html)
