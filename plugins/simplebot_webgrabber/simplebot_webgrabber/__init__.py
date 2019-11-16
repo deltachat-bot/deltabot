@@ -8,7 +8,6 @@ import mimetypes
 from jinja2 import Environment, PackageLoader, select_autoescape
 from simplebot import Plugin, Mode, PluginCommand
 import bs4
-import html2text
 import requests
 
 
@@ -54,8 +53,6 @@ class WebGrabber(Plugin):
                           _('Search weather info from wttr.in'), cls.wttr_cmd),
             PluginCommand('/web', ['<url>'],
                           _('Get a webpage or file'), cls.web_cmd),
-            PluginCommand('/url', ['<url>'],
-                          _('Get a webpage as text'), cls.url_cmd),
             PluginCommand('/web/app', [], _('Sends an html app to help you to use the plugin.'), cls.app_cmd)]
         cls.bot.add_commands(cls.commands)
 
@@ -187,22 +184,6 @@ class WebGrabber(Plugin):
                         with open(fpath, 'wb') as fd:
                             fd.write(chunks)
                         chat.send_file(fpath)
-        except Exception as ex:      # TODO: too much generic, change this
-            cls.bot.logger.exception(ex)
-            chat.send_text(_('Failed to get url:\n{}').format(url))
-
-    @classmethod
-    def _send_text(cls, chat, url):
-        if not url.startswith('http'):
-            url = 'http://'+url
-        try:
-            with requests.get(url, headers=HEADERS, stream=True) as r:
-                r.raise_for_status()
-                r.encoding = 'utf-8'
-                cls.bot.logger.debug(
-                    'Content type: {}'.format(r.headers['content-type']))
-                if 'text/html' in r.headers['content-type']:
-                    chat.send_text(html2text.html2text(r.text))
         except Exception as ex:      # TODO: too much generic, change this
             cls.bot.logger.exception(ex)
             chat.send_text(_('Failed to get url:\n{}').format(url))

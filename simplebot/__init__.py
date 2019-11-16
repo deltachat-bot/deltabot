@@ -10,10 +10,12 @@ import zipfile
 import zlib
 
 from .deltabot import DeltaBot, Command, Filter
+import html2text
 import pkg_resources
 
 
-__version__ = '0.9.0'
+__version__ = '0.9.1'
+html2text.config.WRAP_LINKS = False
 
 
 class Mode(IntEnum):
@@ -21,6 +23,7 @@ class Mode(IntEnum):
     HTML = 2
     HTMLZIP = 3
     TEXT_HTMLZIP = 4
+    MD = 5
 
 
 class Plugin(ABC):
@@ -113,7 +116,7 @@ class SimpleBot(DeltaBot):
 
         self.buildin_commands = [
             PluginCommand('/settings', ['<property>', '<value>'],
-                          'Set your preferences, "property" can be "locale"(values: en, es, de, etc) or "mode"(values: text, html, html.zip, text/html.zip)', self._settings_cmd),
+                          'Set your preferences, "property" can be "locale"(values: en, es, de, etc) or "mode"(values: text, md, html, html.zip, text/html.zip)', self._settings_cmd),
             PluginCommand('/start', [], 'Show an information message', self._start_cmd)]
         self.add_commands(self.buildin_commands)
 
@@ -132,12 +135,18 @@ class SimpleBot(DeltaBot):
             zlib.Z_DEFAULT_COMPRESSION = 9
             with zipfile.ZipFile(file_path, 'w', compression=zipfile.ZIP_DEFLATED) as fd:
                 fd.writestr('index.html', html)
-            chat.send_file(file_path)
+            chat.send_file(file_path, mime_type='application/zip')
         else:
-            file_path = self.get_blobpath(basename+'.html')
+            if mode == Mode.MD:
+                file_path = self.get_blobpath(basename+'.md')
+                mime_type = 'text/markdown'
+                html = html2text.html2text(html)
+            else:
+                file_path = self.get_blobpath(basename+'.html')
+                mime_type = 'text/html'
             with open(file_path, 'w') as fd:
                 fd.write(html)
-            chat.send_file(file_path, mime_type='text/html')
+            chat.send_file(file_path, mime_type=mime_type)
         return file_path
 
     def get_blobpath(self, basename):
@@ -209,6 +218,8 @@ class SimpleBot(DeltaBot):
                 mode = Mode.HTMLZIP
             elif value == 'text/html.zip':
                 mode = Mode.TEXT_HTMLZIP
+            elif value == 'md':
+                mode = Mode.MD
             else:
                 self.get_chat(ctx.msg).send_text(
                     'Invalid value: {}'.format(value))
