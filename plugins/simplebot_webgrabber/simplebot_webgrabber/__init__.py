@@ -80,6 +80,9 @@ class WebGrabber(Plugin):
                         if b.has_attr('type') and b['type'] == 'hidden':
                             b.extract()
                         b.attrs['disabled'] = None
+                    for i in soup(['i', 'em', 'strong']):
+                        if not i.get_text().strip():
+                            i.extract()
                     for f in soup('form'):
                         del f['action'], f['method']
                     for t in soup(['img']):
