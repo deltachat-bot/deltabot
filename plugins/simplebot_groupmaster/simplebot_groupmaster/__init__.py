@@ -118,7 +118,7 @@ class GroupMaster(Plugin):
             if ctx.msg.filename:
                 if os.path.getsize(ctx.msg.filename) <= 102400:
                     for g in cls.get_cchats(ch['id']):
-                        ctx.bot.account.forward_messages([ctx.msg], g)
+                        cls.bot.account.forward_messages([ctx.msg], g)
                 else:
                     chat.send_text(
                         _('Message is too big, only up to 100KB are allowed'))
