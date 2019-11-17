@@ -145,7 +145,7 @@ class WebGrabber(Plugin):
                             if not re.match(r'^https?://', a['href']):
                                 a['href'] = re.sub(
                                     r'(?:\./)?(.*)', r'{}/\1'.format(url), a['href'])
-                            a['href'] = 'mailto:{}?body=/web+{}'.format(
+                            a['href'] = 'mailto:{}?body=/web%20{}'.format(
                                 bot_addr, quote_plus(a['href']))
                     # t = soup.new_tag('script')
                     # t.string = cls.env.get_template('page.js').render(
