@@ -131,7 +131,7 @@ class MastodonBridge(Plugin):
                             else:
                                 mentions.append(s)
                     for dm in reversed(dmsgs):
-                        acct = dm['account']['acct']
+                        acct = dm['account']['acct'].lower()
                         text = '{} (@{}):\n\n'.format(
                             dm['account']['display_name'], acct)
 
@@ -161,7 +161,7 @@ class MastodonBridge(Plugin):
                             g.set_profile_image(file_name)
 
                     for mention in reversed(mentions):
-                        acct = mention['account']['acct']
+                        acct = mention['account']['acct'].lower()
                         text = '{} (@{}):\n\n'.format(
                             mention['account']['display_name'], acct)
 
