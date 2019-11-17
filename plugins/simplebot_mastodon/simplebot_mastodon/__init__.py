@@ -168,6 +168,8 @@ class MastodonBridge(Plugin):
                         br.replace_with('\n')
                     text += soup.get_text()
 
+                    text += '\n\n[{}]'.format(mention['visibility'])
+
                     chat = cls.bot.get_chat(acc['notifications'])
                     chat.send_text(text)
             cls.worker.deactivated.wait(cls.cfg.getint('delay'))
