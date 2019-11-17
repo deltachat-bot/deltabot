@@ -272,14 +272,12 @@ class MastodonBridge(Plugin):
                 ctx.text, acc['username'], acc['api_url']))
             m = cls.get_session(acc)
             contact = m.account_search(ctx.text, limit=1)
-            if contact and contact[0]['acct'] == ctx.text:
-                avatar = contact[0]['avatar_static']
-                if avatar:
-                    file_name = cls.bot.get_blobpath('mastodon-avatar.jpg')
-                    r = requests.get(avatar)
-                    with open(file_name, 'wb') as fd:
-                        fd.write(r.content)
-                    g.set_profile_image(file_name)
+            if contact and contact[0]['acct'].lower() in (ctx.text, ctx.text.split('@')[0]):
+                file_name = cls.bot.get_blobpath('mastodon-avatar.jpg')
+                r = requests.get(contact[0]['avatar_static'])
+                with open(file_name, 'wb') as fd:
+                    fd.write(r.content)
+                g.set_profile_image(file_name)
 
 
 class DBManager:
