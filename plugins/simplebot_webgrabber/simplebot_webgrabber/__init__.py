@@ -91,11 +91,10 @@ class WebGrabber(Plugin):
                             if parent:
                                 t.extract()
                                 parent.insert_before(t)
-                                if not parent.contents:
-                                    if t.string == '[IMAGE]':
-                                        parent.string = '(LINK)'
-                                    else:
-                                        parent.string = t.string+'(LINK)'
+                                contents = [e for e in parent.contents if not isinstance(
+                                    e, str) or e.strip()]
+                                if not contents:
+                                    parent.string = '(LINK)'
                         else:
                             t.extract()
                     styles = [str(s) for s in soup.find_all('style')]
