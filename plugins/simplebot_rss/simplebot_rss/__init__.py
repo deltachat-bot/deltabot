@@ -322,8 +322,7 @@ class RSS(Plugin):
                 file_name = cls.bot.get_blobpath(file_name)
                 with open(file_name, 'wb') as fd:
                     fd.write(r.content)
-                dc.capi.lib.dc_set_chat_profile_image(
-                    cls.bot.account._dc_context, group.id, dc.account.as_dc_charpointer(file_name))
+                group.set_profile_image(file_name)
         except Exception as ex:
             cls.bot.logger.exception(ex)
 
