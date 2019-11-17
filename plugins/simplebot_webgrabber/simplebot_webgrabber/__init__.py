@@ -76,6 +76,12 @@ class WebGrabber(Plugin):
                     soup.head.append(soup.new_tag('meta', charset='utf-8'))
                     [comment.extract() for comment in soup.find_all(
                         text=lambda text: isinstance(text, bs4.Comment))]
+                    for b in soup(['button', 'input']):
+                        if b.has_attr('type') and b['type'] == 'hidden':
+                            b.extract()
+                        b.attrs['disabled'] = None
+                    for f in soup('form'):
+                        del f['action'], f['method']
                     for t in soup(['img']):
                         src = t.get('src')
                         if src:
