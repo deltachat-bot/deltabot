@@ -143,12 +143,20 @@ class MastodonBridge(Plugin):
                         'SELECT * FROM priv_chats WHERE api_url=? AND username=? AND contact=?', (acc['api_url'], acc['username'], acct)).fetchone()
                     if pv:
                         g = cls.bot.get_chat(pv['id'])
+                        g.send_text(text)
                     else:
                         g = cls.bot.create_group(
                             '🇲 {} ({})'.format(acct, acc['api_url']), [acc['addr']])
                         cls.db.execute(
                             'INSERT INTO priv_chats VALUES (?,?,?,?)', (g.id, acct, acc['api_url'], acc['username']))
-                    g.send_text(text)
+
+                        file_name = cls.bot.get_blobpath('mastodon-avatar.jpg')
+                        r = requests.get(dm['account']['avatar_static'])
+                        with open(file_name, 'wb') as fd:
+                            fd.write(r.content)
+
+                        g.send_text(text)
+                        g.set_profile_image(file_name)
 
                 for c in reversed(chats):
                     pass  # TODO
