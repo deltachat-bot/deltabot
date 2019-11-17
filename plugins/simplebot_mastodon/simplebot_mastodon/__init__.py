@@ -108,70 +108,74 @@ class MastodonBridge(Plugin):
             for acc in cls.db.execute('SELECT * FROM accounts WHERE status=?', (Status.ENABLED,)):
                 if cls.worker.deactivated.is_set():
                     return
-                m = cls.get_session(acc)
-                max_id = None
-                dmsgs = []
-                mentions = []
-                while True:
-                    ment = m.mentions(
-                        max_id=max_id, since_id=acc['last_notification'])
-                    if not ment:
-                        break
-                    if max_id is None:
-                        cls.db.execute('UPDATE accounts SET last_notification=? WHERE api_url=? AND username=?', (
-                            ment[0]['id'], acc['api_url'], acc['username']))
-                    max_id = ment[-1]
-                    for mention in ment:
-                        if not mention['type'] == 'mention':
-                            continue
-                        s = mention['status']
-                        if s['visibility'] == Visibility.DIRECT and len(s['mentions']) == 1:
-                            dmsgs.append(s)
+                try:
+                    m = cls.get_session(acc)
+                    max_id = None
+                    dmsgs = []
+                    mentions = []
+                    while True:
+                        ment = m.mentions(
+                            max_id=max_id, since_id=acc['last_notification'])
+                        if not ment:
+                            break
+                        if max_id is None:
+                            cls.db.execute('UPDATE accounts SET last_notification=? WHERE api_url=? AND username=?', (
+                                ment[0]['id'], acc['api_url'], acc['username']))
+                        max_id = ment[-1]
+                        for mention in ment:
+                            if not mention['type'] == 'mention':
+                                continue
+                            s = mention['status']
+                            if s['visibility'] == Visibility.DIRECT and len(s['mentions']) == 1:
+                                dmsgs.append(s)
+                            else:
+                                mentions.append(s)
+                    for dm in reversed(dmsgs):
+                        acct = dm['account']['acct']
+                        text = '{} (@{}):\n'.format(
+                            dm['account']['display_name'], acct)
+
+                        soup = BeautifulSoup(dm['content'], 'html.parser')
+                        for br in soup('br'):
+                            br.replace_with('\n')
+                        text += soup.get_text()
+
+                        pv = cls.db.execute(
+                            'SELECT * FROM priv_chats WHERE api_url=? AND username=? AND contact=?', (acc['api_url'], acc['username'], acct)).fetchone()
+                        if pv:
+                            g = cls.bot.get_chat(pv['id'])
+                            g.send_text(text)
                         else:
-                            mentions.append(s)
-                for dm in reversed(dmsgs):
-                    acct = dm['account']['acct']
-                    text = '{} (@{}):\n'.format(
-                        dm['account']['display_name'], acct)
+                            g = cls.bot.create_group(
+                                '🇲 {} ({})'.format(acct, acc['api_url']), [acc['addr']])
+                            cls.db.execute(
+                                'INSERT INTO priv_chats VALUES (?,?,?,?)', (g.id, acct, acc['api_url'], acc['username']))
 
-                    soup = BeautifulSoup(dm['content'], 'html.parser')
-                    for br in soup('br'):
-                        br.replace_with('\n')
-                    text += soup.get_text()
+                            file_name = cls.bot.get_blobpath(
+                                'mastodon-avatar.jpg')
+                            r = requests.get(dm['account']['avatar_static'])
+                            with open(file_name, 'wb') as fd:
+                                fd.write(r.content)
 
-                    pv = cls.db.execute(
-                        'SELECT * FROM priv_chats WHERE api_url=? AND username=? AND contact=?', (acc['api_url'], acc['username'], acct)).fetchone()
-                    if pv:
-                        g = cls.bot.get_chat(pv['id'])
-                        g.send_text(text)
-                    else:
-                        g = cls.bot.create_group(
-                            '🇲 {} ({})'.format(acct, acc['api_url']), [acc['addr']])
-                        cls.db.execute(
-                            'INSERT INTO priv_chats VALUES (?,?,?,?)', (g.id, acct, acc['api_url'], acc['username']))
+                            g.send_text(text)
+                            g.set_profile_image(file_name)
 
-                        file_name = cls.bot.get_blobpath('mastodon-avatar.jpg')
-                        r = requests.get(dm['account']['avatar_static'])
-                        with open(file_name, 'wb') as fd:
-                            fd.write(r.content)
+                    for mention in reversed(mentions):
+                        acct = mention['account']['acct']
+                        text = '{} (@{}):\n'.format(
+                            dm['account']['display_name'], acct)
 
-                        g.send_text(text)
-                        g.set_profile_image(file_name)
+                        soup = BeautifulSoup(mention['content'], 'html.parser')
+                        for br in soup('br'):
+                            br.replace_with('\n')
+                        text += soup.get_text()
 
-                for mention in reversed(mentions):
-                    acct = mention['account']['acct']
-                    text = '{} (@{}):\n'.format(
-                        dm['account']['display_name'], acct)
+                        text += '\n\n[{}]'.format(mention['visibility'])
 
-                    soup = BeautifulSoup(mention['content'], 'html.parser')
-                    for br in soup('br'):
-                        br.replace_with('\n')
-                    text += soup.get_text()
-
-                    text += '\n\n[{}]'.format(mention['visibility'])
-
-                    chat = cls.bot.get_chat(acc['notifications'])
-                    chat.send_text(text)
+                        chat = cls.bot.get_chat(acc['notifications'])
+                        chat.send_text(text)
+                except Exception as ex:
+                    cls.bot.logger.exception(ex)
             cls.worker.deactivated.wait(cls.cfg.getint('delay'))
 
     @classmethod
