@@ -101,16 +101,22 @@ class GroupMaster(Plugin):
     def process_messages(cls, ctx):
         chat = cls.bot.get_chat(ctx.msg)
         mg = cls.get_mgroup(chat.id)
+        sender = ctx.msg.get_sender_contact()
         if mg:
-            if ctx.msg.is_text():
-                nick = cls.get_nick(ctx.msg.get_sender_contact().addr)
+            ctx.processed = True
+            contacts = chat.get_contacts()
+            nick = cls.get_nick(sender.addr)
+            if sender not in contacts:
+                for g in cls.get_mchats(mg['id']):
+                    if g.id != chat.id:
+                        g.send_text('** Group left by {}'.format(nick))
+            elif ctx.msg.is_text():
                 for g in cls.get_mchats(mg['id']):
                     if g.id != chat.id:
                         g.send_text('{}:\n{}'.format(nick, ctx.text))
             else:
                 chat.send_text(
                     _('Only text messages are supported in mega-groups'))
-            ctx.processed = True
             return
         ch = cls.get_channel(chat.id)
         if ch and ch['admin'] == chat.id:
@@ -123,12 +129,17 @@ class GroupMaster(Plugin):
                     chat.send_text(
                         _('Message is too big, only up to 100KB are allowed'))
             else:
+                contacts = chat.get_contacts()
+                if sender not in contacts:
+                    return
                 nick = cls.get_nick(ctx.msg.get_sender_contact().addr)
                 for g in cls.get_cchats(ch['id']):
                     g.send_text('{}:\n{}'.format(nick, ctx.text))
         elif ch:
             ctx.processed = True
-            chat.send_text(_('Only channel operators can do that.'))
+            contacts = chat.get_contacts()
+            if sender in contacts:
+                chat.send_text(_('Only channel operators can do that.'))
 
     @classmethod
     def generate_pid(cls):
