@@ -139,9 +139,13 @@ class GroupMaster(Plugin):
         me = cls.bot.get_contact()
         chats = []
         invalid_chats = []
-        old_chats = (cls.bot.get_chat(r[0]) for r in cls.db.execute(
-            'SELECT id FROM mchats WHERE mgroup=?', (mgid,)))
-        for chat in old_chats:
+        old_chats = cls.db.execute(
+            'SELECT id FROM mchats WHERE mgroup=?', (mgid,))
+        for r in old_chats:
+            chat = cls.bot.get_chat(r[0])
+            if chat is None:
+                cls.db.execute('DELETE FROM mchats WHERE id=?', (r[0],))
+                continue
             contacts = chat.get_contacts()
             if me not in contacts or len(contacts) == 1:
                 invalid_chats.append(chat)
@@ -159,12 +163,20 @@ class GroupMaster(Plugin):
         me = cls.bot.get_contact()
         chats = []
         invalid_chats = []
-        old_chats = (cls.bot.get_chat(r[0]) for r in cls.db.execute(
-            'SELECT id FROM cchats WHERE channel=?', (cgid,)))
+        old_chats = []
+        for r in cls.db.execute('SELECT id FROM cchats WHERE channel=?', (cgid,)):
+            c = cls.bot.get_chat(r[0])
+            if c is None:
+                cls.db.execute('DELETE FROM cchats WHERE id=?', (r[0],))
+            else:
+                old_chats.append(c)
         admin = cls.db.execute(
             'SELECT admin FROM channels WHERE id=?', (cgid,)).fetchone()[0]
         admin = cls.bot.get_chat(admin)
-        admins = admin.get_contacts()
+        if admin is None:
+            admins = []
+        else:
+            admins = admin.get_contacts()
         if me not in admins or len(admins) == 1:
             invalid_chats = old_chats
             cls.db.execute('DELETE FROM channels WHERE id=?', (cgid,))

@@ -218,10 +218,11 @@ class FacebookBridge(Plugin):
         me = cls.bot.get_contact()
         for gid in ids:
             g = cls.bot.get_chat(gid[0])
-            try:
-                g.remove_contact(me)
-            except ValueError as ex:
-                cls.bot.logger.exception(ex)
+            if g is not None:
+                try:
+                    g.remove_contact(me)
+                except ValueError as ex:
+                    cls.bot.logger.exception(ex)
         cls.db.delete_user(addr)
         cls.bot.get_chat(contact).send_text(
             _('You have logged out from facebook'))
@@ -356,7 +357,10 @@ class FacebookBridge(Plugin):
                 if row['status'] == Status.DISABLED:
                     continue
                 g = cls.bot.get_chat(row['group_id'])
-                members = g.get_contacts()
+                if g is None:
+                    members = []
+                else:
+                    members = g.get_contacts()
                 if me not in members or len(members) != 2:
                     cls.db.execute(
                         'DELETE FROM groups WHERE group_id=?', (g.id,))
