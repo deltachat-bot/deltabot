@@ -132,7 +132,7 @@ class MastodonBridge(Plugin):
                                 mentions.append(s)
                     for dm in reversed(dmsgs):
                         acct = dm['account']['acct']
-                        text = '{} (@{}):\n'.format(
+                        text = '{} (@{}):\n\n'.format(
                             dm['account']['display_name'], acct)
 
                         soup = BeautifulSoup(dm['content'], 'html.parser')
@@ -162,7 +162,7 @@ class MastodonBridge(Plugin):
 
                     for mention in reversed(mentions):
                         acct = mention['account']['acct']
-                        text = '{} (@{}):\n'.format(
+                        text = '{} (@{}):\n\n'.format(
                             mention['account']['display_name'], acct)
 
                         soup = BeautifulSoup(mention['content'], 'html.parser')
