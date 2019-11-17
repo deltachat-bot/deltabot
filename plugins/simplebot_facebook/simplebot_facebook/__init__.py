@@ -160,7 +160,7 @@ class FacebookBridge(Plugin):
         if onlogin.user is not None:
             r = onlogin.user._state._session.get(
                 'https://m.facebook.com/buddylist.php')
-            soup = bs4.BeautifulSoup(r.text, 'html').find(id='root')
+            soup = bs4.BeautifulSoup(r.text, 'html.parser').find(id='root')
             text = ''
             for img in soup('img')[1:]:
                 if img['width'] == '7' and img['height'] == '14':
