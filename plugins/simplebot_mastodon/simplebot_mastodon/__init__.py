@@ -270,6 +270,16 @@ class MastodonBridge(Plugin):
                 'INSERT OR REPLACE INTO priv_chats VALUES (?,?,?,?)', (g.id, ctx.text, acc['api_url'], acc['username']))
             g.send_text(_('Private chat with {}\nYour account: {} ({})').format(
                 ctx.text, acc['username'], acc['api_url']))
+            m = cls.get_session(acc)
+            contact = m.account_search(ctx.text, limit=1)
+            if contact and contact[0]['acct'] == ctx.text:
+                avatar = contact[0]['avatar_static']
+                if avatar:
+                    file_name = cls.bot.get_blobpath('mastodon-avatar.jpg')
+                    r = requests.get(avatar)
+                    with open(file_name, 'wb') as fd:
+                        fd.write(r.content)
+                    g.set_profile_image(file_name)
 
 
 class DBManager:
