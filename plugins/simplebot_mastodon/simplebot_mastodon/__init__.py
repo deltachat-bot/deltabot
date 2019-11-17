@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from enum import IntEnum, Enum
-from threading import Thread, RLock, Event
+from threading import Thread, Event
 import gettext
 import os
 import sqlite3
@@ -293,7 +293,6 @@ class DBManager:
     def __init__(self, db_path):
         self.db = sqlite3.connect(db_path, check_same_thread=False)
         self.db.row_factory = sqlite3.Row
-        self.lock = RLock()
         with self.db:
             self.db.execute(
                 '''CREATE TABLE IF NOT EXISTS accounts 
@@ -316,7 +315,7 @@ class DBManager:
                 PRIMARY KEY(id))''')
 
     def execute(self, statement, args=()):
-        with self.lock, self.db:
+        with self.db:
             return self.db.execute(statement, args)
 
     def insert_user(self, user):

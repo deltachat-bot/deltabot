@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from enum import IntEnum
-from threading import Thread, RLock, Event
+from threading import Thread, Event
 import functools
 import gettext
 import json
@@ -460,7 +460,6 @@ class DBManager:
     def __init__(self, db_path):
         self.db = sqlite3.connect(db_path, check_same_thread=False)
         self.db.row_factory = sqlite3.Row
-        self.lock = RLock()
         with self.db:
             self.db.execute(
                 '''CREATE TABLE IF NOT EXISTS users 
@@ -481,7 +480,7 @@ class DBManager:
             )
 
     def execute(self, statement, args=(), get='all'):
-        with self.lock, self.db:
+        with self.db:
             r = self.db.execute(statement, args)
             return r.fetchall() if get == 'all' else r.fetchone()
 
