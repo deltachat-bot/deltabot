@@ -1,1 +1,2 @@
 recursive-include simplebot_mastodon/locale *
+include simplebot_mastodon/mastodon-logo.png
