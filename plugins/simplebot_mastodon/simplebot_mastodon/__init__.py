@@ -10,6 +10,9 @@ from bs4 import BeautifulSoup
 import mastodon
 
 
+MASTODON_LOGO = os.path.join(os.path.dirname(__file__), 'mastodon-logo.png')
+
+
 class Status(IntEnum):
     DISABLED = 0
     ENABLED = 1
@@ -201,15 +204,18 @@ class MastodonBridge(Plugin):
 
             addr = ctx.msg.get_sender_contact().addr
             tgroup = cls.bot.create_group(
-                '🇲 Toot to {}'.format(api_url), [addr])
+                'Toot to {}'.format(api_url), [addr])
             ngroup = cls.bot.create_group(
-                '🇲 Notifications ({})'.format(api_url), [addr])
+                'Notifications ({})'.format(api_url), [addr])
             sgroup = cls.bot.create_group(
-                '🇲 Settings ({})'.format(api_url), [addr])
+                'Settings ({})'.format(api_url), [addr])
 
             cls.db.insert_user(
                 (api_url, uname, access_token, addr, Status.ENABLED, tgroup.id, ngroup.id, sgroup.id, last_notification))
 
+            sgroup.set_profile_image(MASTODON_LOGO)
+            tgroup.set_profile_image(MASTODON_LOGO)
+            ngroup.set_profile_image(MASTODON_LOGO)
             sgroup.send_text(
                 _('Here you can send commands for account: {} at {}\n\nTo logout from the bridge just leave this group').format(uname, api_url))
             tgroup.send_text(
