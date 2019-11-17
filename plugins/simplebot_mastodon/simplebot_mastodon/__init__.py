@@ -111,27 +111,27 @@ class MastodonBridge(Plugin):
                 m = cls.get_session(acc)
                 max_id = None
                 dmsgs = []
-                chats = []
+                mentions = []
                 while True:
-                    mentions = m.mentions(
+                    ment = m.mentions(
                         max_id=max_id, since_id=acc['last_notification'])
-                    if not mentions:
+                    if not ment:
                         break
                     if max_id is None:
                         cls.db.execute('UPDATE accounts SET last_notification=? WHERE api_url=? AND username=?', (
-                            mentions[0]['id'], acc['api_url'], acc['username']))
-                    max_id = mentions[-1]
-                    for mention in mentions:
+                            ment[0]['id'], acc['api_url'], acc['username']))
+                    max_id = ment[-1]
+                    for mention in ment:
                         if not mention['type'] == 'mention':
                             continue
                         s = mention['status']
                         if s['visibility'] == Visibility.DIRECT and len(s['mentions']) == 1:
                             dmsgs.append(s)
                         else:
-                            chats.append(s)
+                            mentions.append(s)
                 for dm in reversed(dmsgs):
                     acct = dm['account']['acct']
-                    text = '{} ({}):\n'.format(
+                    text = '{} (@{}):\n'.format(
                         dm['account']['display_name'], acct)
 
                     soup = BeautifulSoup(dm['content'], 'html.parser')
@@ -158,8 +158,18 @@ class MastodonBridge(Plugin):
                         g.send_text(text)
                         g.set_profile_image(file_name)
 
-                for c in reversed(chats):
-                    pass  # TODO
+                for mention in reversed(mentions):
+                    acct = mention['account']['acct']
+                    text = '{} (@{}):\n'.format(
+                        dm['account']['display_name'], acct)
+
+                    soup = BeautifulSoup(mention['content'], 'html.parser')
+                    for br in soup('br'):
+                        br.replace_with('\n')
+                    text += soup.get_text()
+
+                    chat = cls.bot.get_chat(acc['notifications'])
+                    chat.send_text(text)
             cls.worker.deactivated.wait(cls.cfg.getint('delay'))
 
     @classmethod
