@@ -213,15 +213,15 @@ class MastodonBridge(Plugin):
             cls.db.insert_user(
                 (api_url, uname, access_token, addr, Status.ENABLED, tgroup.id, ngroup.id, sgroup.id, last_notification))
 
-            sgroup.set_profile_image(MASTODON_LOGO)
-            tgroup.set_profile_image(MASTODON_LOGO)
-            ngroup.set_profile_image(MASTODON_LOGO)
             sgroup.send_text(
                 _('Here you can send commands for account: {} at {}\n\nTo logout from the bridge just leave this group').format(uname, api_url))
+            sgroup.set_profile_image(MASTODON_LOGO)
             tgroup.send_text(
                 _('Messages you send here will be tooted to {}\nAccount: {}').format(api_url, uname))
+            tgroup.set_profile_image(MASTODON_LOGO)
             ngroup.send_text(
                 _('Here you will receive notifications from {}\nAccount: {}').format(api_url, uname))
+            ngroup.set_profile_image(MASTODON_LOGO)
 
     @classmethod
     def logout_cmd(cls, ctx):
