@@ -8,6 +8,7 @@ import sqlite3
 from simplebot import Plugin, PluginCommand, PluginFilter
 from bs4 import BeautifulSoup
 import mastodon
+import requests
 
 
 MASTODON_LOGO = os.path.join(os.path.dirname(__file__), 'mastodon-logo.png')
