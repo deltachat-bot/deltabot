@@ -141,6 +141,10 @@ class MastodonBridge(Plugin):
                             text += media_urls + '\n\n'
 
                         soup = BeautifulSoup(dm['content'], 'html.parser')
+                        accts = {e['url']: '@'+e['acct']
+                                 for e in dm['mentions']}
+                        for a in soup('a', class_='mention'):
+                            a.string = accts.get(a['href'], a.string)
                         for br in soup('br'):
                             br.replace_with('\n')
                         for p in soup('p'):
@@ -178,8 +182,14 @@ class MastodonBridge(Plugin):
                             text += media_urls + '\n\n'
 
                         soup = BeautifulSoup(mention['content'], 'html.parser')
+                        accts = {e['url']: '@'+e['acct']
+                                 for e in mention['mentions']}
+                        for a in soup('a', class_='mention'):
+                            a.string = accts.get(a['href'], a.string)
                         for br in soup('br'):
                             br.replace_with('\n')
+                        for p in soup('p'):
+                            p.replace_with(p.get_text()+'\n\n')
                         text += soup.get_text()
 
                         text += '\n\n[{}]'.format(mention['visibility'])
