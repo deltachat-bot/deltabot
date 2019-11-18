@@ -218,6 +218,7 @@ class MastodonBridge(Plugin):
         chat = cls.bot.get_chat(ctx.msg)
 
         m = Mastodon(api_base_url=api_url, ratelimit_method='throw')
+        access_token = m.log_in(email, passwd)
         uname = m.me()['acct'].lower()
 
         old_user = cls.db.execute(
@@ -225,7 +226,6 @@ class MastodonBridge(Plugin):
         if old_user:
             chat.send_text(_('Account already in use'))
         else:
-            access_token = m.log_in(email, passwd)
             n = m.notifications(limit=1)
             last_notification = n[0]['id'] if n else None
 
