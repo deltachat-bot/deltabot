@@ -135,6 +135,11 @@ class MastodonBridge(Plugin):
                         text = '{} (@{}):\n\n'.format(
                             dm['account']['display_name'], acct)
 
+                        media_urls = '\n'.join(
+                            media['url'] for media in dm['media_attachments'])
+                        if media_urls:
+                            text += media_urls + '\n\n'
+
                         soup = BeautifulSoup(dm['content'], 'html.parser')
                         for br in soup('br'):
                             br.replace_with('\n')
@@ -164,6 +169,11 @@ class MastodonBridge(Plugin):
                         acct = mention['account']['acct'].lower()
                         text = '{} (@{}):\n\n'.format(
                             mention['account']['display_name'], acct)
+
+                        media_urls = '\n'.join(
+                            media['url'] for media in mention['media_attachments'])
+                        if media_urls:
+                            text += media_urls + '\n\n'
 
                         soup = BeautifulSoup(mention['content'], 'html.parser')
                         for br in soup('br'):
