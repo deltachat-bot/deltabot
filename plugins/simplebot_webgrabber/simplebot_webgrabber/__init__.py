@@ -216,7 +216,7 @@ class WebGrabber(Plugin):
     @classmethod
     def ddg_cmd(cls, ctx):
         chat = cls.bot.get_chat(ctx.msg)
-        url = "https://duckduckgo.com/lite?q={}".format(quote_plus(ctx.text))
+        url = "https://duckduckgo.com/html?q={}".format(quote_plus(ctx.text))
         cls.send_page(chat, url, ctx.mode)
 
     @classmethod
