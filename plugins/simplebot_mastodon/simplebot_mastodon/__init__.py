@@ -143,6 +143,8 @@ class MastodonBridge(Plugin):
                         soup = BeautifulSoup(dm['content'], 'html.parser')
                         for br in soup('br'):
                             br.replace_with('\n')
+                        for p in soup('p'):
+                            p.replace_with(p.get_text()+'\n\n')
                         text += soup.get_text()
 
                         pv = cls.db.execute(
