@@ -60,7 +60,7 @@ class MastodonBridge(Plugin):
         cls.filters = [PluginFilter(cls.process_messages)]
         cls.bot.add_filters(cls.filters)
         cls.commands = [
-            PluginCommand('/masto/login', ['<instance>', '<user>', '<pass>'],
+            PluginCommand('/masto/login', ['<instance>', '<email>', '<pass>'],
                           _('Login in Mastodon'), cls.login_cmd),
             PluginCommand('/masto/logout', ['[instance]', '[user]'],
                           _('Logout from Mastodon'), cls.logout_cmd),
@@ -214,16 +214,18 @@ class MastodonBridge(Plugin):
 
     @classmethod
     def login_cmd(cls, ctx):
-        api_url, uname, passwd = ctx.text.split(maxsplit=2)
+        api_url, email, passwd = ctx.text.split(maxsplit=2)
         chat = cls.bot.get_chat(ctx.msg)
+
+        m = Mastodon(api_base_url=api_url, ratelimit_method='throw')
+        uname = m.me()['acct'].lower()
 
         old_user = cls.db.execute(
             'SELECT * FROM accounts WHERE username=? AND api_url=?', (uname, api_url)).fetchone()
         if old_user:
             chat.send_text(_('Account already in use'))
         else:
-            m = Mastodon(api_base_url=api_url, ratelimit_method='throw')
-            access_token = m.log_in(uname, passwd)
+            access_token = m.log_in(email, passwd)
             n = m.notifications(limit=1)
             last_notification = n[0]['id'] if n else None
 
@@ -255,7 +257,7 @@ class MastodonBridge(Plugin):
         if ctx.text:
             api_url, uname = ctx.text.split(maxsplit=1)
             acc = cls.db.execute(
-                'SELECT * FROM accounts WHERE api_url=? AND username=? AND addr=?', (api_url, uname, addr)).fetchone()
+                'SELECT * FROM accounts WHERE api_url=? AND username=? AND addr=?', (api_url, uname.lower(), addr)).fetchone()
         else:
             chat = cls.bot.get_chat(ctx.msg)
             acc = cls.db.execute(
