@@ -5,8 +5,9 @@ import gettext
 import os
 import sqlite3
 
-from simplebot import Plugin, PluginCommand, PluginFilter
+from simplebot import Plugin, PluginCommand, PluginFilter, Mode
 from bs4 import BeautifulSoup
+from jinja2 import Environment, PackageLoader
 import mastodon
 import requests
 
@@ -43,10 +44,14 @@ class MastodonBridge(Plugin):
         if save:
             cls.bot.save_config()
 
+        cls.env = Environment(loader=PackageLoader(__name__, 'templates'))
+
         localedir = os.path.join(os.path.dirname(__file__), 'locale')
         lang = gettext.translation('simplebot_mastodon', localedir=localedir,
                                    languages=[bot.locale], fallback=True)
         lang.install()
+
+        cls.REPLY_BTN = _('Reply')
 
         cls.db = DBManager(os.path.join(
             cls.bot.get_dir(__name__), 'mastodon.db'))
@@ -66,6 +71,8 @@ class MastodonBridge(Plugin):
                           _('Logout from Mastodon'), cls.logout_cmd),
             PluginCommand('/masto/direct', ['<user>'],
                           _('Start a private chat with the given Mastodon user'), cls.direct_cmd),
+            PluginCommand('/masto/reply', ['<instance>', '<user>', '<id>'],
+                          _('Reply to a toot with the given id'), cls.reply_cmd),
         ]
         cls.bot.add_commands(cls.commands)
 
@@ -79,13 +86,20 @@ class MastodonBridge(Plugin):
         return Mastodon(access_token=acc['access_token'], api_base_url=acc['api_url'], ratelimit_method='throw')
 
     @classmethod
-    def toot(cls, ctx, acc, visibility=None):
+    def toot(cls, ctx, acc, visibility=None, in_reply_to=None):
         m = cls.get_session(acc)
         if ctx.msg.is_image() or ctx.msg.is_gif() or ctx.msg.is_video() or ctx.msg.is_audio():
             media = m.media_post(ctx.msg.filename)
-            m.status_post(ctx.text, media_ids=media, visibility=visibility)
+            if in_reply_to:
+                m.status_reply(in_reply_to, ctx.text,
+                               media_ids=media, visibility=visibility)
+            else:
+                m.status_post(ctx.text, media_ids=media, visibility=visibility)
         elif ctx.text:
-            m.status_post(ctx.text, visibility=visibility)
+            if in_reply_to:
+                m.status_reply(in_reply_to, ctx.text, visibility=visibility)
+            else:
+                m.status_post(ctx.text, visibility=visibility)
         else:
             cls.bot.get_chat(ctx.msg).send_text(_('Unsuported message type'))
 
@@ -171,31 +185,37 @@ class MastodonBridge(Plugin):
                             g.send_text(text)
                             g.set_profile_image(file_name)
 
-                    for mention in reversed(mentions):
-                        acct = mention['account']['acct'].lower()
-                        text = '{} (@{}):\n\n'.format(
-                            mention['account']['display_name'], acct)
+                    chat = cls.bot.get_chat(acc['notifications'])
+                    if ctx.mode in (Mode.TEXT, Mode.TEXT_HTMLZIP):
+                        for mention in reversed(mentions):
+                            text = '{} (@{}):\n\n'.format(
+                                mention.account.display_name, mention.account.acct)
 
-                        media_urls = '\n'.join(
-                            media['url'] for media in mention['media_attachments'])
-                        if media_urls:
-                            text += media_urls + '\n\n'
+                            media_urls = '\n'.join(
+                                media.url for media in mention.media_attachments)
+                            if media_urls:
+                                text += media_urls + '\n\n'
 
-                        soup = BeautifulSoup(mention['content'], 'html.parser')
-                        accts = {e['url']: '@'+e['acct']
-                                 for e in mention['mentions']}
-                        for a in soup('a', class_='mention'):
-                            a.string = accts.get(a['href'], a.string)
-                        for br in soup('br'):
-                            br.replace_with('\n')
-                        for p in soup('p'):
-                            p.replace_with(p.get_text()+'\n\n')
-                        text += soup.get_text()
+                            soup = BeautifulSoup(
+                                mention.content, 'html.parser')
+                            accts = {e.url: '@'+e.acct
+                                     for e in mention.mentions}
+                            for a in soup('a', class_='mention'):
+                                a.string = accts.get(a['href'], a.string)
+                            for br in soup('br'):
+                                br.replace_with('\n')
+                            for p in soup('p'):
+                                p.replace_with(p.get_text()+'\n\n')
+                            text += soup.get_text()
 
-                        text += '\n\n[{}]'.format(mention['visibility'])
+                            text += '\n\n[{}]'.format(mention.visibility)
 
-                        chat = cls.bot.get_chat(acc['notifications'])
-                        chat.send_text(text)
+                            chat.send_text(text)
+                    else:
+                        me = cls.bot.get_contact().addr
+                        html = cls.env.get_template('items.html').render(
+                            plugin=cls, mentions=mentions, bot_addr=me, api_url=acc['api_url'], username=acc['username'])
+                        cls.bot.send_html(chat, html, cls.name, ctx.mode)
                 except Exception as ex:
                     cls.bot.logger.exception(ex)
             cls.worker.deactivated.wait(cls.cfg.getint('delay'))
@@ -327,6 +347,19 @@ class MastodonBridge(Plugin):
                 with open(file_name, 'wb') as fd:
                     fd.write(r.content)
                 g.set_profile_image(file_name)
+
+    @classmethod
+    def repy_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        api_url, uname, toot_id, text = ctx.text.split(maxsplit=3)
+        toot_id = int(toot_id)
+        acc = cls.db.execute(
+            'SELECT * FROM accounts WHERE api_url=? AND username=?', (api_url, uname)).fetchone()
+        if not acc:
+            chat.send_text(_('Invalid instance or user'))
+            return
+        ctx.text = text
+        cls.toot(ctx, acc, in_reply_to=toot_id)
 
 
 class DBManager:
