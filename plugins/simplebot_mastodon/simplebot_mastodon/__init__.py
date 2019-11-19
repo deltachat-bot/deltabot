@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from enum import IntEnum, Enum
 from threading import Thread, Event
+from urllib.parse import quote_plus
 import gettext
 import os
 import sqlite3
@@ -219,7 +220,7 @@ class MastodonBridge(Plugin):
                     elif mentions:
                         me = cls.bot.get_contact().addr
                         html = cls.env.get_template('items.html').render(
-                            plugin=cls, mentions=mentions, bot_addr=me, api_url=acc['api_url'], username=acc['username'])
+                            plugin=cls, mentions=mentions, bot_addr=me, api_url=quote_plus(acc['api_url']), username=acc['username'])
                         cls.bot.send_html(chat, html, cls.name, pref['mode'])
                 except Exception as ex:
                     cls.bot.logger.exception(ex)
