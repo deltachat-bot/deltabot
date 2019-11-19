@@ -31,7 +31,8 @@ setup(
     ],
     keywords='deltachat simplebot plugin',
     packages=[MODULE_NAME],
-    install_requires=['simplebot', 'feedparser', 'requests', 'html2text'],
+    install_requires=['simplebot', 'feedparser',
+                      'requests', 'html2text', 'Jinja2'],
     python_requires='>=3.5',
     entry_points={
         'simplebot.plugins': '{} = {}:{}'.format(PLUGIN_NAME, MODULE_NAME, CLASS_NAME)
