@@ -169,7 +169,11 @@ class MastodonBridge(Plugin):
                             'SELECT * FROM priv_chats WHERE api_url=? AND username=? AND contact=?', (acc['api_url'], acc['username'], acct)).fetchone()
                         if pv:
                             g = cls.bot.get_chat(pv['id'])
-                            g.send_text(text)
+                            if g is None:
+                                cls.db.execute(
+                                    'DELETE FROM priv_chats WHERE id=?', (pv['id'],))
+                            else:
+                                g.send_text(text)
                         else:
                             g = cls.bot.create_group(
                                 '🇲 {} ({})'.format(acct, acc['api_url']), [acc['addr']])
@@ -350,7 +354,7 @@ class MastodonBridge(Plugin):
                 g.set_profile_image(file_name)
 
     @classmethod
-    def repy_cmd(cls, ctx):
+    def reply_cmd(cls, ctx):
         chat = cls.bot.get_chat(ctx.msg)
         api_url, uname, toot_id, text = ctx.text.split(maxsplit=3)
         toot_id = int(toot_id)
