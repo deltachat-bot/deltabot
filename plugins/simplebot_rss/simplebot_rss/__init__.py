@@ -123,7 +123,7 @@ class RSS(Plugin):
                 latest = tuple(map(int, feed['latest'].split()))
                 d.entries = cls.get_old_entries(d, latest)
                 entries = d.entries[-10:]
-                if ctx.mode == Mode.TEXT:
+                if ctx.mode in (Mode.TEXT, Mode.TEXT_HTMLZIP):
                     text = ''
                     for e in entries:
                         text += '{}:\n({})\n'.format(e.get('title',
@@ -156,7 +156,7 @@ class RSS(Plugin):
     def list_cmd(cls, ctx):
         feeds = cls.db.execute('SELECT * FROM feeds')
         chat = cls.bot.get_chat(ctx.msg)
-        if ctx.mode == Mode.TEXT:
+        if ctx.mode in (Mode.TEXT, Mode.TEXT_HTMLZIP):
             feeds.sort(key=lambda f: len(f['chats'].split()))
             text = '{0} ({1}):\n\n'.format(cls.name, len(feeds))
             for f in feeds:
@@ -274,7 +274,7 @@ class RSS(Plugin):
                         if me in members and len(members) > 1:
                             members.remove(me)
                             pref = cls.bot.get_preferences(members[0].addr)
-                            if pref['mode'] == Mode.TEXT:
+                            if pref['mode'] in (Mode.TEXT, Mode.TEXT_HTMLZIP):
                                 g.send_text(text)
                             else:
                                 cls.bot.send_html(
