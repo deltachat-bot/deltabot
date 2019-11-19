@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block header %}
+Mentions
+{% endblock %}
+{% block content %}
+<div id="items">
+  {% for e in mentions %}
+  <div class="status-card">
+    <header class="w3-container w3-blue">
+      {{ '{} (@{})'.format(e.account.display_name, e.account.acct) }}
+    </header>
+    <div class="w3-container">
+      <p>{{ '<br>'.join(media.url for media in e.media_attachments) }}</p>
+      <p>{{ e.content }}</p>
+      <a class="w3-btn w3-blue w3-large w3-left" href="mailto:{{ bot_addr }}?body=/masto/reply%20{{ api_url }}%20{{ username }}%20{{ e.id }}")>❮ {{ plugin.REPLY_BTN }}</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+
