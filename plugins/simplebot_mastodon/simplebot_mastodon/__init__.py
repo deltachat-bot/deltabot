@@ -216,7 +216,7 @@ class MastodonBridge(Plugin):
                             text += '\n\n[{}]'.format(mention.visibility)
 
                             chat.send_text(text)
-                    else:
+                    elif mentions:
                         me = cls.bot.get_contact().addr
                         html = cls.env.get_template('items.html').render(
                             plugin=cls, mentions=mentions, bot_addr=me, api_url=acc['api_url'], username=acc['username'])
