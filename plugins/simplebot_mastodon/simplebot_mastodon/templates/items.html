@@ -13,7 +13,7 @@ Mentions
     <div class="w3-container">
       <p>
 	{% for media in e.media_attachments %}
-	       {{ media.url+'<br>' }}
+	       {{ '<a href="{0}">{0}<br>'.format(media.url) }}
 	{% endfor %}
       </p>
       <p>{{ e.content }}</p>
