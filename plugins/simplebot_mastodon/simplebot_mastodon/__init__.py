@@ -186,7 +186,8 @@ class MastodonBridge(Plugin):
                             g.set_profile_image(file_name)
 
                     chat = cls.bot.get_chat(acc['notifications'])
-                    if ctx.mode in (Mode.TEXT, Mode.TEXT_HTMLZIP):
+                    pref = cls.bot.get_preferences(acc['addr'])
+                    if pref['mode'] in (Mode.TEXT, Mode.TEXT_HTMLZIP):
                         for mention in reversed(mentions):
                             text = '{} (@{}):\n\n'.format(
                                 mention.account.display_name, mention.account.acct)
@@ -215,7 +216,7 @@ class MastodonBridge(Plugin):
                         me = cls.bot.get_contact().addr
                         html = cls.env.get_template('items.html').render(
                             plugin=cls, mentions=mentions, bot_addr=me, api_url=acc['api_url'], username=acc['username'])
-                        cls.bot.send_html(chat, html, cls.name, ctx.mode)
+                        cls.bot.send_html(chat, html, cls.name, pref['mode'])
                 except Exception as ex:
                     cls.bot.logger.exception(ex)
             cls.worker.deactivated.wait(cls.cfg.getint('delay'))
