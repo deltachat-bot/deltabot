@@ -92,13 +92,14 @@ class MastodonBridge(Plugin):
         if ctx.msg.is_image() or ctx.msg.is_gif() or ctx.msg.is_video() or ctx.msg.is_audio():
             media = m.media_post(ctx.msg.filename)
             if in_reply_to:
-                m.status_reply(in_reply_to, ctx.text,
+                m.status_reply(m.status(in_reply_to), ctx.text,
                                media_ids=media, visibility=visibility)
             else:
                 m.status_post(ctx.text, media_ids=media, visibility=visibility)
         elif ctx.text:
             if in_reply_to:
-                m.status_reply(in_reply_to, ctx.text, visibility=visibility)
+                m.status_reply(m.status(in_reply_to),
+                               ctx.text, visibility=visibility)
             else:
                 m.status_post(ctx.text, visibility=visibility)
         else:
@@ -359,11 +360,14 @@ class MastodonBridge(Plugin):
         chat = cls.bot.get_chat(ctx.msg)
         api_url, uname, toot_id, text = ctx.text.split(maxsplit=3)
         toot_id = int(toot_id)
+        addr = ctx.msg.get_sender_contact().addr
+
         acc = cls.db.execute(
-            'SELECT * FROM accounts WHERE api_url=? AND username=?', (api_url, uname)).fetchone()
+            'SELECT * FROM accounts WHERE api_url=? AND username=? AND addr=?', (api_url, uname, addr)).fetchone()
         if not acc:
             chat.send_text(_('Invalid instance or user'))
             return
+
         ctx.text = text
         cls.toot(ctx, acc, in_reply_to=toot_id)
 
