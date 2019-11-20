@@ -433,7 +433,7 @@ class FacebookBridge(Plugin):
                     onlogin = Event()
                     Thread(target=cls._login, args=(
                         onlogin, addr), daemon=True).start()
-                    onlogin.wait()
+                    onlogin.wait(60*10)
                     if onlogin.user is None:
                         continue
                     cls._send_fb2dc(onlogin.user, addr)
@@ -450,7 +450,7 @@ class FBUser(Client):
         if cookie is not None:
             cookie = json.loads(cookie)
         super().__init__(username, password, session_cookies=cookie,
-                         user_agent=user_agent, max_tries=3)
+                         user_agent=user_agent, max_tries=1)
 
     def on2FACode(self):
         return self.on_2fa()
