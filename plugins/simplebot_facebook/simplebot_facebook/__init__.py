@@ -433,7 +433,7 @@ class FacebookBridge(Plugin):
                     onlogin = Event()
                     Thread(target=cls._login, args=(
                         onlogin, addr), daemon=True).start()
-                    onlogin.wait(60*10)
+                    onlogin.wait(60*5)
                     if onlogin.user is None:
                         continue
                     cls._send_fb2dc(onlogin.user, addr)
