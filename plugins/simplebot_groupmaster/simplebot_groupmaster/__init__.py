@@ -482,8 +482,7 @@ class GroupMaster(Plugin):
                     'INSERT OR REPLACE INTO channel_images VALUES(?,?,?)', (ch['id'], img_blob, extension))
                 for g in cls.get_cchats(ch['id']):
                     g.set_profile_image(ctx.msg.filename)
-                g = cls.bot.get_chat(ch['admin'])
-                g.set_profile_image(ctxt.msg.filename)
+                chat.set_profile_image(ctx.msg.filename)
                 return
         chat.send_text(_('Wrong syntax'))
 
