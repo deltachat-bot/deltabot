@@ -171,6 +171,7 @@ class GroupMaster(Plugin):
             chat.remove_contact(me)
         if not chats:
             cls.db.execute('DELETE FROM mgroups WHERE id=?', (mgid,))
+            cls.db.execute('DELETE FROM mg_images WHERE mgroup=?', (mgid,))
         return chats
 
     @classmethod
@@ -195,6 +196,8 @@ class GroupMaster(Plugin):
         if me not in admins or len(admins) == 1:
             invalid_chats = old_chats
             cls.db.execute('DELETE FROM channels WHERE id=?', (cgid,))
+            cls.db.execute(
+                'DELETE FROM channel_images WHERE channel=?', (cgid,))
         else:
             for chat in old_chats:
                 contacts = chat.get_contacts()
@@ -452,7 +455,7 @@ class GroupMaster(Plugin):
         if ctx.msg.filename and os.path.getsize(ctx.msg.filename) <= 102400:
             addr = ctx.msg.get_sender_contact().addr
             text = _('** {} changed group image').format(cls.get_nick(addr))
-            extension = ctx.msg.filename.rsplit(maxsplit=1)[-1]
+            extension = ctx.msg.filename.rsplit('.', maxsplit=1)[-1]
             with open(ctx.msg.filename, 'rb') as fd:
                 img_blob = sqlite3.Binary(fd.read())
 
@@ -472,7 +475,7 @@ class GroupMaster(Plugin):
         chat = cls.bot.get_chat(ctx.msg)
         if ctx.msg.filename and os.path.getsize(ctx.msg.filename) <= 102400:
             addr = ctx.msg.get_sender_contact().addr
-            extension = ctx.msg.filename.rsplit(maxsplit=1)[-1]
+            extension = ctx.msg.filename.rsplit('.', maxsplit=1)[-1]
             with open(ctx.msg.filename, 'rb') as fd:
                 img_blob = sqlite3.Binary(fd.read())
 
