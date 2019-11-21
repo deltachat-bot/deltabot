@@ -443,6 +443,27 @@ class GroupMaster(Plugin):
             chat.send_text(_('Wrong syntax'))
 
     @classmethod
+    def image_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        mg = cls.get_mgroup(chat.id)
+        if mg and ctx.msg.filename:
+            if os.path.getsize(ctx.msg.filename) <= 102400:
+                addr = ctx.msg.get_sender_contact().addr
+                text = _('** {} changed group image').format(cls.get_nick(addr))
+                with open(ctx.msg.filename, 'rb') as fd:
+                    img_blob = fd.read()
+                cls.db.execute(
+                    'INSERT OR REPLACE mg_images VALUES(?,?,?)', (mg['id'], sqlite3.Binary(img_blob), ctx.msg.filename.rsplit(maxsplit=1)[-1]))
+                for chat in cls.get_mchats(mg['id']):
+                    chat.set_profile_image(ctxt.msg.filename)
+                    chat.send_text(text)
+            else:
+                chat.send_text(
+                    _('Message is too big, only up to 100KB are allowed'))
+        else:
+            chat.send_text(_('Wrong syntax'))
+
+    @classmethod
     def join_cmd(cls, ctx):
         chat = cls.bot.get_chat(ctx.msg)
         sender = ctx.msg.get_sender_contact()
@@ -473,6 +494,14 @@ class GroupMaster(Plugin):
                             chat.send_text(text)
                     g.send_text(banner.format(
                         mg['name'], ctx.text, mg['topic']))
+                    img = cls.db.execute(
+                        'SELECT image, extension FROM mg_images WHERE mgroup=?', (mg['id'],)).fetchone()
+                    if img:
+                        file_name = cls.bot.get_blobpath(
+                            'mg-image.{}'.format(img['extension']))
+                        with open(file_name, 'wb') as fd:
+                            fd.write(img['image'])
+                        g.set_profile_image(file_name)
                     return
             elif ctx.text.startswith(GROUP_URL):
                 gid = rmprefix(ctx.text, GROUP_URL).split('-')
@@ -714,6 +743,10 @@ class DBManager:
                          name TEXT NOT NULL,
                          topic TEXT,
                          status INTEGER NOT NULL)''')
+        self.execute('''CREATE TABLE IF NOT EXISTS mg_images
+                        (mgroup INTEGER PRIMARY KEY REFERENCES mgroups(id),
+                         image BLOB NOT NULL,
+                         extension TEXT NOT NULL)''')
         self.execute('''CREATE TABLE IF NOT EXISTS mchats
                         (id INTEGER PRIMARY KEY,
                          mgroup INTEGER NOT NULL REFERENCES mgroups(id))''')
