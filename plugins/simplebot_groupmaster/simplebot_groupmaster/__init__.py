@@ -74,10 +74,14 @@ class GroupMaster(Plugin):
                 'Send it in a group, mega-group or channel to show the current topic or replace it.'), cls.topic_cmd),
             PluginCommand('/group/name', ['<name>'], _(
                 'Send it in a mega-group to change its name.'), cls.name_cmd),
+            PluginCommand('/group/image', [], _(
+                'Change the mega-group image, you must attach an image to the message sending this command'), cls.image_cmd),
             PluginCommand('/group/remove', ['<id>', '[addr]'], _(
                 'Remove the member with the given address from the group (or mega-group) with the given id. If no address is provided, removes yourself'), cls.remove_cmd),
             PluginCommand('/channel', ['<name>'], _(
-                'Create a new channel with the given name'), cls.channel_cmd), ]
+                'Create a new channel with the given name'), cls.channel_cmd),
+            PluginCommand('/channel/image', [], _(
+                'Change the channel image, you must attach an image to the message sending this command. Only channel operator can change the channel image'), cls.cimage_cmd), ]
         cls.bot.add_commands(cls.commands)
 
         cls.LIST_BTN = _('Groups List')
@@ -445,23 +449,42 @@ class GroupMaster(Plugin):
     @classmethod
     def image_cmd(cls, ctx):
         chat = cls.bot.get_chat(ctx.msg)
-        mg = cls.get_mgroup(chat.id)
-        if mg and ctx.msg.filename:
-            if os.path.getsize(ctx.msg.filename) <= 102400:
-                addr = ctx.msg.get_sender_contact().addr
-                text = _('** {} changed group image').format(cls.get_nick(addr))
-                with open(ctx.msg.filename, 'rb') as fd:
-                    img_blob = fd.read()
+        if ctx.msg.filename and os.path.getsize(ctx.msg.filename) <= 102400:
+            addr = ctx.msg.get_sender_contact().addr
+            text = _('** {} changed group image').format(cls.get_nick(addr))
+            extension = ctx.msg.filename.rsplit(maxsplit=1)[-1]
+            with open(ctx.msg.filename, 'rb') as fd:
+                img_blob = sqlite3.Binary(fd.read())
+
+            mg = cls.get_mgroup(chat.id)
+            if mg:
                 cls.db.execute(
-                    'INSERT OR REPLACE mg_images VALUES(?,?,?)', (mg['id'], sqlite3.Binary(img_blob), ctx.msg.filename.rsplit(maxsplit=1)[-1]))
-                for chat in cls.get_mchats(mg['id']):
-                    chat.set_profile_image(ctxt.msg.filename)
-                    chat.send_text(text)
-            else:
-                chat.send_text(
-                    _('Message is too big, only up to 100KB are allowed'))
-        else:
-            chat.send_text(_('Wrong syntax'))
+                    'INSERT OR REPLACE mg_images VALUES(?,?,?)', (mg['id'], img_blob, extension))
+                for g in cls.get_mchats(mg['id']):
+                    g.set_profile_image(ctxt.msg.filename)
+                    g.send_text(text)
+                return
+        chat.send_text(_('Wrong syntax'))
+
+    @classmethod
+    def cimage_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        if ctx.msg.filename and os.path.getsize(ctx.msg.filename) <= 102400:
+            addr = ctx.msg.get_sender_contact().addr
+            extension = ctx.msg.filename.rsplit(maxsplit=1)[-1]
+            with open(ctx.msg.filename, 'rb') as fd:
+                img_blob = sqlite3.Binary(fd.read())
+
+            ch = cls.get_channel(chat.id)
+            if ch and chat.id == ch['admin']:
+                cls.db.execute(
+                    'INSERT OR REPLACE channel_images VALUES(?,?,?)', (ch['id'], img_blob, extension))
+                for g in cls.get_cchats(ch['id']):
+                    g.set_profile_image(ctxt.msg.filename)
+                g = cls.bot.get_chat(ch['admin'])
+                g.set_profile_image(ctxt.msg.filename)
+                return
+        chat.send_text(_('Wrong syntax'))
 
     @classmethod
     def join_cmd(cls, ctx):
@@ -543,6 +566,14 @@ class GroupMaster(Plugin):
                         'INSERT INTO cchats VALUES (?,?)', (g.id, ch['id']))
                     g.send_text(banner.format(
                         ch['name'], ctx.text, ch['topic']))
+                    img = cls.db.execute(
+                        'SELECT image, extension FROM channel_images WHERE channel=?', (ch['id'],)).fetchone()
+                    if img:
+                        file_name = cls.bot.get_blobpath(
+                            'ch-image.{}'.format(img['extension']))
+                        with open(file_name, 'wb') as fd:
+                            fd.write(img['image'])
+                        g.set_profile_image(file_name)
                     return
             else:
                 raise ValueError('Invalid ID')
@@ -760,6 +791,10 @@ class DBManager:
                          topic TEXT,
                          status INTEGER NOT NULL,
                          admin INTEGER NOT NULL)''')
+        self.execute('''CREATE TABLE IF NOT EXISTS channel_images
+                        (channel INTEGER PRIMARY KEY REFERENCES channels(id),
+                         image BLOB NOT NULL,
+                         extension TEXT NOT NULL)''')
         self.execute('''CREATE TABLE IF NOT EXISTS cchats
                         (id INTEGER PRIMARY KEY,
                          channel INTEGER NOT NULL REFERENCES channels(id))''')
