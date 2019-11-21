@@ -459,7 +459,7 @@ class GroupMaster(Plugin):
             mg = cls.get_mgroup(chat.id)
             if mg:
                 cls.db.execute(
-                    'INSERT OR REPLACE mg_images VALUES(?,?,?)', (mg['id'], img_blob, extension))
+                    'INSERT OR REPLACE INTO mg_images VALUES(?,?,?)', (mg['id'], img_blob, extension))
                 for g in cls.get_mchats(mg['id']):
                     g.set_profile_image(ctxt.msg.filename)
                     g.send_text(text)
@@ -478,7 +478,7 @@ class GroupMaster(Plugin):
             ch = cls.get_channel(chat.id)
             if ch and chat.id == ch['admin']:
                 cls.db.execute(
-                    'INSERT OR REPLACE channel_images VALUES(?,?,?)', (ch['id'], img_blob, extension))
+                    'INSERT OR REPLACE INTO channel_images VALUES(?,?,?)', (ch['id'], img_blob, extension))
                 for g in cls.get_cchats(ch['id']):
                     g.set_profile_image(ctxt.msg.filename)
                 g = cls.bot.get_chat(ch['admin'])
