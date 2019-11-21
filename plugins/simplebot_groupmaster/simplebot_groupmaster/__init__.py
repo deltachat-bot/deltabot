@@ -462,7 +462,8 @@ class GroupMaster(Plugin):
                     'INSERT OR REPLACE INTO mg_images VALUES(?,?,?)', (mg['id'], img_blob, extension))
                 for g in cls.get_mchats(mg['id']):
                     g.set_profile_image(ctx.msg.filename)
-                    g.send_text(text)
+                    if g.id != chat.id:
+                        g.send_text(text)
                 return
         chat.send_text(_('Wrong syntax'))
 
