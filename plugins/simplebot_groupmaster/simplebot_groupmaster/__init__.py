@@ -461,7 +461,7 @@ class GroupMaster(Plugin):
                 cls.db.execute(
                     'INSERT OR REPLACE INTO mg_images VALUES(?,?,?)', (mg['id'], img_blob, extension))
                 for g in cls.get_mchats(mg['id']):
-                    g.set_profile_image(ctxt.msg.filename)
+                    g.set_profile_image(ctx.msg.filename)
                     g.send_text(text)
                 return
         chat.send_text(_('Wrong syntax'))
@@ -480,7 +480,7 @@ class GroupMaster(Plugin):
                 cls.db.execute(
                     'INSERT OR REPLACE INTO channel_images VALUES(?,?,?)', (ch['id'], img_blob, extension))
                 for g in cls.get_cchats(ch['id']):
-                    g.set_profile_image(ctxt.msg.filename)
+                    g.set_profile_image(ctx.msg.filename)
                 g = cls.bot.get_chat(ch['admin'])
                 g.set_profile_image(ctxt.msg.filename)
                 return
