@@ -91,7 +91,7 @@ class MastodonBridge(Plugin):
     @classmethod
     def toot(cls, ctx, acc, visibility=None, in_reply_to=None):
         m = cls.get_session(acc)
-        if is_image() or ctx.msg.is_gif() or ctx.msg.is_video() or ctx.msg._view_type in (dc.const.DC_MSG_AUDIO, dc.const.DC_MSG_VOICE):
+        if ctx.msg.is_image() or ctx.msg.is_gif() or ctx.msg.is_video() or ctx.msg._view_type in (dc.const.DC_MSG_AUDIO, dc.const.DC_MSG_VOICE):
             if ctx.msg.filename.endswith('.aac'):
                 aac_file = AudioSegment.from_file(ctx.msg.filename, 'aac')
                 filename = ctx.msg.filename[:-4]+'.mp3'
