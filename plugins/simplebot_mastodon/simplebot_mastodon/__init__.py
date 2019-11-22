@@ -97,7 +97,7 @@ class MastodonBridge(Plugin):
                 aac_file.export(filename, format='mp3')
             else:
                 filename = ctx.msg.filename
-            media = m.media_post(filename)
+            media = [m.media_post(filename)['id']]
             if in_reply_to:
                 m.status_reply(m.status(in_reply_to), ctx.text,
                                media_ids=media, visibility=visibility)
