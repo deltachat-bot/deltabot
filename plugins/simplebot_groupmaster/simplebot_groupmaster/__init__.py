@@ -597,6 +597,7 @@ class GroupMaster(Plugin):
     @classmethod
     def remove_cmd(cls, ctx):
         sender = ctx.msg.get_sender_contact()
+        banner = _('Removed from {} by {}')
         try:
             gid = ctx.text.split(maxsplit=1)
             if len(gid) == 2:
@@ -612,8 +613,48 @@ class GroupMaster(Plugin):
                     'SELECT * FROM mgroups WHERE id=?', (_mgid,)).fetchone()
                 if not mgroup:
                     raise ValueError('Wrong syntax')
+                if '@' not in addr:
+                    r = cls.db.execute(
+                        'SELECT addr FROM nicks WHERE nick=?', (addr,)).fetchone()
+                    if not r:
+                        cls.bot.get_chat(sender).send_text(
+                            _('Unknow user: {}').format(addr))
+                        return
+                    else:
+                        addr = r[0]
+                contact = cls.bot.get_contact(addr)
+                cgroup = None
+                is_member = False
+                for g in cls.get_mchats(mgroup['id']):
+                    contacts = g.get_contacts()
+                    if contact in contacts:
+                        cgroup = g
+                    if sender in contacts:
+                        is_member = True
+                if is_member and cgroup:
+                    cgroup.remove_contact(contact)
+                    sender_nick = cls.get_nick(sender.addr)
+                    nick = cls.get_nick(addr)
+                    cls.bot.get_chat(contact).send_text(
+                        banner.format(mgroup['name'], sender_nick))
+                    text = _('** {} removed by {}').format(nick, sender_nick)
+                    for chat in cls.get_mchats(mgroup['id']):
+                        chat.send_text(text)
+            elif gid.startswith(CHANNEL_URL):
+                cgid = rmprefix(gid, CHANNEL_URL).split('-')[-1]
+                channel = cls.db.execute(
+                    'SELECT * FROM channels WHERE id=?', (cgid,)).fetchone()
+                if not channel:
+                    raise ValueError('Wrong syntax')
+                for g in cls.get_cchats(channel['id']):
+                    if sender in g.get_contacts():
+                        g.remove_contact(sender)
+                        break
+                else:
+                    g = cls.bot.get_chat(channel['admin'])
+                    if sender in g.get_contacts():
+                        g.remove_contact(sender)
             elif gid.startswith(GROUP_URL):
-                mgroup = None
                 gid = int(rmprefix(gid, GROUP_URL).split('-')[-1])
                 for g in cls.get_groups():
                     if g.id == gid:
@@ -621,49 +662,18 @@ class GroupMaster(Plugin):
                         break
                 else:
                     raise ValueError('Wrong syntax')
+                contact = cls.bot.get_contact(addr)
+                contacts = group.get_contacts()
+                if sender in contacts and contact in contacts:
+                    group.remove_contact(contact)
+                    chat = cls.bot.get_chat(contact)
+                    chat.send_text(banner.format(
+                        group.get_name(), sender.addr))
             else:
                 raise ValueError('Wrong syntax')
-            if '@' not in addr and not mgroup:
-                raise ValueError('Invalid email address')
         except (ValueError, IndexError) as err:
             cls.bot.get_chat(sender).send_text(_('Wrong syntax'))
             return
-
-        banner = _('Removed from {} by {}')
-        if mgroup:
-            if '@' not in addr:
-                r = cls.db.execute(
-                    'SELECT addr FROM nicks WHERE nick=?', (addr,)).fetchone()
-                if not r:
-                    cls.bot.get_chat(sender).send_text(
-                        _('Unknow user: {}').format(addr))
-                else:
-                    addr = r[0]
-            contact = cls.bot.get_contact(addr)
-            cgroup = None
-            is_member = False
-            for g in cls.get_mchats(mgroup['id']):
-                contacts = g.get_contacts()
-                if contact in contacts:
-                    cgroup = g
-                if sender in contacts:
-                    is_member = True
-            if is_member and cgroup:
-                cgroup.remove_contact(contact)
-                sender_nick = cls.get_nick(sender.addr)
-                nick = cls.get_nick(addr)
-                cls.bot.get_chat(contact).send_text(
-                    banner.format(mgroup['name'], sender_nick))
-                text = _('** {} removed by {}').format(nick, sender_nick)
-                for chat in cls.get_mchats(mgroup['id']):
-                    chat.send_text(text)
-        else:
-            contact = cls.bot.get_contact(addr)
-            contacts = group.get_contacts()
-            if sender in contacts and contact in contacts:
-                group.remove_contact(contact)
-                chat = cls.bot.get_chat(contact)
-                chat.send_text(banner.format(group.get_name(), sender.addr))
 
     @classmethod
     def list_cmd(cls, ctx):
