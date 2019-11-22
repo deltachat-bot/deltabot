@@ -14,7 +14,7 @@ import html2text
 import pkg_resources
 
 
-__version__ = '0.9.1'
+__version__ = '0.9.2'
 html2text.config.WRAP_LINKS = False
 
 
