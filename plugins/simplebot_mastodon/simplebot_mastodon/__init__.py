@@ -93,8 +93,8 @@ class MastodonBridge(Plugin):
         if ctx.msg.is_image() or ctx.msg.is_gif() or ctx.msg.is_video() or ctx.msg.is_audio():
             if ctx.msg.filename.endswith('.aac'):
                 aac_file = AudioSegment.from_file(ctx.msg.filename, 'aac')
-                filename = ctx.msg.filename[:-4]+'.webm'
-                aac_file.export(filename, format='webm')
+                filename = ctx.msg.filename[:-4]+'.mp3'
+                aac_file.export(filename, format='mp3')
             else:
                 filename = ctx.msg.filename
             media = m.media_post(filename)
