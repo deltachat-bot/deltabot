@@ -9,6 +9,7 @@ import sqlite3
 from simplebot import Plugin, PluginCommand, PluginFilter, Mode
 from bs4 import BeautifulSoup
 from jinja2 import Environment, PackageLoader
+from pydub import AudioSegment
 import mastodon
 import requests
 
@@ -40,7 +41,7 @@ class MastodonBridge(Plugin):
         save = False
         cls.cfg = cls.bot.get_config(__name__)
         if not cls.cfg.get('delay'):
-            cls.cfg['delay'] = '10'
+            cls.cfg['delay'] = '20'
             save = True
         if save:
             cls.bot.save_config()
@@ -90,7 +91,13 @@ class MastodonBridge(Plugin):
     def toot(cls, ctx, acc, visibility=None, in_reply_to=None):
         m = cls.get_session(acc)
         if ctx.msg.is_image() or ctx.msg.is_gif() or ctx.msg.is_video() or ctx.msg.is_audio():
-            media = m.media_post(ctx.msg.filename)
+            if ctx.msg.filename.endswith('.aac'):
+                aac_file = AudioSegment.from_file(ctx.msg.filename, 'aac')
+                filename = ctx.msg.filename[:-4]+'.webm'
+                aac_file.export(filename, format='webm')
+            else:
+                filename = ctx.msg.filename
+            media = m.media_post(filename)
             if in_reply_to:
                 m.status_reply(m.status(in_reply_to), ctx.text,
                                media_ids=media, visibility=visibility)
