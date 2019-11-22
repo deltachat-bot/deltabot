@@ -114,21 +114,32 @@ class GroupMaster(Plugin):
                 for g in cls.get_mchats(mg['id']):
                     if g.id != chat.id:
                         g.send_text('** Group left by {}'.format(nick))
-            elif ctx.msg.is_text():
+                return
+            ctx.text = '{}:\n{}'.format(
+                nick, ctx.text) if ctx.text else nick
+            if ctx.msg.filename:
+                if os.path.getsize(ctx.msg.filename) <= 61440:  # <=60KB
+                    for g in cls.get_mchats(mg['id']):
+                        if g.id != chat.id:
+                            cls.bot.send_file(g, ctx.msg.filename, ctx.text)
+                else:
+                    chat.send_text(
+                        _('Message is too big, only up to 60KB are allowed'))
+            else:
                 for g in cls.get_mchats(mg['id']):
                     if g.id != chat.id:
-                        g.send_text('{}:\n{}'.format(nick, ctx.text))
-            else:
-                chat.send_text(
-                    _('Only text messages are supported in mega-groups'))
+                        g.send_text(ctx.text)
             return
         ch = cls.get_channel(chat.id)
         if ch and ch['admin'] == chat.id:
             ctx.processed = True
+            nick = cls.get_nick(ctx.msg.get_sender_contact().addr)
             if ctx.msg.filename:
                 if os.path.getsize(ctx.msg.filename) <= 102400:
+                    ctx.text = '{}:\n{}'.format(
+                        nick, ctx.text) if ctx.text else nick
                     for g in cls.get_cchats(ch['id']):
-                        cls.bot.account.forward_messages([ctx.msg], g)
+                        cls.bot.send_file(g, ctx.msg.file_name, ctx.text)
                 else:
                     chat.send_text(
                         _('Message is too big, only up to 100KB are allowed'))
@@ -136,13 +147,12 @@ class GroupMaster(Plugin):
                 contacts = chat.get_contacts()
                 if sender not in contacts:
                     return
-                nick = cls.get_nick(ctx.msg.get_sender_contact().addr)
                 for g in cls.get_cchats(ch['id']):
                     g.send_text('{}:\n{}'.format(nick, ctx.text))
         elif ch:
             ctx.processed = True
             contacts = chat.get_contacts()
-            if sender in contacts:
+            if sender in contacts:  # if user isn't leaving the group
                 chat.send_text(_('Only channel operators can do that.'))
 
     @classmethod
