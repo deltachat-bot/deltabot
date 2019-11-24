@@ -133,7 +133,7 @@ class GroupMaster(Plugin):
         ch = cls.get_channel(chat.id)
         if ch and ch['admin'] == chat.id:
             ctx.processed = True
-            nick = cls.get_nick(ctx.msg.get_sender_contact().addr)
+            nick = cls.get_nick(sender.addr)
             if ctx.msg.filename:
                 if os.path.getsize(ctx.msg.filename) <= 102400:
                     ctx.text = '{}:\n{}'.format(
