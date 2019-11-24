@@ -72,10 +72,18 @@ class MastodonBridge(Plugin):
                           _('Login in Mastodon'), cls.login_cmd),
             PluginCommand('/masto/logout', ['[instance]', '[user]'],
                           _('Logout from Mastodon'), cls.logout_cmd),
+            PluginCommand('/masto/enable', [],
+                          _('Enable the Mastodon bridge again'), cls.enable_cmd),
+            PluginCommand('/masto/disable', [],
+                          _('Disable the Mastodon bridge, you will stop receiving messages from Mastodon'), cls.disable_cmd),
             PluginCommand('/masto/direct', ['<user>'],
                           _('Start a private chat with the given Mastodon user'), cls.direct_cmd),
-            PluginCommand('/masto/reply', ['<instance>', '<user>', '<id>'],
+            PluginCommand('/masto/reply', ['<id>', '<text>'],
                           _('Reply to a toot with the given id'), cls.reply_cmd),
+            PluginCommand('/masto/star', ['<id>'],
+                          _('Mark as favourite the toot with the given id'), cls.star_cmd),
+            PluginCommand('/masto/boost', ['<id>'],
+                          _('Boost the toot with the given id'), cls.boost_cmd),
         ]
         cls.bot.add_commands(cls.commands)
 
@@ -114,6 +122,13 @@ class MastodonBridge(Plugin):
             cls.bot.get_chat(ctx.msg).send_text(_('Unsuported message type'))
 
     @classmethod
+    def parse_url(cls, url):
+        api_url, url = url.split('@', maxsplit=1)
+        uname, toot_id = url.split('/', maxsplit=1)
+        toot_id = int(toot_id)
+        return (api_url, uname, toot_id)
+
+    @classmethod
     def delete_account(cls, acc):
         me = cls.bot.get_contact()
         for pv in cls.db.execute('SELECT * FROM priv_chats WHERE api_url=? AND username=?', (acc['api_url'], acc['username'])):
@@ -132,6 +147,8 @@ class MastodonBridge(Plugin):
             for acc in cls.db.execute('SELECT * FROM accounts WHERE status=?', (Status.ENABLED,)):
                 if cls.worker.deactivated.is_set():
                     return
+                url = '{}@{}%2F'.format(quote_plus(
+                    acc['api_url']), acc['username'])
                 try:
                     m = cls.get_session(acc)
                     max_id = None
@@ -174,6 +191,7 @@ class MastodonBridge(Plugin):
                         for p in soup('p'):
                             p.replace_with(p.get_text()+'\n\n')
                         text += soup.get_text()
+                        text += '\n\nID: {}{}'.format(url, dm.id)
 
                         pv = cls.db.execute(
                             'SELECT * FROM priv_chats WHERE api_url=? AND username=? AND contact=?', (acc['api_url'], acc['username'], acct)).fetchone()
@@ -223,13 +241,14 @@ class MastodonBridge(Plugin):
                                 p.replace_with(p.get_text()+'\n\n')
                             text += soup.get_text()
 
-                            text += '\n\n[{}]'.format(mention.visibility)
+                            text += '\n\n[{}]\nID: {}{}'.format(
+                                mention.visibility, url, mention.id)
 
                             chat.send_text(text)
                     elif mentions:
                         me = cls.bot.get_contact().addr
                         html = cls.env.get_template('items.html').render(
-                            plugin=cls, mentions=mentions, bot_addr=me, api_url=quote_plus(acc['api_url']), username=acc['username'])
+                            plugin=cls, mentions=mentions, bot_addr=me, url=url)
                         cls.bot.send_html(chat, html, cls.name, pref['mode'])
                 except Exception as ex:
                     cls.bot.logger.exception(ex)
@@ -327,6 +346,36 @@ class MastodonBridge(Plugin):
             cls.bot.get_chat(ctx.msg).send_text(_('Unknow account'))
 
     @classmethod
+    def enable_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        acc = cls.db.execute(
+            'SELECT * FROM accounts WHERE settings=?', (chat.id,)).fetchone()
+        if not acc:
+            chat.send_text(
+                _('You must send that command in you Mastodon account settings chat'))
+            return
+
+        if acc['status'] != Status.ENABLED:
+            cls.db.execute('UPDATE accounts SET status=? WHERE api_url=? AND username=?',
+                           (Status.ENABLED, acc['api_url'], acc['username']))
+        chat.send_text(_('Account enabled'))
+
+    @classmethod
+    def disable_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        acc = cls.db.execute(
+            'SELECT * FROM accounts WHERE settings=?', (chat.id,)).fetchone()
+        if not acc:
+            chat.send_text(
+                _('You must send that command in you Mastodon account settings chat'))
+            return
+
+        if acc['status'] != Status.DISABLED:
+            cls.db.execute('UPDATE accounts SET status=? WHERE api_url=? AND username=?',
+                           (Status.DISABLED, acc['api_url'], acc['username']))
+        chat.send_text(_('Account disabled'))
+
+    @classmethod
     def direct_cmd(cls, ctx):
         if not ctx.text or ' ' in ctx.text:
             chat.send_text(_('Wrong Syntax'))
@@ -366,18 +415,48 @@ class MastodonBridge(Plugin):
     @classmethod
     def reply_cmd(cls, ctx):
         chat = cls.bot.get_chat(ctx.msg)
-        api_url, uname, toot_id, text = ctx.text.split(maxsplit=3)
-        toot_id = int(toot_id)
+        url, text = ctx.text.split(maxsplit=1)
+        api_url, uname, toot_id = cls.parse_url(url)
         addr = ctx.msg.get_sender_contact().addr
 
         acc = cls.db.execute(
             'SELECT * FROM accounts WHERE api_url=? AND username=? AND addr=?', (api_url, uname, addr)).fetchone()
         if not acc:
-            chat.send_text(_('Invalid instance or user'))
+            chat.send_text(_('Invalid toot id'))
             return
 
         ctx.text = text
         cls.toot(ctx, acc, in_reply_to=toot_id)
+
+    @classmethod
+    def star_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        api_url, uname, toot_id = cls.parse_url(ctx.text)
+        addr = ctx.msg.get_sender_contact().addr
+
+        acc = cls.db.execute(
+            'SELECT * FROM accounts WHERE api_url=? AND username=? AND addr=?', (api_url, uname, addr)).fetchone()
+        if not acc:
+            chat.send_text(_('Invalid toot id'))
+            return
+
+        m = cls.get_session(acc)
+        m.status_favourite(toot_id)
+
+    @classmethod
+    def boost_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        api_url, uname, toot_id = cls.parse_url(ctx.text)
+        addr = ctx.msg.get_sender_contact().addr
+
+        acc = cls.db.execute(
+            'SELECT * FROM accounts WHERE api_url=? AND username=? AND addr=?', (api_url, uname, addr)).fetchone()
+        if not acc:
+            chat.send_text(_('Invalid toot id'))
+            return
+
+        m = cls.get_session(acc)
+        m.status_reblog(toot_id)
 
 
 class DBManager:

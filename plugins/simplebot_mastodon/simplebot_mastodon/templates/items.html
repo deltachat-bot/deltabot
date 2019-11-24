@@ -1,5 +1,12 @@
 {% extends "base.html" %}
 
+{% block css %}
+<style>
+  .m-btn {
+      margin-left: 15px !important;
+  }
+</style>
+{% endblock %}
 {% block header %}
 Mentions
 {% endblock %}
@@ -17,9 +24,10 @@ Mentions
 	{% endfor %}
       </p>
       <p>{{ e.content }}</p>
-      <a class="w3-btn w3-blue w3-large w3-left" href="mailto:{{ bot_addr }}?body=/masto/reply%20{{ api_url }}%20{{ username }}%20{{ e.id }}")>❮ {{ plugin.REPLY_BTN }}</a>
+      <a class="w3-btn w3-blue w3-large m-btn" href="mailto:{{ bot_addr }}?body=/masto/reply%20{{ url }}{{ e.id }}")>↩</a>
+      <a class="w3-btn w3-blue w3-large m-btn" href="mailto:{{ bot_addr }}?body=/masto/boost%20{{ url }}{{ e.id }}")>🔁</a>
+      <a class="w3-btn w3-blue w3-large m-btn" href="mailto:{{ bot_addr }}?body=/masto/star%20{{ url }}{{ e.id }}")>⭐</a>
     </div>
-    <br>
   </div>
   {% endfor %}
 </div>
