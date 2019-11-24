@@ -251,7 +251,7 @@ class MastodonBridge(Plugin):
                     elif mentions:
                         me = cls.bot.get_contact().addr
                         html = cls.env.get_template('items.html').render(
-                            plugin=cls, mentions=mentions, bot_addr=me, url=quote_plus(url), v2emoji=v2emoji)
+                            plugin=cls, mentions=reversed(mentions), bot_addr=me, url=quote_plus(url), v2emoji=v2emoji)
                         cls.bot.send_html(chat, html, cls.name, pref['mode'])
                 except Exception as ex:
                     cls.bot.logger.exception(ex)
