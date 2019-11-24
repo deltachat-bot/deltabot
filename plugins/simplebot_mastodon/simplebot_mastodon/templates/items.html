@@ -24,8 +24,12 @@ Mentions
 	{% endfor %}
       </p>
       <p>{{ e.content }}</p>
-      <a class="w3-btn w3-blue w3-large m-btn" href="mailto:{{ bot_addr }}?body=/masto/reply%20{{ url }}{{ e.id }}")>↩</a>
-      <a class="w3-btn w3-blue w3-large m-btn" href="mailto:{{ bot_addr }}?body=/masto/boost%20{{ url }}{{ e.id }}")>🔁</a>
+      <a class="w3-btn w3-blue w3-large m-btn" href="mailto:{{ bot_addr }}?body=/masto/reply%20{{ url }}{{ e.id }}">↩</a>
+      {% if e.visibility in ('public', 'unlisted') %}
+      <a class="w3-btn w3-blue w3-large m-btn" href="mailto:{{ bot_addr }}?body=/masto/boost%20{{ url }}{{ e.id }}">🔁</a>
+      {% else %}
+      <a class="w3-btn w3-blue w3-large m-btn w3-disabled">{{ v2emoji[e.visibility] }}</a>
+      {% endif %}
       <a class="w3-btn w3-blue w3-large m-btn" href="mailto:{{ bot_addr }}?body=/masto/star%20{{ url }}{{ e.id }}")>⭐</a>
     </div>
   </div>

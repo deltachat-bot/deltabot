@@ -30,6 +30,10 @@ class Visibility(str, Enum):
     PUBLIC = 'public'  # post will be public
 
 
+v2emoji = {Visibility.DIRECT: '✉', Visibility.PRIVATE: '🔒',
+           Visibility.UNLISTED: '🔓', Visibility.PUBLIC: '🌎'}
+
+
 class MastodonBridge(Plugin):
 
     name = 'Mastodon Bridge'
@@ -147,8 +151,7 @@ class MastodonBridge(Plugin):
             for acc in cls.db.execute('SELECT * FROM accounts WHERE status=?', (Status.ENABLED,)):
                 if cls.worker.deactivated.is_set():
                     return
-                url = '{}@{}%2F'.format(quote_plus(
-                    acc['api_url']), acc['username'])
+                url = '{}@{}/'.format(acc['api_url'], acc['username'])
                 try:
                     m = cls.get_session(acc)
                     max_id = None
@@ -242,13 +245,13 @@ class MastodonBridge(Plugin):
                             text += soup.get_text()
 
                             text += '\n\n[{}]\nID: {}{}'.format(
-                                mention.visibility, url, mention.id)
+                                v2emoji[mention.visibility], url, mention.id)
 
                             chat.send_text(text)
                     elif mentions:
                         me = cls.bot.get_contact().addr
                         html = cls.env.get_template('items.html').render(
-                            plugin=cls, mentions=mentions, bot_addr=me, url=url)
+                            plugin=cls, mentions=mentions, bot_addr=me, url=quote_plus(url), v2emoji=v2emoji)
                         cls.bot.send_html(chat, html, cls.name, pref['mode'])
                 except Exception as ex:
                     cls.bot.logger.exception(ex)
