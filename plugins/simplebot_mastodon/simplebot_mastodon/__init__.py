@@ -88,6 +88,12 @@ class MastodonBridge(Plugin):
                           _('Mark as favourite the toot with the given id'), cls.star_cmd),
             PluginCommand('/masto/boost', ['<id>'],
                           _('Boost the toot with the given id'), cls.boost_cmd),
+            PluginCommand('/masto/follow', ['<id>'],
+                          _('Follow the user with the given id'), cls.follow_cmd),
+            PluginCommand('/masto/whois', ['<id>'],
+                          _('See the profile of the given user'), cls.whois_cmd),
+            PluginCommand('/masto/timeline', ['<timeline>'],
+                          _('Get latest entries from the given timeline'), cls.timeline_cmd),
         ]
         cls.bot.add_commands(cls.commands)
 
@@ -125,12 +131,58 @@ class MastodonBridge(Plugin):
         else:
             cls.bot.get_chat(ctx.msg).send_text(_('Unsuported message type'))
 
-    @classmethod
-    def parse_url(cls, url):
+    @staticmethod
+    def parse_url(url):
         api_url, url = url.split('@', maxsplit=1)
         uname, toot_id = url.split('/', maxsplit=1)
-        toot_id = int(toot_id)
         return (api_url, uname, toot_id)
+
+    @staticmethod
+    def get_text(html):
+        return BeautifulSoup(html, 'html.parser').get_text()
+
+    @staticmethod
+    def toots2text(toots, url):
+        for t in reversed(toots):
+            text = '{} (@{}):\n\n'.format(
+                t.account.display_name, t.account.acct)
+
+            media_urls = '\n'.join(
+                media.url for media in t.media_attachments)
+            if media_urls:
+                text += media_urls + '\n\n'
+
+            soup = BeautifulSoup(
+                t.content, 'html.parser')
+            accts = {e.url: '@'+e.acct
+                     for e in t.mentions}
+            for a in soup('a', class_='mention'):
+                a.string = accts.get(a['href'], a.string)
+            for br in soup('br'):
+                br.replace_with('\n')
+            for p in soup('p'):
+                p.replace_with(p.get_text()+'\n\n')
+            text += soup.get_text()
+
+            text += '\n\n[{}] {}{}'.format(
+                v2emoji[t.visibility], url, t.id)
+
+            yield text
+
+    @classmethod
+    def toots2html(cls, toots, url):
+        for t in toots:
+            soup = BeautifulSoup(
+                t.content, 'html.parser')
+            accts = {e.url: '@' +
+                     e.acct for e in t.mentions}
+            for a in soup('a', class_='mention'):
+                a.string = accts.get(a['href'], a.string)
+            t.content = str(soup)
+
+        me = cls.bot.get_contact().addr
+        return cls.env.get_template('items.html').render(
+            plugin=cls, mentions=reversed(toots), bot_addr=me, url=quote_plus(url), v2emoji=v2emoji)
 
     @classmethod
     def delete_account(cls, acc):
@@ -223,35 +275,10 @@ class MastodonBridge(Plugin):
                     chat = cls.bot.get_chat(acc['notifications'])
                     pref = cls.bot.get_preferences(acc['addr'])
                     if pref['mode'] in (Mode.TEXT, Mode.TEXT_HTMLZIP):
-                        for mention in reversed(mentions):
-                            text = '{} (@{}):\n\n'.format(
-                                mention.account.display_name, mention.account.acct)
-
-                            media_urls = '\n'.join(
-                                media.url for media in mention.media_attachments)
-                            if media_urls:
-                                text += media_urls + '\n\n'
-
-                            soup = BeautifulSoup(
-                                mention.content, 'html.parser')
-                            accts = {e.url: '@'+e.acct
-                                     for e in mention.mentions}
-                            for a in soup('a', class_='mention'):
-                                a.string = accts.get(a['href'], a.string)
-                            for br in soup('br'):
-                                br.replace_with('\n')
-                            for p in soup('p'):
-                                p.replace_with(p.get_text()+'\n\n')
-                            text += soup.get_text()
-
-                            text += '\n\n[{}]\nID: {}{}'.format(
-                                v2emoji[mention.visibility], url, mention.id)
-
-                            chat.send_text(text)
+                        chat.send_text('\n\n'.join(
+                            cls.toots2text(mentions, url)))
                     elif mentions:
-                        me = cls.bot.get_contact().addr
-                        html = cls.env.get_template('items.html').render(
-                            plugin=cls, mentions=reversed(mentions), bot_addr=me, url=quote_plus(url), v2emoji=v2emoji)
+                        html = cls.toots2html(mentions, url)
                         cls.bot.send_html(chat, html, cls.name, pref['mode'])
                 except Exception as ex:
                     cls.bot.logger.exception(ex)
@@ -460,6 +487,109 @@ class MastodonBridge(Plugin):
 
         m = cls.get_session(acc)
         m.status_reblog(toot_id)
+
+    @classmethod
+    def follow_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        acc = cls.db.execute(
+            'SELECT * FROM accounts WHERE settings=?', (chat.id,)).fetchone()
+        if acc:
+            acc_id = ctx.text
+        else:
+            api_url, uname, acc_id = cls.parse_url(ctx.text)
+            addr = ctx.msg.get_sender_contact().addr
+            acc = cls.db.execute(
+                'SELECT * FROM accounts WHERE api_url=? AND username=? AND addr=?', (api_url, uname, addr)).fetchone()
+        if not acc:
+            chat.send_text(
+                _('You must send that command in you Mastodon account settings chat'))
+            return
+
+        m = cls.get_session(acc)
+        if not acc_id.isdigit():
+            for a in m.account_search(acc_id):
+                if a.acct.lower() == acc_id:
+                    acc_id = a.id
+                    break
+            else:
+                chat.send_text(_('Invalid id'))
+                return
+        m.account_follow(acc_id)
+        chat.send_text(_('User followed'))
+
+    @classmethod
+    def whois_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        acc = cls.db.execute(
+            'SELECT * FROM accounts WHERE settings=?', (chat.id,)).fetchone()
+        if acc:
+            acc_id = ctx.text
+        else:
+            api_url, uname, acc_id = cls.parse_url(ctx.text)
+            addr = ctx.msg.get_sender_contact().addr
+            acc = cls.db.execute(
+                'SELECT * FROM accounts WHERE api_url=? AND username=? AND addr=?', (api_url, uname, addr)).fetchone()
+        if not acc:
+            chat.send_text(
+                _('You must send that command in you Mastodon account settings chat'))
+            return
+
+        m = cls.get_session(acc)
+        if acc_id.isdigit():
+            user = m.account(acc_id)
+        else:
+            for a in m.account_search(acc_id):
+                if a.acct.lower() == acc_id:
+                    user = a
+                    break
+            else:
+                chat.send_text(_('Invalid id'))
+                return
+        text = '{} (@{}):\n\n'.format(user.display_name, user.acct)
+        fields = ''
+        for f in user.fields:
+            fields += '{}: {}\n'.format(cls.get_text(f.name),
+                                        cls.get_text(f.value))
+        if fields:
+            text += fields+'\n\n'
+        text += cls.get_text(user.note)
+        text += '\n\nToots: {}\nFollowing: {}\nFollowers: {}'.format(
+            user.statuses_count, user.following_count, user.followers_count)
+        chat.send_text(text)
+
+    @classmethod
+    def timeline_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        acc = cls.db.execute(
+            'SELECT * FROM accounts WHERE settings=?', (chat.id,)).fetchone()
+        if acc:
+            timeline = ctx.text
+        else:
+            api_url, uname, timeline = cls.parse_url(ctx.text)
+            addr = ctx.msg.get_sender_contact().addr
+            acc = cls.db.execute(
+                'SELECT * FROM accounts WHERE api_url=? AND username=? AND addr=?', (api_url, uname, addr)).fetchone()
+        if not acc:
+            chat.send_text(
+                _('You must send that command in you Mastodon account settings chat'))
+            return
+
+        m = cls.get_session(acc)
+        if timeline.startswith('#'):
+            toots = m.timeline('tag/' + timeline[1:])
+        else:
+            toots = m.timeline(timeline)
+
+        url = '{}@{}/'.format(acc['api_url'], acc['username'])
+
+        if toots:
+            if ctx.mode in (Mode.TEXT, Mode.TEXT_HTMLZIP):
+                chat.send_text('\n\n'.join(cls.toots2text(toots, url)))
+            else:
+                html = cls.toots2html(toots, url)
+                cls.bot.send_html(chat, html, cls.name, ctx.mode)
+        else:
+            chat.send_text(_('Nothing found for {}').format(timeline))
 
 
 class DBManager:

@@ -20,7 +20,7 @@ Mentions
     <div class="w3-container">
       <p>
 	{% for media in e.media_attachments %}
-	       {{ '<a href="{0}">{0}<br>'.format(media.url) }}
+	       {{ '<a href="{}">{}</a><br>'.format(media.url, media.url.rsplit(maxsplit=1)[-1]) }}
 	{% endfor %}
       </p>
       <p>{{ e.content }}</p>
@@ -30,7 +30,7 @@ Mentions
       {% else %}
       <a class="w3-btn w3-blue w3-large m-btn">{{ v2emoji[e.visibility] }}</a>
       {% endif %}
-      <a class="w3-btn w3-blue w3-large m-btn" href="mailto:{{ bot_addr }}?body=/masto/star%20{{ url }}{{ e.id }}")>⭐</a>
+      <a class="w3-btn w3-blue w3-large m-btn" href="mailto:{{ bot_addr }}?body=/masto/star%20{{ url }}{{ e.id }}">⭐</a>
     </div>
   </div>
   {% endfor %}
