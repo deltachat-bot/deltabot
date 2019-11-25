@@ -34,6 +34,10 @@ v2emoji = {Visibility.DIRECT: '✉', Visibility.PRIVATE: '🔒',
            Visibility.UNLISTED: '🔓', Visibility.PUBLIC: '🌎'}
 
 
+def rmprefix(text, prefix):
+    return text[text.startswith(prefix) and len(prefix):]
+
+
 class MastodonBridge(Plugin):
 
     name = 'Mastodon Bridge'
@@ -263,7 +267,7 @@ class MastodonBridge(Plugin):
                                 g.send_text(text)
                         else:
                             g = cls.bot.create_group(
-                                '🇲 {} ({})'.format(acct, acc['api_url']), [acc['addr']])
+                                '🇲 {} ({})'.format(acct, rmprefix(acc['api_url'], 'https://')), [acc['addr']])
                             cls.db.execute(
                                 'INSERT INTO priv_chats VALUES (?,?,?,?)', (g.id, acct, acc['api_url'], acc['username']))
 
@@ -343,11 +347,11 @@ class MastodonBridge(Plugin):
 
             addr = ctx.msg.get_sender_contact().addr
             tgroup = cls.bot.create_group(
-                'Toot to {}'.format(api_url), [addr])
+                'Toot to {}'.format(rmprefix(api_url, 'https://')), [addr])
             ngroup = cls.bot.create_group(
-                'Notifications ({})'.format(api_url), [addr])
+                'Notifications ({})'.format(rmprefix(api_url, 'https://')), [addr])
             sgroup = cls.bot.create_group(
-                'Settings ({})'.format(api_url), [addr])
+                'Settings ({})'.format(rmprefix(api_url, 'https://')), [addr])
 
             cls.db.insert_user(
                 (api_url, uname, access_token, addr, Status.ENABLED, tgroup.id, ngroup.id, sgroup.id, last_notification))
@@ -434,7 +438,7 @@ class MastodonBridge(Plugin):
                 _('Chat already exists, send direct messages here'))
         else:
             g = cls.bot.create_group(
-                '🇲 {} ({})'.format(ctx.text, acc['api_url']), [acc['addr']])
+                '🇲 {} ({})'.format(ctx.text, rmprefix(acc['api_url'], 'https://')), [acc['addr']])
             cls.db.execute(
                 'INSERT OR REPLACE INTO priv_chats VALUES (?,?,?,?)', (g.id, ctx.text, acc['api_url'], acc['username']))
             g.send_text(_('Private chat with {}\nYour account: {} ({})').format(
