@@ -143,7 +143,12 @@ class MastodonBridge(Plugin):
 
     @staticmethod
     def get_text(html):
-        return BeautifulSoup(html, 'html.parser').get_text()
+        soup = BeautifulSoup(html, 'html.parser').get_text()
+        for br in soup('br'):
+            br.replace_with('\n')
+        for p in soup('p'):
+            p.replace_with(p.get_text()+'\n\n')
+        return soup.get_text()
 
     @staticmethod
     def toots2text(toots, url):
