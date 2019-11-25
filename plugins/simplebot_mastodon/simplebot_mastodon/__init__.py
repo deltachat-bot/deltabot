@@ -273,13 +273,15 @@ class MastodonBridge(Plugin):
                             g.set_profile_image(file_name)
 
                     chat = cls.bot.get_chat(acc['notifications'])
-                    pref = cls.bot.get_preferences(acc['addr'])
-                    if pref['mode'] in (Mode.TEXT, Mode.TEXT_HTMLZIP):
-                        chat.send_text('\n\n'.join(
-                            cls.toots2text(mentions, url)))
-                    elif mentions:
-                        html = cls.toots2html(mentions, url)
-                        cls.bot.send_html(chat, html, cls.name, pref['mode'])
+                    if mentions:
+                        pref = cls.bot.get_preferences(acc['addr'])
+                        if pref['mode'] in (Mode.TEXT, Mode.TEXT_HTMLZIP):
+                            chat.send_text('\n\n'.join(
+                                cls.toots2text(mentions, url)))
+                        else:
+                            html = cls.toots2html(mentions, url)
+                            cls.bot.send_html(
+                                chat, html, cls.name, pref['mode'])
                 except Exception as ex:
                     cls.bot.logger.exception(ex)
             cls.worker.deactivated.wait(cls.cfg.getint('delay'))
