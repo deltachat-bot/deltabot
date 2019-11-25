@@ -182,7 +182,7 @@ class MastodonBridge(Plugin):
                 href = accts.get(a['href'])
                 if href:
                     a['string'] = href
-            t.content = str(soup)
+            t['content'] = str(soup)
 
         me = cls.bot.get_contact().addr
         return cls.env.get_template('items.html').render(
