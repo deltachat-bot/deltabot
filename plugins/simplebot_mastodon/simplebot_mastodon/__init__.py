@@ -94,6 +94,12 @@ class MastodonBridge(Plugin):
                           _('Boost the toot with the given id'), cls.boost_cmd),
             PluginCommand('/masto/follow', ['<id>'],
                           _('Follow the user with the given id'), cls.follow_cmd),
+            PluginCommand('/masto/unfollow', ['<id>'],
+                          _('Unfollow the user with the given id'), cls.unfollow_cmd),
+            PluginCommand('/masto/mute', ['<id>'],
+                          _('Mute the user with the given id'), cls.mute_cmd),
+            PluginCommand('/masto/unmute', ['<id>'],
+                          _('Unmute the user with the given id'), cls.funmute_cmd),
             PluginCommand('/masto/whois', ['<id>'],
                           _('See the profile of the given user'), cls.whois_cmd),
             PluginCommand('/masto/timeline', ['<timeline>'],
@@ -537,6 +543,90 @@ class MastodonBridge(Plugin):
                 return
         m.account_follow(acc_id)
         chat.send_text(_('User followed'))
+
+    @classmethod
+    def unfollow_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        acc = cls.get_account(chat)
+        if acc:
+            acc_id = ctx.text
+        else:
+            api_url, uname, acc_id = cls.parse_url(ctx.text)
+            addr = ctx.msg.get_sender_contact().addr
+            acc = cls.db.execute(
+                'SELECT * FROM accounts WHERE api_url=? AND username=? AND addr=?', (api_url, uname, addr)).fetchone()
+        if not acc:
+            chat.send_text(
+                _('You must send that command in you Mastodon account settings chat'))
+            return
+
+        m = cls.get_session(acc)
+        if not acc_id.isdigit():
+            for a in m.account_search(acc_id):
+                if a.acct.lower() == acc_id:
+                    acc_id = a.id
+                    break
+            else:
+                chat.send_text(_('Invalid id'))
+                return
+        m.account_unfollow(acc_id)
+        chat.send_text(_('User unfollowed'))
+
+    @classmethod
+    def mute_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        acc = cls.get_account(chat)
+        if acc:
+            acc_id = ctx.text
+        else:
+            api_url, uname, acc_id = cls.parse_url(ctx.text)
+            addr = ctx.msg.get_sender_contact().addr
+            acc = cls.db.execute(
+                'SELECT * FROM accounts WHERE api_url=? AND username=? AND addr=?', (api_url, uname, addr)).fetchone()
+        if not acc:
+            chat.send_text(
+                _('You must send that command in you Mastodon account settings chat'))
+            return
+
+        m = cls.get_session(acc)
+        if not acc_id.isdigit():
+            for a in m.account_search(acc_id):
+                if a.acct.lower() == acc_id:
+                    acc_id = a.id
+                    break
+            else:
+                chat.send_text(_('Invalid id'))
+                return
+        m.account_mute(acc_id)
+        chat.send_text(_('User muted'))
+
+    @classmethod
+    def unmute_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        acc = cls.get_account(chat)
+        if acc:
+            acc_id = ctx.text
+        else:
+            api_url, uname, acc_id = cls.parse_url(ctx.text)
+            addr = ctx.msg.get_sender_contact().addr
+            acc = cls.db.execute(
+                'SELECT * FROM accounts WHERE api_url=? AND username=? AND addr=?', (api_url, uname, addr)).fetchone()
+        if not acc:
+            chat.send_text(
+                _('You must send that command in you Mastodon account settings chat'))
+            return
+
+        m = cls.get_session(acc)
+        if not acc_id.isdigit():
+            for a in m.account_search(acc_id):
+                if a.acct.lower() == acc_id:
+                    acc_id = a.id
+                    break
+            else:
+                chat.send_text(_('Invalid id'))
+                return
+        m.account_unmute(acc_id)
+        chat.send_text(_('User unmuted'))
 
     @classmethod
     def whois_cmd(cls, ctx):
