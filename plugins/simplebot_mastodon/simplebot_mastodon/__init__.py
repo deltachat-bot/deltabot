@@ -198,6 +198,18 @@ class MastodonBridge(Plugin):
             plugin=cls, mentions=reversed(toots), bot_addr=me, url=quote_plus(url), v2emoji=v2emoji)
 
     @classmethod
+    def get_account(cls, chat):
+        acc = cls.db.execute(
+            'SELECT * FROM accounts WHERE notifications=? OR settings=? OR toots=?', (chat.id,)*3).fetchone()
+        if not acc:
+            pv = cls.db.execute(
+                'SELECT api_url, username FROM priv_chats WHERE id=?', (chat.id,))
+            if pv:
+                acc = cls.db.execute(
+                    'SELECT * FROM accounts WHERE api_url=? AND username=?', (pv['api_url'], pv['username']))
+        return acc
+
+    @classmethod
     def delete_account(cls, acc):
         me = cls.bot.get_contact()
         for pv in cls.db.execute('SELECT * FROM priv_chats WHERE api_url=? AND username=?', (acc['api_url'], acc['username'])):
@@ -380,9 +392,7 @@ class MastodonBridge(Plugin):
             acc = cls.db.execute(
                 'SELECT * FROM accounts WHERE api_url=? AND username=? AND addr=?', (api_url, uname.lower(), addr)).fetchone()
         else:
-            chat = cls.bot.get_chat(ctx.msg)
-            acc = cls.db.execute(
-                'SELECT * FROM accounts WHERE settings=?', (chat.id,)).fetchone()
+            acc = cls.get_account(cls.bot.get_chat(ctx.msg))
 
         if acc:
             cls.delete_account(acc)
@@ -393,8 +403,7 @@ class MastodonBridge(Plugin):
     @classmethod
     def enable_cmd(cls, ctx):
         chat = cls.bot.get_chat(ctx.msg)
-        acc = cls.db.execute(
-            'SELECT * FROM accounts WHERE settings=?', (chat.id,)).fetchone()
+        acc = cls.get_account(chat)
         if not acc:
             chat.send_text(
                 _('You must send that command in you Mastodon account settings chat'))
@@ -408,8 +417,7 @@ class MastodonBridge(Plugin):
     @classmethod
     def disable_cmd(cls, ctx):
         chat = cls.bot.get_chat(ctx.msg)
-        acc = cls.db.execute(
-            'SELECT * FROM accounts WHERE settings=?', (chat.id,)).fetchone()
+        acc = cls.get_account(chat)
         if not acc:
             chat.send_text(
                 _('You must send that command in you Mastodon account settings chat'))
@@ -427,8 +435,7 @@ class MastodonBridge(Plugin):
             return
 
         chat = cls.bot.get_chat(ctx.msg)
-        acc = cls.db.execute(
-            'SELECT * FROM accounts WHERE settings=?', (chat.id,)).fetchone()
+        acc = cls.get_account(chat)
         if not acc:
             chat.send_text(
                 _('You must send that command in you Mastodon account settings chat'))
@@ -506,8 +513,7 @@ class MastodonBridge(Plugin):
     @classmethod
     def follow_cmd(cls, ctx):
         chat = cls.bot.get_chat(ctx.msg)
-        acc = cls.db.execute(
-            'SELECT * FROM accounts WHERE settings=?', (chat.id,)).fetchone()
+        acc = cls.get_account(chat)
         if acc:
             acc_id = ctx.text
         else:
@@ -535,8 +541,7 @@ class MastodonBridge(Plugin):
     @classmethod
     def whois_cmd(cls, ctx):
         chat = cls.bot.get_chat(ctx.msg)
-        acc = cls.db.execute(
-            'SELECT * FROM accounts WHERE settings=?', (chat.id,)).fetchone()
+        acc = cls.get_account(chat)
         if acc:
             acc_id = ctx.text
         else:
@@ -575,8 +580,7 @@ class MastodonBridge(Plugin):
     @classmethod
     def timeline_cmd(cls, ctx):
         chat = cls.bot.get_chat(ctx.msg)
-        acc = cls.db.execute(
-            'SELECT * FROM accounts WHERE settings=?', (chat.id,)).fetchone()
+        acc = cls.get_account(chat)
         if acc:
             timeline = ctx.text
         else:
