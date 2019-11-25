@@ -157,7 +157,9 @@ class MastodonBridge(Plugin):
             accts = {e.url: '@'+e.acct
                      for e in t.mentions}
             for a in soup('a', class_='mention'):
-                a.string = accts.get(a['href'], a.string)
+                href = accts.get(a['href'])
+                if href:
+                    a['string'] = href
             for br in soup('br'):
                 br.replace_with('\n')
             for p in soup('p'):
@@ -177,7 +179,9 @@ class MastodonBridge(Plugin):
             accts = {e.url: '@' +
                      e.acct for e in t.mentions}
             for a in soup('a', class_='mention'):
-                a.string = accts.get(a['href'], a.string)
+                href = accts.get(a['href'])
+                if href:
+                    a['string'] = href
             t.content = str(soup)
 
         me = cls.bot.get_contact().addr
