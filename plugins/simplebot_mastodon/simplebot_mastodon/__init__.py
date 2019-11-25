@@ -280,7 +280,7 @@ class MastodonBridge(Plugin):
                     if mentions:
                         pref = cls.bot.get_preferences(acc['addr'])
                         if pref['mode'] in (Mode.TEXT, Mode.TEXT_HTMLZIP):
-                            chat.send_text('\n――――――――――\n'.join(
+                            chat.send_text('\n\n―――――――――――――――\n\n'.join(
                                 cls.toots2text(mentions, url)))
                         else:
                             html = cls.toots2html(mentions, url)
@@ -590,7 +590,7 @@ class MastodonBridge(Plugin):
 
         if toots:
             if ctx.mode in (Mode.TEXT, Mode.TEXT_HTMLZIP):
-                chat.send_text('\n――――――――――\n'.join(
+                chat.send_text('\n\n―――――――――――――――\n\n'.join(
                     cls.toots2text(toots, url)))
             else:
                 html = cls.toots2html(toots, url)
