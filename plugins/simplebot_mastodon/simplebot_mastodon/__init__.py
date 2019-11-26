@@ -99,7 +99,7 @@ class MastodonBridge(Plugin):
             PluginCommand('/masto/mute', ['<id>'],
                           _('Mute the user with the given id'), cls.mute_cmd),
             PluginCommand('/masto/unmute', ['<id>'],
-                          _('Unmute the user with the given id'), cls.funmute_cmd),
+                          _('Unmute the user with the given id'), cls.unmute_cmd),
             PluginCommand('/masto/whois', ['<id>'],
                           _('See the profile of the given user'), cls.whois_cmd),
             PluginCommand('/masto/timeline', ['<timeline>'],
