@@ -531,6 +531,7 @@ class MastodonBridge(Plugin):
 
         m = cls.get_session(acc)
         if not acc_id.isdigit():
+            acc_id = acc_id.lower()
             for a in m.account_search(acc_id):
                 if a.acct.lower() == acc_id:
                     acc_id = a.id
@@ -559,6 +560,7 @@ class MastodonBridge(Plugin):
 
         m = cls.get_session(acc)
         if not acc_id.isdigit():
+            acc_id = acc_id.lower()
             for a in m.account_search(acc_id):
                 if a.acct.lower() == acc_id:
                     acc_id = a.id
@@ -587,6 +589,7 @@ class MastodonBridge(Plugin):
 
         m = cls.get_session(acc)
         if not acc_id.isdigit():
+            acc_id = acc_id.lower()
             for a in m.account_search(acc_id):
                 if a.acct.lower() == acc_id:
                     acc_id = a.id
@@ -615,6 +618,7 @@ class MastodonBridge(Plugin):
 
         m = cls.get_session(acc)
         if not acc_id.isdigit():
+            acc_id = acc_id.lower()
             for a in m.account_search(acc_id):
                 if a.acct.lower() == acc_id:
                     acc_id = a.id
@@ -645,6 +649,7 @@ class MastodonBridge(Plugin):
         if acc_id.isdigit():
             user = m.account(acc_id)
         else:
+            acc_id = acc_id.lower()
             for a in m.account_search(acc_id):
                 if a.acct.lower() == acc_id:
                     user = a
