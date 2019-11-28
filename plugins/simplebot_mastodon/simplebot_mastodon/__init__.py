@@ -126,7 +126,7 @@ class MastodonBridge(Plugin):
                 aac_file.export(filename, format='mp3')
             else:
                 filename = ctx.msg.filename
-            media = [m.media_post(filename)['id']]
+            media = [m.media_post(filename).id]
             if in_reply_to:
                 m.status_reply(m.status(in_reply_to), ctx.text,
                                media_ids=media, visibility=visibility)
@@ -169,12 +169,11 @@ class MastodonBridge(Plugin):
 
             soup = BeautifulSoup(
                 t.content, 'html.parser')
-            accts = {e.url: '@'+e.acct
-                     for e in t.mentions}
-            for a in soup('a', class_='mention'):
-                href = accts.get(a['href'])
-                if href:
-                    a['string'] = href
+            if t.mentions:
+                accts = {e.url: '@' + e.acct
+                         for e in t.mentions}
+                for a in soup('a', class_='mention'):
+                    a.string = accts[a['href']]
             for br in soup('br'):
                 br.replace_with('\n')
             for p in soup('p'):
@@ -191,12 +190,10 @@ class MastodonBridge(Plugin):
         for t in toots:
             soup = BeautifulSoup(
                 t.content, 'html.parser')
-            accts = {e.url: '@' +
-                     e.acct for e in t.mentions}
-            for a in soup('a', class_='mention'):
-                href = accts.get(a['href'])
-                if href:
-                    a['string'] = href
+            if t.mentions:
+                accts = {e.url: '@' + e.acct for e in t.mentions}
+                for a in soup('a', class_='mention'):
+                    a.string = accts[a['href']]
             t['content'] = str(soup)
 
         me = cls.bot.get_contact().addr
@@ -247,31 +244,31 @@ class MastodonBridge(Plugin):
                             break
                         if max_id is None:
                             cls.db.execute('UPDATE accounts SET last_notification=? WHERE api_url=? AND username=?', (
-                                ment[0]['id'], acc['api_url'], acc['username']))
+                                ment[0].id, acc['api_url'], acc['username']))
                         max_id = ment[-1]
                         for mention in ment:
-                            if not mention['type'] == 'mention':
+                            if not mention.type == 'mention':
                                 continue
-                            s = mention['status']
-                            if s['visibility'] == Visibility.DIRECT and len(s['mentions']) == 1:
+                            s = mention.status
+                            if s.visibility == Visibility.DIRECT and len(s.mentions) == 1:
                                 dmsgs.append(s)
                             else:
                                 mentions.append(s)
                     for dm in reversed(dmsgs):
-                        acct = dm['account']['acct'].lower()
+                        acct = dm.account.acct
                         text = '{} (@{}):\n\n'.format(
-                            dm['account']['display_name'], acct)
+                            dm.account.display_name, acct)
 
                         media_urls = '\n'.join(
-                            media['url'] for media in dm['media_attachments'])
+                            media.url for media in dm.media_attachments)
                         if media_urls:
                             text += media_urls + '\n\n'
 
-                        soup = BeautifulSoup(dm['content'], 'html.parser')
-                        accts = {e['url']: '@'+e['acct']
-                                 for e in dm['mentions']}
+                        soup = BeautifulSoup(dm.content, 'html.parser')
+                        accts = {e.url: '@'+e.acct
+                                 for e in dm.mentions}
                         for a in soup('a', class_='mention'):
-                            a.string = accts.get(a['href'], a.string)
+                            a.string = accts[a['href']]
                         for br in soup('br'):
                             br.replace_with('\n')
                         for p in soup('p'):
@@ -280,7 +277,7 @@ class MastodonBridge(Plugin):
                         text += '\n\nID: {}{}'.format(url, dm.id)
 
                         pv = cls.db.execute(
-                            'SELECT * FROM priv_chats WHERE api_url=? AND username=? AND contact=?', (acc['api_url'], acc['username'], acct)).fetchone()
+                            'SELECT * FROM priv_chats WHERE api_url=? AND username=? AND contact=?', (acc['api_url'], acc['username'], acct.lower())).fetchone()
                         if pv:
                             g = cls.bot.get_chat(pv['id'])
                             if g is None:
@@ -296,7 +293,7 @@ class MastodonBridge(Plugin):
 
                             file_name = cls.bot.get_blobpath(
                                 'mastodon-avatar.jpg')
-                            r = requests.get(dm['account']['avatar_static'])
+                            r = requests.get(dm.account.avatar_static)
                             with open(file_name, 'wb') as fd:
                                 fd.write(r.content)
 
@@ -358,7 +355,7 @@ class MastodonBridge(Plugin):
 
         m = Mastodon(api_base_url=api_url, ratelimit_method='throw')
         access_token = m.log_in(email, passwd)
-        uname = m.me()['acct'].lower()
+        uname = m.me().acct.lower()
 
         old_user = cls.db.execute(
             'SELECT * FROM accounts WHERE username=? AND api_url=?', (uname, api_url)).fetchone()
@@ -366,7 +363,7 @@ class MastodonBridge(Plugin):
             chat.send_text(_('Account already in use'))
         else:
             n = m.notifications(limit=1)
-            last_notification = n[0]['id'] if n else None
+            last_notification = n[0].id if n else None
 
             addr = ctx.msg.get_sender_contact().addr
             tgroup = cls.bot.create_group(
@@ -463,9 +460,9 @@ class MastodonBridge(Plugin):
                 ctx.text, acc['username'], acc['api_url']))
             m = cls.get_session(acc)
             contact = m.account_search(ctx.text, limit=1)
-            if contact and contact[0]['acct'].lower() in (ctx.text, ctx.text.split('@')[0]):
+            if contact and contact[0].acct.lower() in (ctx.text, ctx.text.split('@')[0]):
                 file_name = cls.bot.get_blobpath('mastodon-avatar.jpg')
-                r = requests.get(contact[0]['avatar_static'])
+                r = requests.get(contact[0].avatar_static)
                 with open(file_name, 'wb') as fd:
                     fd.write(r.content)
                 g.set_profile_image(file_name)
