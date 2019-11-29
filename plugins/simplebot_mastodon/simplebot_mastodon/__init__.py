@@ -670,8 +670,14 @@ class MastodonBridge(Plugin):
         if fields:
             text += fields+'\n\n'
         text += cls.get_text(user.note)
-        text += '\n\nToots: {}\nFollowing: {}\nFollowers: {}'.format(
+        text += '\n\nToots: {}\nFollowing: {}\nFollowers: {}\n\n'.format(
             user.statuses_count, user.following_count, user.followers_count)
+
+        toots = m.account_statuses(user.id)
+        url = '{}@{}/'.format(acc['api_url'], acc['username'])
+        text += '\n\n―――――――――――――――\n\n'.join(
+            cls.toots2text(toots, url))
+
         chat.send_text(text)
 
     @classmethod
