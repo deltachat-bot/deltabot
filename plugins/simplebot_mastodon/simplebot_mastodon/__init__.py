@@ -172,7 +172,7 @@ class MastodonBridge(Plugin):
             if t.mentions:
                 accts = {e.url: '@' + e.acct
                          for e in t.mentions}
-                for a in soup('a', class_='mention'):
+                for a in soup('a', class_='u-url'):
                     a.string = accts[a['href']]
             for br in soup('br'):
                 br.replace_with('\n')
@@ -192,7 +192,7 @@ class MastodonBridge(Plugin):
                 t.content, 'html.parser')
             if t.mentions:
                 accts = {e.url: '@' + e.acct for e in t.mentions}
-                for a in soup('a', class_='mention'):
+                for a in soup('a', class_='u-url'):
                     a.string = accts[a['href']]
             t['content'] = str(soup)
 
@@ -267,7 +267,7 @@ class MastodonBridge(Plugin):
                         soup = BeautifulSoup(dm.content, 'html.parser')
                         accts = {e.url: '@'+e.acct
                                  for e in dm.mentions}
-                        for a in soup('a', class_='mention'):
+                        for a in soup('a', class_='u-url'):
                             a.string = accts[a['href']]
                         for br in soup('br'):
                             br.replace_with('\n')
