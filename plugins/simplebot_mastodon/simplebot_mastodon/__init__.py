@@ -159,8 +159,13 @@ class MastodonBridge(Plugin):
     @staticmethod
     def toots2text(toots, url):
         for t in reversed(toots):
-            text = '{} (@{}):\n\n'.format(
-                t.account.display_name, t.account.acct)
+            if t.reblog:
+                a = t.reblog.account
+                text = '{} (@{}):\n🔁 {} (@{})\n\n'.format(
+                    a.account.display_name, a.account.acct, t.account.display_name, t.account.acct)
+            else:
+                text = '{} (@{}):\n\n'.format(
+                    t.account.display_name, t.account.acct)
 
             media_urls = '\n'.join(
                 media.url for media in t.media_attachments)

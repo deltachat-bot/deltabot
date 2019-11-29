@@ -15,7 +15,11 @@ Mentions
   {% for e in mentions %}
   <div class="status-card">
     <header class="w3-container w3-blue">
+      {% if e.reblog %}
+      {{ '{} (@{})\n🔁 {} (@{})'.format(e.reblog.account.display_name, e.reblog.account.acct, e.account.display_name, e.account.acct) }}
+      {% else %}
       {{ '{} (@{})'.format(e.account.display_name, e.account.acct) }}
+      {% endif %}
     </header>
     <div class="w3-container">
       <p>
