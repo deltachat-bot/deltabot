@@ -117,6 +117,20 @@ class MastodonBridge(Plugin):
         return Mastodon(access_token=acc['access_token'], api_base_url=acc['api_url'], ratelimit_method='throw')
 
     @classmethod
+    def get_user(cls, m, user_id):
+        user = None
+        if user_id.isdigit():
+            user = m.account(user_id)
+        else:
+            user_id = user_id.lstrip('@').lower()
+            ids = (user_id, user_id.split('@')[0])
+            for a in m.account_search(user_id):
+                if a.acct.lower() in ids:
+                    user = a
+                    break
+        return user
+
+    @classmethod
     def toot(cls, ctx, acc, visibility=None, in_reply_to=None):
         m = cls.get_session(acc)
         if ctx.msg.is_image() or ctx.msg.is_gif() or ctx.msg.is_video() or ctx.msg._view_type in (dc.const.DC_MSG_AUDIO, dc.const.DC_MSG_VOICE):
@@ -536,12 +550,8 @@ class MastodonBridge(Plugin):
 
         m = cls.get_session(acc)
         if not acc_id.isdigit():
-            acc_id = acc_id.lower()
-            for a in m.account_search(acc_id):
-                if a.acct.lower() == acc_id:
-                    acc_id = a.id
-                    break
-            else:
+            acc_id = cls.get_user(m, acc_id)
+            if acc_id is None:
                 chat.send_text(_('Invalid id'))
                 return
         m.account_follow(acc_id)
@@ -565,12 +575,8 @@ class MastodonBridge(Plugin):
 
         m = cls.get_session(acc)
         if not acc_id.isdigit():
-            acc_id = acc_id.lower()
-            for a in m.account_search(acc_id):
-                if a.acct.lower() == acc_id:
-                    acc_id = a.id
-                    break
-            else:
+            acc_id = cls.get_user(m, acc_id)
+            if acc_id is None:
                 chat.send_text(_('Invalid id'))
                 return
         m.account_unfollow(acc_id)
@@ -594,12 +600,8 @@ class MastodonBridge(Plugin):
 
         m = cls.get_session(acc)
         if not acc_id.isdigit():
-            acc_id = acc_id.lower()
-            for a in m.account_search(acc_id):
-                if a.acct.lower() == acc_id:
-                    acc_id = a.id
-                    break
-            else:
+            acc_id = cls.get_user(m, acc_id)
+            if acc_id is None:
                 chat.send_text(_('Invalid id'))
                 return
         m.account_mute(acc_id)
@@ -623,12 +625,8 @@ class MastodonBridge(Plugin):
 
         m = cls.get_session(acc)
         if not acc_id.isdigit():
-            acc_id = acc_id.lower()
-            for a in m.account_search(acc_id):
-                if a.acct.lower() == acc_id:
-                    acc_id = a.id
-                    break
-            else:
+            acc_id = cls.get_user(m, acc_id)
+            if acc_id is None:
                 chat.send_text(_('Invalid id'))
                 return
         m.account_unmute(acc_id)
@@ -651,17 +649,11 @@ class MastodonBridge(Plugin):
             return
 
         m = cls.get_session(acc)
-        if acc_id.isdigit():
-            user = m.account(acc_id)
-        else:
-            acc_id = acc_id.lower()
-            for a in m.account_search(acc_id):
-                if a.acct.lower() == acc_id:
-                    user = a
-                    break
-            else:
-                chat.send_text(_('Invalid id'))
-                return
+        user = cls.get_user(m, acc_id)
+        if user is None:
+            chat.send_text(_('Invalid id'))
+            return
+
         text = '{} (@{}):\n\n'.format(user.display_name, user.acct)
         fields = ''
         for f in user.fields:
