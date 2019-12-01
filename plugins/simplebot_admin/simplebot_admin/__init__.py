@@ -48,6 +48,8 @@ class Admin(Plugin):
                           _('Remove the given message or message range from the INBOX'), cls.rmmsg_cmd),
             PluginCommand('/admin/delrss', ['<feed>'],
                           _('Delete the RSS with the give url from the RSS data base (needs simplebot_rss plugin)'), cls.delrss_cmd),
+            PluginCommand('/admin/joinchannel', ['<id>'],
+                          _('Join a channel as admin (needs simplebot_groupmaster plugin)'), cls.joinchannel_cmd),
             PluginCommand('/admin/stats', [], _('Show statistics about the bot'), cls.stats_cmd)]
         cls.bot.add_commands(cls.commands)
 
@@ -170,6 +172,20 @@ class Admin(Plugin):
         RSS.db.execute(
             'DELETE FROM feeds WHERE url=?', (ctx.text,))
         chat.send_text('Feed deleted')
+
+    @classmethod
+    def joinchannel_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        sender = ctx.msg.get_sender_contact()
+
+        if sender.addr not in cls.cfg['admins'].split():
+            chat.send_text(_('You are not an administrator'))
+            return
+
+        from simplebot_groupmaster import GroupMaster
+        r = GroupMaster.db.execute(
+            'SELECT admin FROM channels WHERE id=?', (ctx.text,)).fetchone()
+        cls.bot.get_chat(r[0]).add_contact(sender)
 
 
 class DBManager:
