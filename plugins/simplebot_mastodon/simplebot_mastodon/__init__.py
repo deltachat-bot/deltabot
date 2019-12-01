@@ -205,7 +205,7 @@ class MastodonBridge(Plugin):
             yield text
 
     @classmethod
-    def toots2html(cls, toots, url):
+    def toots2html(cls, toots, url, template='items.html', **kargs):
         for t in toots:
             soup = BeautifulSoup(
                 t.content, 'html.parser')
@@ -216,8 +216,8 @@ class MastodonBridge(Plugin):
             t['content'] = str(soup)
 
         me = cls.bot.get_contact().addr
-        return cls.env.get_template('items.html').render(
-            plugin=cls, mentions=reversed(toots), bot_addr=me, url=quote_plus(url), v2emoji=v2emoji)
+        return cls.env.get_template(template).render(
+            plugin=cls, toots=toots, bot_addr=me, url=quote_plus(url), v2emoji=v2emoji, **kargs)
 
     @classmethod
     def get_account(cls, chat):
@@ -654,23 +654,28 @@ class MastodonBridge(Plugin):
             chat.send_text(_('Invalid id'))
             return
 
-        text = '{} (@{}):\n\n'.format(user.display_name, user.acct)
-        fields = ''
-        for f in user.fields:
-            fields += '{}: {}\n'.format(cls.get_text(f.name),
-                                        cls.get_text(f.value))
-        if fields:
-            text += fields+'\n\n'
-        text += cls.get_text(user.note)
-        text += '\n\nToots: {}\nFollowing: {}\nFollowers: {}\n\n'.format(
-            user.statuses_count, user.following_count, user.followers_count)
-
-        toots = m.account_statuses(user.id)
         url = '{}@{}/'.format(acc['api_url'], acc['username'])
-        text += '\n\n―――――――――――――――\n\n'.join(
-            cls.toots2text(toots, url))
+        toots = m.account_statuses(user.id)
+        if ctx.mode in (Mode.TEXT, Mode.TEXT_HTMLZIP):
+            text = '{} (@{}):\n\n'.format(user.display_name, user.acct)
+            fields = ''
+            for f in user.fields:
+                fields += '{}: {}\n'.format(cls.get_text(f.name),
+                                            cls.get_text(f.value))
+            if fields:
+                text += fields+'\n\n'
+            text += cls.get_text(user.note)
+            text += '\n\nToots: {}\nFollowing: {}\nFollowers: {}\n\n'.format(
+                user.statuses_count, user.following_count, user.followers_count)
 
-        chat.send_text(text)
+            text += '\n\n―――――――――――――――\n\n'.join(
+                cls.toots2text(toots, url))
+
+            chat.send_text(text)
+        else:
+            html = cls.toots2html(
+                toots, url, template='profile.html', user=user)
+            cls.bot.send_html(chat, html, cls.name, ctx.mode)
 
     @classmethod
     def timeline_cmd(cls, ctx):

@@ -31,9 +31,11 @@
     {% block css %}{% endblock %}
   </head>
   <body>
+    {% block header %}
     <div id="topbar" class="w3-container w3-blue">
-      <h1>{% block header %}{{ plugin.name }}{% endblock %}</h1>
+      <h1>{% block header_text %}{{ plugin.name }}{% endblock %}</h1>
     </div>
+    {% endblock %}
     {% block content %}{% endblock %}
     </body>
 </html>
