@@ -44,7 +44,7 @@ class Helper(Plugin):
     @classmethod
     def help_cmd(cls, ctx):
         chat = cls.bot.get_chat(ctx.msg)
-        if ctx.mode == Mode.TEXT:
+        if ctx.mode in (Mode.TEXT, Mode.TEXT_HTMLZIP):
             text = _('Commands:\n\n')
             for c in cls.bot.commands:
                 text += '{0} {1}\n{2}\n\n'.format(
