@@ -77,7 +77,7 @@ class DeltaFriends(Plugin):
     def list_cmd(cls, ctx):
         friends = cls.db.execute('SELECT * FROM deltafriends ORDER BY addr')
         chat = cls.bot.get_chat(ctx.msg)
-        if ctx.mode == Mode.TEXT:
+        if ctx.mode in (Mode.TEXT, Mode.TEXT_HTMLZIP):
             text = _('{0} ({1}):\n\n').format(cls.name, len(friends))
             for f in friends:
                 text += '{0}:\n{1}\n\n'.format(f['addr'], f['bio'])

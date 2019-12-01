@@ -703,7 +703,7 @@ class GroupMaster(Plugin):
 
         chat = cls.bot.get_chat(ctx.msg)
         gcount = len(groups)
-        if ctx.mode == Mode.TEXT:
+        if ctx.mode in (Mode.TEXT, Mode.TEXT_HTMLZIP):
             groups.sort(key=lambda g: g[-1])
             text = '{0} ({1}):\n\n'.format(cls.name, gcount)
             for g in groups:
