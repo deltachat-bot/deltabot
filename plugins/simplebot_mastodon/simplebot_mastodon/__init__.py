@@ -341,9 +341,6 @@ class MastodonBridge(Plugin):
             'SELECT * FROM accounts WHERE toots=?', (chat.id,)).fetchone()
         if account:
             ctx.processed = True
-            if account['status'] == Status.DISABLED:
-                cls.db.execute('UPDATE accounts SET status=? WHERE api_url=? AND username=?', (
-                    Status.ENABLED, account['api_url'], account['username']))
             cls.toot(ctx, account)
             return
 
