@@ -64,8 +64,7 @@ class DeltaBot:
     def send_file(self, chat, path, text, view_type='file'):
         msg = dc.message.Message.new_empty(self.account, view_type)
         msg.set_file(path)
-        dc.capi.lib.dc_msg_set_text(
-            msg._dc_msg, dc.cutil.as_dc_charpointer(text))
+        msg.set_text(text)
         chat.send_prepared(chat.prepare_message(msg))
 
     def add_commands(self, commands):
