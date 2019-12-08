@@ -2,6 +2,7 @@
   :align: center
   :alt: SimpleBot Logo
 
+
 SimpleBot
 =========
 
@@ -30,6 +31,7 @@ Official Plugins
 - **Wikiquote:** Get quotes from Wikiquote on Delta Chat.
 - **XKCD:** See xkcd.com comics in Delta Chat.
 
+
 Install
 -------
 
@@ -40,6 +42,7 @@ To install it run the following command (preferably in a ``virtualenv``):
    $ pip3 install simplebot
 
 Then install `some plugins <https://pypi.org/search/?q=simplebot&o=&c=Environment+%3A%3A+Plugins>`_
+
 
 Starting the bot
 ----------------
@@ -67,71 +70,6 @@ It will listen for incoming messages and handle them with plugins.
 
 Install `Delta Chat  <https://delta.chat>`_ and add your bot's email address as a contact and
 start chatting with it! You can also add the bot as a member to a group chat.
-
-Development
-===========
-
-Creating your own bot
----------------------
-
-This is an example of how to create your very own "echo bot" in eight lines of code:
-
-.. code-block:: python
-
-   from simplebot.deltabot import DeltaBot
-   
-   def on_echo(msg, text):
-       bot.get_chat(msg).send_text(text)
-   
-   bot = DeltaBot('/path/to/bot/dir/')
-   bot.add_command('/echo', ['[text]'], 'Test command', on_echo)
-   
-   if not bot.is_configured():
-       bot.configure('<email>', '<password>')
-   
-   bot.start()
-
-Replace "/path/to/bot/dir/", "<email>" and "<password>" with appropriate values and run the code,
-send a test message to the bot address: `/echo hello world`, the bot should reply with a "hello world"
-message.
-
-Creating a SimpleBot plugin
----------------------------
-
-This is an example of an "echo plugin":
-
-.. code-block:: python
-
-   # in a package called "echo"
-   from simplebot import Plugin
-   
-   class Echo(Plugin):
-       @classmethod
-       def activate(cls, bot):
-           self.bot = bot
-           cls.commands = [('/echo', ['[text]'], 'Echoes back the given text', cls.on_echo)]
-           cls.bot.add_commands(cls.commands)
-    
-       @classmethod
-       def on_echo(cls, msg, text):
-           chat = cls.bot.get_chat(msg)
-           chat.send_text(text)
-
-In the package is `setup.py` file add an entry point:
-
-.. code-block:: python
-
-   setup(
-   # (...)
-   install_requires=['simplebot'],
-   entry_points={
-           'simplebot.plugins': 'Echo = echo:Echo')
-       }
-   # (...)
-   )
-
-Install the package and start the bot, the bot will load your plugin,
-send a message like '/echo hello world' to see if it works.
 
 
 Delta Chat Bot Integration (Request)
