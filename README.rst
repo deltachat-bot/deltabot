@@ -1,3 +1,7 @@
+.. image:: simplebot/simplebot-avatar.png
+  :align: center
+  :alt: SimpleBot Logo
+
 SimpleBot
 =========
 
