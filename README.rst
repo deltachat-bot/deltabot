@@ -7,8 +7,8 @@ SimpleBot
 =========
 
 A simple "deltabot" that depends on plugins to add functionality.
-It works as part of a group or in 1:1 chats in https://delta.chat
-applications. SimpleBot supports Autocrypt end-to-end encryption
+It works as part of a group or in 1:1 chats in `Delta Chat  <https://delta.chat>`_
+applications. SimpleBot supports `Autocrypt <https://autocrypt.org/>`_ end-to-end encryption
 but note that the operator of the bot service can look into
 messages that are sent to it.
 
