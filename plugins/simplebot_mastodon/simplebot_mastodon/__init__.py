@@ -331,6 +331,10 @@ class MastodonBridge(Plugin):
                             html = cls.toots2html(mentions, url)
                             cls.bot.send_html(
                                 chat, html, cls.name, pref['mode'])
+                except mastodon.MastodonUnauthorizedError:
+                    cls.delete_account(acc)
+                    cls.bot.get_chat(acc['addr']).send_text(
+                        _('You have logged out from Mastodon'))
                 except Exception as ex:
                     cls.bot.logger.exception(ex)
             cls.worker.deactivated.wait(cls.cfg.getint('delay'))
@@ -417,7 +421,8 @@ class MastodonBridge(Plugin):
 
         if acc:
             cls.delete_account(acc)
-            cls.bot.get_chat(contact).send_text(_('You have logged out'))
+            cls.bot.get_chat(contact).send_text(
+                _('You have logged out from Mastodon'))
         else:
             cls.bot.get_chat(ctx.msg).send_text(_('Unknow account'))
 
