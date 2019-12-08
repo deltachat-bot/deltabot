@@ -72,26 +72,7 @@ Install `Delta Chat  <https://delta.chat>`_ and add your bot's email address as 
 start chatting with it! You can also add the bot as a member to a group chat.
 
 
-Delta Chat Bot Integration (Request)
-====================================
+License
+=======
 
-Bot API
--------
-
-- Delta Chat Core (**DCC**) must provide functions to declare the configured account as bot, and to know if a contact is a bot. If an account is a bot, **DCC** must include a header in the messages sent so other **DC clients** know this is a bot account.
-- **DC clients** applications should show a label or other prominent way to identify an account as a bot.
-- **DCC** must allow to register a list of commands and their description, this information is sent attached to the message sent by the bot, **DC clients** should use this information to provide command completion and description.
-- For consistency **DCC** should force a command prefix for bots instead of letting this decision to bots developers (ex. "!" or "/")
-- When the bot or a new member is added to a group the bot's **DCC** must automatically reply with a message with the metadata about the commands the bot supports. **DC clients** shouldn't show this message to the user or show a system message instead.
-- By default bots should be added to groups in a **"privacy mode"**, in this mode **DC clients** will not send messages to the bot unless they are command messages or changes in the group status (ex. adding/removing members, changing group name or picture). This way the bots are not overloaded with useless messages and also improves the privacy for users.
-- **DC clients** must provide a way to know if a bot is in "privacy mode" or not in the group settings, and allow to change the mode (only if the bot require it for some functionality, if the bot don't require "privacy mode" to be off, don't let the user change this).
-- Bots should not receive messages from other bots, if a bot sends a message to a group, **DCC** should send the message to the human members of the group, unless it is a  change in group status (ex. adding/removing members, changing group name or picture)
-- On a private chat(1x1) with the bot, the bot may send an especial message to send a "buttons" list, each button has a label, a command string and a "has_args" flag, with this data, **DC clients** should display a board with the buttons in the bot's chat, when a button is clicked, if "has_args" is false, a message with the button's command should be sent, otherwise the DC client should show the input field in an especial way with some visual effects to reflect that what you type here will be sent as part of the command, the user type what should be passed to the command and then press the sent button.
-
-
-Games API
----------
-
-- **TODO:** talk here about an integrated webview in DC clients, and an API for intercommunication between the webview(JavaScript) and DCC
-- Messages sent in background with the game api should be differentiated from messages sent manually by the user
-- Background messages can only include the bot address in the "To" header (ex. clients can't be used to send spam to 3rd parties)
+This project is **free software**, licensed under the **GPL3** License - see the `LICENSE <https://github.com/adbenitez/simplebot/blob/master/LICENSE>`_ file for more details.
