@@ -1,4 +1,4 @@
-.. image:: simplebot/simplebot-avatar.png
+.. image:: artwork/simplebot-banner.png
   :align: center
   :alt: SimpleBot Logo
 
