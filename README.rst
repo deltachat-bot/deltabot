@@ -8,9 +8,27 @@ SimpleBot
 A simple "deltabot" that depends on plugins to add functionality.
 It works as part of a group or in 1:1 chats in https://delta.chat
 applications. SimpleBot supports Autocrypt end-to-end encryption
-but note that the operator of the "bot" service can look into
+but note that the operator of the bot service can look into
 messages that are sent to it.
 
+
+Official Plugins
+----------------
+
+- **Admin:** Administration tools for bot operators.
+- **Echo:** Simple plugin to echo back text.
+- **FB Messenger:** Facebook Messenger bridge.
+- **DeltaFriends:** Provides a directory for users to share their address and biography.
+- **GroupMaster:** Extends the capabilities of Delta Chat groups, adding "mega groups", "channels", and allowing to have public groups, or invite friends to join a group with a private link.
+- **Help:** Provides a help command.
+- **Mastodon Bridge:** A bridge between Delta Chat and Mastodon network.
+- **RSS:** Subscribe to RSS and Atom links.
+- **Shortcuts:** Allows to create custom shortcuts for commands.
+- **Tic Tac Toe:** The simple Tic Tac Toe game to play with friends.
+- **Translator:** Allows to translate text. Example: /tr en es hello world.
+- **WebGrabber:** Access the web using Delta Chat.
+- **Wikiquote:** Get quotes from Wikiquote on Delta Chat.
+- **XKCD:** See xkcd.com comics in Delta Chat.
 
 Install
 -------
