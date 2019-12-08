@@ -92,6 +92,8 @@ class MastodonBridge(Plugin):
                           _('Mark as favourite the toot with the given id'), cls.star_cmd),
             PluginCommand('/masto/boost', ['<id>'],
                           _('Boost the toot with the given id'), cls.boost_cmd),
+            PluginCommand('/masto/context', ['<id>'],
+                          _('Get the context of the toot with the given id'), cls.context_cmd),
             PluginCommand('/masto/follow', ['<id>'],
                           _('Follow the user with the given id'), cls.follow_cmd),
             PluginCommand('/masto/unfollow', ['<id>'],
@@ -528,6 +530,31 @@ class MastodonBridge(Plugin):
 
         m = cls.get_session(acc)
         m.status_reblog(toot_id)
+
+    @classmethod
+    def context_cmd(cls, ctx):
+        chat = cls.bot.get_chat(ctx.msg)
+        api_url, uname, toot_id = cls.parse_url(ctx.text)
+        addr = ctx.msg.get_sender_contact().addr
+
+        acc = cls.db.execute(
+            'SELECT * FROM accounts WHERE api_url=? AND username=? AND addr=?', (api_url, uname, addr)).fetchone()
+        if not acc:
+            chat.send_text(_('Invalid toot id'))
+            return
+
+        m = cls.get_session(acc)
+        toots = m.status_context(toot_id)['ancestors']
+        if toots:
+            url = '{}@{}/'.format(acc['api_url'], acc['username'])
+            if ctx.mode in (Mode.TEXT, Mode.TEXT_HTMLZIP):
+                chat.send_text('\n\n―――――――――――――――\n\n'.join(
+                    cls.toots2text([toots[-1]], url)))
+            else:
+                html = cls.toots2html([toots[-1]], url)
+                cls.bot.send_html(chat, html, cls.name, ctx.mode)
+        else:
+            chat.send_text(_('Nothing found'))
 
     @classmethod
     def follow_cmd(cls, ctx):
