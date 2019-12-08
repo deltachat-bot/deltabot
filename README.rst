@@ -7,7 +7,7 @@ SimpleBot
 =========
 
 A simple "deltabot" that depends on plugins to add functionality.
-It works as part of a group or in 1:1 chats in `Delta Chat  <https://delta.chat>`_
+It works as part of a group or in 1:1 chats in `Delta Chat`_
 applications. SimpleBot supports `Autocrypt <https://autocrypt.org/>`_ end-to-end encryption
 but note that the operator of the bot service can look into
 messages that are sent to it. See also: https://github.com/Simon-Laux/ZHV/
@@ -68,7 +68,7 @@ You can then let the bot listen continously:
 
 It will listen for incoming messages and handle them with installed plugins.
 
-Install `Delta Chat  <https://delta.chat>`_ and add your bot's email address as a contact and
+Install `Delta Chat`_ and add your bot's email address as a contact and
 start chatting with it! You can also add the bot as a member to a group chat.
 
 
@@ -76,3 +76,6 @@ License
 =======
 
 This project is **free software**, licensed under the **GPL3** License - see the `LICENSE <https://github.com/adbenitez/simplebot/blob/master/LICENSE>`_ file for more details.
+
+
+.. _Delta Chat: https://delta.chat
