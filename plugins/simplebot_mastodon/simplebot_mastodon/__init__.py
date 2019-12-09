@@ -337,6 +337,7 @@ class MastodonBridge(Plugin):
                         _('You have logged out from Mastodon'))
                 except Exception as ex:
                     cls.bot.logger.exception(ex)
+                cls.worker.deactivated.wait(1)
             cls.worker.deactivated.wait(cls.cfg.getint('delay'))
 
     @classmethod
