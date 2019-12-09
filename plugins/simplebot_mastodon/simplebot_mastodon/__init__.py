@@ -310,7 +310,7 @@ class MastodonBridge(Plugin):
                             g = cls.bot.create_group(
                                 '🇲 {} ({})'.format(acct, rmprefix(acc['api_url'], 'https://')), [acc['addr']])
                             cls.db.execute(
-                                'INSERT INTO priv_chats VALUES (?,?,?,?)', (g.id, acct, acc['api_url'], acc['username']))
+                                'INSERT INTO priv_chats VALUES (?,?,?,?)', (g.id, acct.lower(), acc['api_url'], acc['username']))
 
                             file_name = cls.bot.get_blobpath(
                                 'mastodon-avatar.jpg')
