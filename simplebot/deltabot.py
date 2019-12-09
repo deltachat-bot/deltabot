@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+import logging.handlers
 import os
 
 import deltachat as dc
@@ -34,7 +35,7 @@ class DeltaBot:
         self.commands = []
         self.filters = []
         self.basedir = os.path.abspath(os.path.expanduser(basedir))
-        self.logger = _get_logger()
+        self._init_logger()
         self.account = _get_account(self.basedir)
         self.account.set_config('save_mime_headers', '1')
         self.account.set_config('e2ee_enabled', '1')
@@ -202,17 +203,25 @@ class DeltaBot:
                 self.logger.info("CONFIG PROGRESS {}".format(data1))
                 return data1
 
+    def _init_logger(self):
+        logger = logging.Logger('DeltaBot')
+        logger.parent = None
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-def _get_logger():
-    logger = logging.Logger('DeltaBot')
-    logger.parent = None
-    chandler = logging.StreamHandler()
-    chandler.setLevel(logging.DEBUG)
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    chandler.setFormatter(formatter)
-    logger.addHandler(chandler)
-    return logger
+        chandler = logging.StreamHandler()
+        chandler.setLevel(logging.DEBUG)
+        chandler.setFormatter(formatter)
+        logger.addHandler(chandler)
+
+        log_path = os.path.join(self.basedir, 'logs.txt')
+        fhandler = logging.handlers.RotatingFileHandler(
+            log_path, backupCount=5, maxBytes=2000000)
+        fhandler.setLevel(logging.INFO)
+        fhandler.setFormatter(formatter)
+        logger.addHandler(fhandler)
+
+        self.logger = logger
 
 
 def _get_account(basedir):
