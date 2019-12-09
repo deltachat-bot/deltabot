@@ -217,7 +217,7 @@ class DeltaBot:
         log_path = os.path.join(self.basedir, 'logs.txt')
         fhandler = logging.handlers.RotatingFileHandler(
             log_path, backupCount=5, maxBytes=2000000)
-        fhandler.setLevel(logging.INFO)
+        fhandler.setLevel(logging.DEBUG)
         fhandler.setFormatter(formatter)
         logger.addHandler(fhandler)
 
