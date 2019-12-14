@@ -139,7 +139,7 @@ class GroupMaster(Plugin):
                     ctx.text = '{}:\n{}'.format(
                         nick, ctx.text) if ctx.text else nick
                     for g in cls.get_cchats(ch['id']):
-                        cls.bot.send_file(g, ctx.msg.file_name, ctx.text)
+                        cls.bot.send_file(g, ctx.msg.filename, ctx.text)
                 else:
                     chat.send_text(
                         _('Message is too big, only up to 100KB are allowed'))
