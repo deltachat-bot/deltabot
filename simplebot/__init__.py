@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
-from abc import ABC, abstractmethod
+from abc import ABC
 from enum import IntEnum
 import configparser
-import logging
 import os
-import re
 import sqlite3
 import zipfile
 import zlib
@@ -96,7 +94,7 @@ class SimpleBot(DeltaBot):
     plugins = None
     # logging.Logger compatible instance
     logger = None
-   # locale to start the bot: es, en, etc.
+    # locale to start the bot: es, en, etc.
     locale = 'en'
     # base directory for the bot configuration and db file
     basedir = None
