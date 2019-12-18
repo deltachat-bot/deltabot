@@ -202,7 +202,7 @@ class SimpleBot(DeltaBot):
             if botcfg['avatar']:
                 if botcfg['avatar'].isdigit():
                     avatar = os.path.join(os.path.dirname(
-                        __file__), 'avatar{}.png'.format(botcfg['avatar']))
+                        __file__), 'assets', 'avatar{}.png'.format(botcfg['avatar']))
                     self.account.set_avatar(avatar)
                 else:
                     self.account.set_avatar(botcfg['avatar'])
