@@ -203,9 +203,9 @@ class SimpleBot(DeltaBot):
                 if botcfg['avatar'].isdigit():
                     avatar = os.path.join(os.path.dirname(
                         __file__), 'avatar{}.png'.format(botcfg['avatar']))
-                    self.set_avatar(avatar)
+                    self.account.set_avatar(avatar)
                 else:
-                    self.set_avatar(botcfg['avatar'])
+                    self.account.set_avatar(botcfg['avatar'])
 
         self.account.set_config('mdns_enabled', botcfg['mdns_enabled'])
         self.account.set_config('mvbox_move', botcfg['mvbox_move'])
