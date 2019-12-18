@@ -1,40 +1,9 @@
 SimpleBot Changelog
 *******************
 
-0.8.0
+x.x.x
 -----
 
-- initial release as SimpleBot
-- removed functionality from deltabot, it was too complex for a simplebot ;)
-- added a basic capability for plugin
-
-
-Legacy changelog from deltabot:
-*******************************
-
-xxx
------
-
-- send hop trace for all incoming media types
-
-
-0.7.1
------
-
-- return with a rendered hop trace for every incoming message
-
-- deltabot is now compatible to py35 or higher only
-
-0.7.0
------
-
-- adapted to new deltachat-0.7.1 bindings
-
-- now reacting with showing the view type of a message content
-
-- new "info" command to show database info
-
-0.6.0
------
-
-- initial release with simple init and serve
+- initial release
+- update to new core API `e90926f <https://github.com/adbenitez/simplebot/commit/e90926feb60e0d2cc3f3bc8acb8a420f2c510e43>`_
+- add artwork `c244c89 <https://github.com/adbenitez/simplebot/commit/c244c89ef3875b7e6dcfee1edabf52efb71a5985>`_
