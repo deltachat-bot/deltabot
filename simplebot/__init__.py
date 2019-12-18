@@ -78,6 +78,9 @@ class DBManager:
                         (addr TEXT PRIMARY KEY,
                          locale TEXT,
                          mode INTEGER)''')
+        self.execute('''CREATE TABLE IF NOT EXISTS config
+                        (keyname TEXT PRIMARY KEY,
+                         value TEXT)''')
 
     def execute(self, statement, args=()):
         with self.db:
@@ -178,12 +181,32 @@ class SimpleBot(DeltaBot):
         botcfg.setdefault(
             'start_msg', 'This is SimpleBot, a free software bot for the Delta Chat aplication.\n\nSource code: https://github.com/adbenitez/simplebot')
         botcfg.setdefault('displayname', 'SimpleBot🤖')
+        botcfg.setdefault('avatar', '1')
         botcfg.setdefault('mdns_enabled', '0')
         botcfg.setdefault('mvbox_move', '0')
         botcfg.setdefault('e2ee_enabled', '1')
         self.save_config()
 
         self.set_name(botcfg['displayname'])
+
+        # set avatar if it isn't the current avatar
+        row = self._db.execute(
+            'SELECT * FROM config WHERE keyname="avatar"').fetchone()
+        if not row:
+            self._db.execute(
+                'INSERT INTO config VALUES ("avatar",?)', (botcfg['avatar'],))
+            row = {'keyname': 'avatar', 'value': None}
+        if row['value'] != botcfg['avatar']:
+            self._db.execute(
+                'UPDATE config SET value=? WHERE keyname="avatar"', (botcfg['avatar'],))
+            if botcfg['avatar']:
+                if botcfg['avatar'].isdigit():
+                    avatar = os.path.join(os.path.dirname(
+                        __file__), 'avatar{}.png'.format(botcfg['avatar']))
+                    self.set_avatar(avatar)
+                else:
+                    self.set_avatar(botcfg['avatar'])
+
         self.account.set_config('mdns_enabled', botcfg['mdns_enabled'])
         self.account.set_config('mvbox_move', botcfg['mvbox_move'])
         self.account.set_config('e2ee_enabled', botcfg['e2ee_enabled'])
