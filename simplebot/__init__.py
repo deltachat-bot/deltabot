@@ -105,10 +105,10 @@ class SimpleBot(DeltaBot):
     def __init__(self, basedir):
         super().__init__(basedir)
 
+        self._db = DBManager(os.path.join(self.basedir, 'simplebot.db'))
         self._cfg = configparser.ConfigParser(allow_no_value=True)
         self._cfg.path = os.path.join(self.basedir, 'simplebot.cfg')
         self._load_config()
-        self._db = DBManager(os.path.join(self.basedir, 'simplebot.db'))
 
         self._mdl = set()
         self._mpl = set()
