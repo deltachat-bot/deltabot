@@ -103,7 +103,7 @@ class SimpleBot(DeltaBot):
     basedir = None
 
     def __init__(self, basedir):
-        super().__init__(basedir)
+        super().__init__(basedir, 'SimpleBot {}'.format(__version__))
 
         self._db = DBManager(os.path.join(self.basedir, 'simplebot.db'))
         self._cfg = configparser.ConfigParser(allow_no_value=True)
