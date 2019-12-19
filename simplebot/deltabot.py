@@ -31,12 +31,12 @@ class Filter():
 
 
 class DeltaBot:
-    def __init__(self, basedir):
+    def __init__(self, basedir, os_name=None):
         self.commands = []
         self.filters = []
         self.basedir = os.path.abspath(os.path.expanduser(basedir))
         self._init_logger()
-        self.account = _get_account(self.basedir)
+        self.account = _get_account(self.basedir, os_name)
         self.account.set_config('save_mime_headers', '1')
         self.account.set_config('e2ee_enabled', '1')
         self.account.set_config('sentbox_watch', '0')
@@ -224,10 +224,10 @@ class DeltaBot:
         self.logger = logger
 
 
-def _get_account(basedir):
+def _get_account(basedir, os_name):
     if not os.path.exists(basedir):
         os.makedirs(basedir)
     db_path = os.path.join(basedir, "account.db")
-    acc = dc.Account(db_path)
+    acc = dc.Account(db_path, os_name=os_name)
     acc.db_path = db_path
     return acc
