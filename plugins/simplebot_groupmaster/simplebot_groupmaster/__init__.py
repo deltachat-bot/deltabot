@@ -528,8 +528,6 @@ class GroupMaster(Plugin):
                     for chat in cls.get_mchats(mg['id']):
                         if chat.id != g.id:
                             chat.send_text(text)
-                    g.send_text(banner.format(
-                        mg['name'], ctx.text, mg['topic']))
                     img = cls.db.execute(
                         'SELECT image, extension FROM mg_images WHERE mgroup=?', (mg['id'],)).fetchone()
                     if img:
@@ -538,6 +536,8 @@ class GroupMaster(Plugin):
                         with open(file_name, 'wb') as fd:
                             fd.write(img['image'])
                         g.set_profile_image(file_name)
+                    g.send_text(banner.format(
+                        mg['name'], ctx.text, mg['topic']))
                     return
             elif ctx.text.startswith(GROUP_URL):
                 gid = rmprefix(ctx.text, GROUP_URL).split('-')
@@ -577,8 +577,6 @@ class GroupMaster(Plugin):
                     g = cls.bot.create_group(ch['name'], [sender])
                     cls.db.execute(
                         'INSERT INTO cchats VALUES (?,?)', (g.id, ch['id']))
-                    g.send_text(banner.format(
-                        ch['name'], ctx.text, ch['topic']))
                     img = cls.db.execute(
                         'SELECT image, extension FROM channel_images WHERE channel=?', (ch['id'],)).fetchone()
                     if img:
@@ -587,6 +585,8 @@ class GroupMaster(Plugin):
                         with open(file_name, 'wb') as fd:
                             fd.write(img['image'])
                         g.set_profile_image(file_name)
+                    g.send_text(banner.format(
+                        ch['name'], ctx.text, ch['topic']))
                     return
             else:
                 raise ValueError('Invalid ID')

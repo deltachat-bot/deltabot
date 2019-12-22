@@ -103,9 +103,9 @@ class RSS(Plugin):
             group = cls.bot.create_group('[RSS] '+title, [sender])
             cls.db.insert((url, title, description,
                            None, None, str(group.id), None))
+            cls.set_image(group, d)
             group.send_text(
                 _('Title:\n{}\n\nURL:\n{}\n\nDescription:\n{}').format(title, url, description))
-            cls.set_image(group, d)
         elif cls._is_subscribed(sender, feed):  # user is already subscribed
             chat = cls.bot.get_chat(ctx.msg)
             chat.send_text(_('You are alredy subscribed to that feed.'))
@@ -116,9 +116,9 @@ class RSS(Plugin):
                 feed['chats'], group.id) if feed['chats'] else str(group.id)
             cls.db.execute(
                 'UPDATE feeds SET chats=? WHERE url=?', (chats, feed['url']))
+            cls.set_image(group, d)
             group.send_text(
                 _('Title:\n{}\n\nURL:\n{}\n\nDescription:\n{}').format(feed['title'], feed['url'], feed['description']))
-            cls.set_image(group, d)
             if d.entries and feed['latest']:
                 latest = tuple(map(int, feed['latest'].split()))
                 d.entries = cls.get_old_entries(d, latest)

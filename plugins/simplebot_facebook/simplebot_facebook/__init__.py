@@ -133,7 +133,6 @@ class FacebookBridge(Plugin):
         name = t.name if t.name else _('(NO NAME)')
         g = cls.bot.create_group('🇫 ' + name, [addr])
         cls.db.insert_group((g.id, t.uid, t.type.value, addr, Status.ENABLED))
-        g.send_text(_('Name: {}').format(name))
 
         if t.photo:
             r = requests.get(t.photo)
@@ -149,6 +148,9 @@ class FacebookBridge(Plugin):
             with open(file_name, 'wb') as fd:
                 fd.write(r.content)
             g.set_profile_image(file_name)
+
+        g.send_text(_('Name: {}').format(name))
+
         return g
 
     @classmethod
