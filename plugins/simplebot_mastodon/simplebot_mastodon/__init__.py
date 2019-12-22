@@ -318,8 +318,8 @@ class MastodonBridge(Plugin):
                             with open(file_name, 'wb') as fd:
                                 fd.write(r.content)
 
-                            g.send_text(text)
                             g.set_profile_image(file_name)
+                            g.send_text(text)
 
                     chat = cls.bot.get_chat(acc['notifications'])
                     if mentions:
@@ -399,15 +399,15 @@ class MastodonBridge(Plugin):
             cls.db.insert_user(
                 (api_url, uname, access_token, addr, Status.ENABLED, tgroup.id, ngroup.id, sgroup.id, last_notification))
 
+            sgroup.set_profile_image(MASTODON_LOGO)
+            tgroup.set_profile_image(MASTODON_LOGO)
+            ngroup.set_profile_image(MASTODON_LOGO)
             sgroup.send_text(
                 _('Here you can send commands for account: {} at {}\n\nTo logout from the bridge just leave this group').format(uname, api_url))
-            sgroup.set_profile_image(MASTODON_LOGO)
             tgroup.send_text(
                 _('Messages you send here will be tooted to {}\nAccount: {}').format(api_url, uname))
-            tgroup.set_profile_image(MASTODON_LOGO)
             ngroup.send_text(
                 _('Here you will receive notifications from {}\nAccount: {}').format(api_url, uname))
-            ngroup.set_profile_image(MASTODON_LOGO)
 
     @classmethod
     def logout_cmd(cls, ctx):
@@ -480,8 +480,6 @@ class MastodonBridge(Plugin):
                 '🇲 {} ({})'.format(ctx.text, rmprefix(acc['api_url'], 'https://')), [acc['addr']])
             cls.db.execute(
                 'INSERT OR REPLACE INTO priv_chats VALUES (?,?,?,?)', (g.id, ctx.text, acc['api_url'], acc['username']))
-            g.send_text(_('Private chat with {}\nYour account: {} ({})').format(
-                ctx.text, acc['username'], acc['api_url']))
             m = cls.get_session(acc)
             contact = m.account_search(ctx.text, limit=1)
             if contact and contact[0].acct.lower() in (ctx.text, ctx.text.split('@')[0]):
@@ -490,6 +488,8 @@ class MastodonBridge(Plugin):
                 with open(file_name, 'wb') as fd:
                     fd.write(r.content)
                 g.set_profile_image(file_name)
+            g.send_text(_('Private chat with {}\nYour account: {} ({})').format(
+                ctx.text, acc['username'], acc['api_url']))
 
     @classmethod
     def reply_cmd(cls, ctx):
