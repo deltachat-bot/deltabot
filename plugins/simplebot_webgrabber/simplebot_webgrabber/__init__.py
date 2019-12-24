@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from threading import Thread, BoundedSemaphore
 from urllib.parse import quote_plus, unquote_plus, quote
 import gettext
 import os
@@ -30,6 +31,8 @@ class WebGrabber(Plugin):
         if not cls.cfg.get('max-size'):
             cls.cfg['max-size'] = '5242880'
             cls.bot.save_config()
+
+        cls.pool = BoundedSemaphore(value=4)
 
         cls.env = Environment(
             loader=PackageLoader(__name__, 'templates'),
@@ -210,8 +213,11 @@ class WebGrabber(Plugin):
 
     @classmethod
     def web_cmd(cls, ctx):
+        def _task():
+            with cls.pool:
+                cls.send_page(cls.bot.get_chat(ctx.msg), url, ctx.mode)
         url = ctx.text.replace(EQUAL_TOKEN, '=').replace(AMP_TOKEN, '&')
-        cls.send_page(cls.bot.get_chat(ctx.msg), url, ctx.mode)
+        Thread(target=_task).start()
 
     @classmethod
     def ddg_cmd(cls, ctx):
