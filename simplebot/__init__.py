@@ -307,8 +307,9 @@ class SimpleBot(DeltaBot):
 
         self.logger.debug('Received message from {}'.format(addr,))
 
-        if ctx.msg.get_mime_headers()['chat-version'] is None:
-            self.logger.debug('Classic email rejected')
+        headers = ctx.msg.get_mime_headers()
+        if headers['chat-version'] is None or 'SimpleBot' in headers.get('X-Mailer', ''):
+            self.logger.debug('Email rejected')
             self.account.delete_messages((ctx.msg,))
             return
 
@@ -354,8 +355,9 @@ class SimpleBot(DeltaBot):
 
         self.logger.debug('Received command from {}'.format(addr,))
 
-        if ctx.msg.get_mime_headers()['chat-version'] is None:
-            self.logger.debug('Classic email rejected')
+        headers = ctx.msg.get_mime_headers()
+        if headers['chat-version'] is None or 'SimpleBot' in headers.get('X-Mailer', ''):
+            self.logger.debug('Email rejected')
             self.account.delete_messages((ctx.msg,))
             return
 
