@@ -12,8 +12,6 @@ import bs4
 import requests
 
 
-EQUAL_TOKEN = 'simplebot_e_token'
-AMP_TOKEN = 'simplebot_a_token'
 HEADERS = {
     'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
 
@@ -142,8 +140,6 @@ class WebGrabber(Plugin):
                     bot_addr = cls.bot.get_address()
                     for a in soup('a', href=True):
                         if not a['href'].startswith('mailto:'):
-                            a['href'] = a['href'].replace('=', EQUAL_TOKEN)
-                            a['href'] = a['href'].replace('&', AMP_TOKEN)
                             a['href'] = re.sub(
                                 r'^(//.*)', r'{}:\1'.format(root.split(':', 1)[0]), a['href'])
                             a['href'] = re.sub(
@@ -208,15 +204,13 @@ class WebGrabber(Plugin):
 
     @classmethod
     def url_cmd(cls, ctx):
-        url = ctx.text.replace(EQUAL_TOKEN, '=').replace(AMP_TOKEN, '&')
-        cls._send_text(cls.bot.get_chat(ctx.msg), url)
+        cls._send_text(cls.bot.get_chat(ctx.msg), ctx.text)
 
     @classmethod
     def web_cmd(cls, ctx):
         def _task():
             with cls.pool:
-                cls.send_page(cls.bot.get_chat(ctx.msg), url, ctx.mode)
-        url = ctx.text.replace(EQUAL_TOKEN, '=').replace(AMP_TOKEN, '&')
+                cls.send_page(cls.bot.get_chat(ctx.msg), ctx.text, ctx.mode)
         Thread(target=_task).start()
 
     @classmethod
