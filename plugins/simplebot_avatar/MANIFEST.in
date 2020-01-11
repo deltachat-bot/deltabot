@@ -1,0 +1,2 @@
+recursive-include simplebot_avatar/locale *
+include *.rst
