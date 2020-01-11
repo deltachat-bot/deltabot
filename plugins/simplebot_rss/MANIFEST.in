@@ -1,2 +1,3 @@
 recursive-include simplebot_rss/locale *
 recursive-include simplebot_rss/templates *
+include *.rst
