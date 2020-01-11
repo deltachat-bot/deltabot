@@ -27,7 +27,7 @@ class Translator(Plugin):
         cls.commands = [
             PluginCommand('/tr', ['<lang1>', '<lang2>', '<text>'],
                           _('Translate text from lang1 to lang2'), cls.tr_cmd),
-            PluginCommand('/tr/list', [], _('List supported languages and their code'), cls.tr_list)]
+            PluginCommand('/tr/list', [], _('List supported languages and their code'), cls.list_cmd)]
         cls.bot.add_commands(cls.commands)
 
     @classmethod
@@ -41,5 +41,5 @@ class Translator(Plugin):
                                      to_language=l2, host='https://translate.google.com'))
 
     @classmethod
-    def tr_list(cls, ctx):
+    def list_cmd(cls, ctx):
         cls.bot.get_chat(ctx.msg).send_text(LANGUAGES)
