@@ -1,1 +1,2 @@
 recursive-include simplebot_facebook/locale *
+include *.rst
