@@ -17,10 +17,11 @@ Official Plugins
 ----------------
 
 - **Admin:** Administration tools for bot operators.
+- **Avatar:** Generates `cats <https://www.peppercarrot.com/extras/html/2016_cat-generator>`_ and `birds <https://www.peppercarrot.com/extras/html/2019_bird-generator>`_ avatars.
 - **Echo:** Simple plugin to echo back text.
 - **FB Messenger:** Facebook Messenger bridge.
 - **DeltaFriends:** Provides a directory for users to share their address and biography.
-- **GroupMaster:** Extends the capabilities of Delta Chat groups, adding "mega groups", "channels", and allowing to have public groups, or invite friends to join a group with a private link.
+- **GroupMaster:** Extends the capabilities of Delta Chat groups, adding "mega groups", "channels", and allowing to have public groups, invite friends to join a group with a private link, set group topic, etc.
 - **Help:** Provides a help command.
 - **Mastodon Bridge:** A bridge between Delta Chat and Mastodon network.
 - **RSS:** Subscribe to RSS and Atom links.
