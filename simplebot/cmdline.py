@@ -24,8 +24,6 @@ def init(ctx, emailaddr, password):
 
     This will verify smtp/imap connectivity.
     """
-    if ctx.parent.bot.is_configured():
-        fail(ctx, 'The account is alredy configured')
     if "@" not in emailaddr:
         fail(ctx, "invalid email address: {}".format(emailaddr))
     ctx.parent.bot.configure(emailaddr, password)
