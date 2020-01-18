@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 from threading import Thread, Event
 from urllib.parse import quote_plus
-import functools
 import gettext
 import os
 import sqlite3
-import time
 
 from jinja2 import Environment, PackageLoader
 from simplebot import Plugin, Mode, PluginCommand
-import deltachat as dc
 import feedparser
 import html2text
 import requests
