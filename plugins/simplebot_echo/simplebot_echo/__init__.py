@@ -23,11 +23,11 @@ class Echo(Plugin):
         cls.long_description = _(
             'To use it you can simply send a message starting with the command /echo. For example:\n/echo hello world')
         cls.commands = [
-            PluginCommand('/echo', ['[text]'], _('Echoes back the given text'), cls.on_echo)]
+            PluginCommand('/echo', ['[text]'], _('Echoes back the given text'), cls.echo_cmd)]
         cls.bot.add_commands(cls.commands)
 
     @classmethod
-    def on_echo(cls, ctx):
+    def echo_cmd(cls, ctx):
         chat = cls.bot.get_chat(ctx.msg)
         if not ctx.text:
             chat.send_text('🤖')
