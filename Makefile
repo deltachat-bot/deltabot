@@ -64,3 +64,7 @@ mastodon:
 .PHONY: avatar
 avatar:
 	echo y | pip uninstall simplebot_avatar; pip install plugins/simplebot_avatar
+
+.PHONY: meme
+meme:
+	echo y | pip uninstall simplebot_meme; pip install plugins/simplebot_meme
