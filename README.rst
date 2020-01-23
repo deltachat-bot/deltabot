@@ -24,6 +24,7 @@ Official Plugins
 - **GroupMaster:** Extends the capabilities of Delta Chat groups, adding "mega groups", "channels", and allowing to have public groups, invite friends to join a group with a private link, set group topic, etc.
 - **Help:** Provides a help command.
 - **Mastodon Bridge:** A bridge between Delta Chat and Mastodon network.
+- **Meme:** Get memes from https://m.cuantarazon.com
 - **RSS:** Subscribe to RSS and Atom links.
 - **Shortcuts:** Allows to create custom shortcuts for commands.
 - **Tic Tac Toe:** The simple Tic Tac Toe game to play with friends.
