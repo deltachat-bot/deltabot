@@ -29,7 +29,7 @@ class Meme(Plugin):
         cls.long_description = _(
             'Uses: https://m.cuantarazon.com/aleatorio/')
         cls.commands = [
-            PluginCommand('/meme', ['[text]'], _(
+            PluginCommand('/meme', [], _(
                 'Generate a random meme'), cls.meme_cmd
             ),
         ]
