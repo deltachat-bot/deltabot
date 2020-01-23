@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from urllib.parse import quote_plus
 import gettext
 import os
 
@@ -15,7 +14,7 @@ HEADERS = {
 class Meme(Plugin):
 
     name = 'Meme'
-    version = '0.1.0'
+    version = '0.2.0'
 
     @classmethod
     def activate(cls, bot):
@@ -38,24 +37,20 @@ class Meme(Plugin):
 
     @classmethod
     def meme_cmd(cls, ctx):
-        cls._meme_cmd(
-            ctx, 'https://m.cuantarazon.com/aleatorio/')
+        url = 'https://m.cuantarazon.com/aleatorio/'
 
-    @classmethod
-    def _meme_cmd(cls, ctx, url):
-        chat = cls.bot.get_chat(ctx.msg)
-
-        if not ctx.text:
-            with requests.get(url, headers=HEADERS) as r:
-                r.raise_for_status()
-                soup = bs4.BeautifulSoup(r.text, 'html.parser')
-
-            img_url = soup.find('div', class_='storyContent').find('img')['src'].split('?')[0]
-            ctx.text = soup.find('div', class_='storyContent').find('img')['alt']
+        with requests.get(url, headers=HEADERS) as r:
+            r.raise_for_status()
+            soup = bs4.BeautifulSoup(r.text, 'html.parser')
+        img = soup.find('div', class_='storyContent').img
+        img_url = img['src'].split('?')[0]
+        ctx.text = img['alt']
 
         with requests.get(img_url, headers=HEADERS) as r:
             r.raise_for_status()
             fpath = cls.bot.get_blobpath('meme.png')
             with open(fpath, 'wb') as fd:
                 fd.write(r.content)
+
+        chat = cls.bot.get_chat(ctx.msg)
         cls.bot.send_file(chat, fpath, ctx.text, 'image')
