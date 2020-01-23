@@ -27,7 +27,7 @@ class Meme(Plugin):
 
         cls.description = _('Retrieve memes.')
         cls.long_description = _(
-            'Uses: https://m.cuantarazon.com/aleatorio/')
+            'Uses: https://m.cuantarazon.com')
         cls.commands = [
             PluginCommand('/meme', [], _(
                 'Generate a random meme'), cls.meme_cmd
