@@ -15,7 +15,7 @@ VERSION = re.search(r'version = \'(.*?)\'', source, re.M).group(1)
 setup(
     name=MODULE_NAME,
     version=VERSION,
-    author='adbenitez',
+    author='The SimpleBot Contributors',
     author_email='adbenitez@nauta.cu',
     description='A plugin for SimpleBot, a Delta Chat bot (http://delta.chat/)',
     long_description='For more info visit https://github.com/adbenitez/simplebot',
