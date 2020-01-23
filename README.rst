@@ -73,6 +73,13 @@ Install `Delta Chat`_ and add your bot's email address as a contact and
 start chatting with it! You can also add the bot as a member to a group chat.
 
 
+Contributors
+============
+
+- Asiel Díaz Benítez (@adbenitez)
+- Luis Antonio Correa Leyva (@correaleyval)
+
+
 License
 =======
 
