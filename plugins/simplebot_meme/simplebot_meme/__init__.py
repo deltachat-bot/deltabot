@@ -25,7 +25,7 @@ class Meme(Plugin):
                                    languages=[bot.locale], fallback=True)
         lang.install()
 
-        cls.description = _('Generate memes.')
+        cls.description = _('Retrieve memes.')
         cls.long_description = _(
             'Uses: https://m.cuantarazon.com/aleatorio/')
         cls.commands = [
