@@ -1,5 +1,5 @@
 .PHONY: all
-all: simplebot echo friends groupmaster help tictactoe translator webgrabber wikiquote xkcd admin shortcuts rss facebook mastodon avatar meme
+all: simplebot echo friends groupmaster help tictactoe translator webgrabber wikiquote xkcd admin shortcuts rss facebook mastodon avatar meme cuba_weather
 
 .PHONY: simplebot
 simplebot:
@@ -8,6 +8,10 @@ simplebot:
 .PHONY: echo
 echo:
 	echo y | pip uninstall simplebot_echo; pip install plugins/simplebot_echo
+
+.PHONY: cuba_weather
+cuba_weather:
+	echo y | pip uninstall simplebot_cubaweather; pip install plugins/simplebot_cubaweather
 
 .PHONY: friends
 friends:
