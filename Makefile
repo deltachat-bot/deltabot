@@ -1,5 +1,5 @@
 .PHONY: all
-all: simplebot echo friends groupmaster help tictactoe translator webgrabber wikiquote xkcd admin shortcuts rss facebook mastodon avatar meme cuba_weather cartv
+all: simplebot echo friends groupmaster help tictactoe translator webgrabber wikiquote xkcd admin shortcuts rss facebook mastodon avatar meme cuba_weather cartv xmpp
 
 .PHONY: simplebot
 simplebot:
@@ -76,3 +76,7 @@ avatar:
 .PHONY: meme
 meme:
 	echo y | pip uninstall simplebot_meme; pip install plugins/simplebot_meme
+
+.PHONY: xmpp
+xmpp:
+	echo y | pip uninstall simplebot_xmpp; pip install plugins/simplebot_xmpp
