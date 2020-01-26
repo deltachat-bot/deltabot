@@ -113,9 +113,9 @@ class BridgeXMPP(Plugin):
         nick = cls.get_nick(sender.addr)
 
         if sender not in chat.get_contacts():
-            text = _('** Group left by {}').format(nick+'[dc]')
+            text = _('** {} left the group').format(nick+'[dc]')
             cls.xmpp.send_message(r[0], text, mtype='groupchat')
-            text = _('** Group left by {}').format(nick)
+            text = _('** {} left the group').format(nick)
             for g in cls.get_cchats(r[0]):
                 g.send_text(text)
             return
