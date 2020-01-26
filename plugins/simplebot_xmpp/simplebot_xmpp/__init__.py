@@ -6,12 +6,16 @@ import sqlite3
 
 from simplebot import Plugin, PluginCommand, PluginFilter
 from slixmpp import ClientXMPP
-from slixmpp.exceptions import IqError, IqTimeout
+from slixmpp.exceptions import IqError, IqTimeout, TimeoutError
 
 
 import logging
 logging.basicConfig(level=logging.DEBUG,
                     format='%(levelname)-8s %(message)s')
+
+
+def timeout_callback(arg):
+    raise TimeoutError("could not send message in time")
 
 
 class BridgeXMPP(Plugin):
@@ -113,18 +117,30 @@ class BridgeXMPP(Plugin):
         nick = cls.get_nick(sender.addr)
 
         if sender not in chat.get_contacts():
-            text = _('** {} left the group').format(nick+'[dc]')
+            text = _('** {}[dc] left the group').format(nick)
             cls.xmpp.send_message(r[0], text, mtype='groupchat')
-            text = _('** {} left the group').format(nick)
             for g in cls.get_cchats(r[0]):
                 g.send_text(text)
             return
 
-        if ctx.msg.is_text() and ctx.text:
+        if ctx.msg.is_text():
             text = '{}[dc]:\n{}'.format(nick, ctx.text)
             cls.xmpp.send_message(r[0], text, mtype='groupchat')
+            for g in cls.get_cchats(r[0]):
+                if g.id != chat.id:
+                    g.send_text(text)
+        elif ctx.msg.filename:
+            text = '{}[dc]:\n{}'.format(nick, ctx.text)
+            cls.xmpp.send_message(r[0], text, mtype='groupchat')
+            url = await cls.xmpp['xep_0363'].upload_file(
+                ctx.msg.filename, timeout=10, timeout_callback=tcallback)
+            html = '<body xmlns="http://www.w3.org/1999/xhtml">{0}<br/><a href="{1}">{1}</a></body>'
+            html = html.format(text, url)
+            for g in cls.get_cchats(r[0]):
+                if g.id != chat.id:
+                    g.send_text('{}\n{}'.format(text, url))
         else:
-            chat.send_text(_('Only text messages are supported'))
+            chat.send_text(_('Unsuported message'))
 
     @classmethod
     def xmpp2dc(cls, msg):
@@ -179,11 +195,8 @@ class BridgeXMPP(Plugin):
                        (g.id, ch['jid']))
 
         text = _(
-            '** {} joined the group').format(cls.get_nick(sender.addr)+'[dc]')
+            '** {}[dc] joined the group').format(cls.get_nick(sender.addr))
         cls.xmpp.send_message(ch['jid'], text, mtype='groupchat')
-
-        text = _(
-            '** {} joined the group').format(cls.get_nick(sender.addr))
         for c in chats:
             c.send_text(text)
         g.send_text(text)
@@ -202,7 +215,8 @@ class XMPP(ClientXMPP):
         self.add_event_handler("session_start", self.session_start)
         self.add_event_handler("message", self.message)
 
-        self.register_plugin('xep_0045')
+        self.register_plugin('xep_0045')  # Multi-User Chat
+        self.register_plugin('xep_0363')  # HTTP File Upload
 
     def join_muc(self, jid):
         self.plugin['xep_0045'].join_muc(jid, self.nick)
