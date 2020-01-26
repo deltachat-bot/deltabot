@@ -174,7 +174,7 @@ class BridgeXMPP(Plugin):
                 chat.send_text(
                     _('You are already a member of that group'))
                 return
-        g = cls.bot.create_group(ch['jid'], [sender])
+        g = cls.bot.create_group('🇽 '+ch['jid'], [sender])
         cls.db.execute('INSERT INTO cchats VALUES (?,?)',
                        (g.id, ch['jid']))
 
