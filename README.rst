@@ -32,6 +32,7 @@ Official Plugins
 - **WebGrabber:** Access the web using Delta Chat.
 - **Wikiquote:** Get quotes from Wikiquote on Delta Chat.
 - **XKCD:** See xkcd.com comics in Delta Chat.
+- **XMPP Bridge:** A bridge between Delta Chat and XMPP network.
 
 
 Install
