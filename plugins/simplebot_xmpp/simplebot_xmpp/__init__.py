@@ -1,21 +1,23 @@
 # -*- coding: utf-8 -*-
 from threading import Thread, Event
+import asyncio
 import gettext
 import os
 import sqlite3
 
 from simplebot import Plugin, PluginCommand, PluginFilter
 from slixmpp import ClientXMPP
-from slixmpp.exceptions import IqError, IqTimeout, TimeoutError
-
+from slixmpp.exceptions import IqError, IqTimeout
 
 import logging
 logging.basicConfig(level=logging.DEBUG,
                     format='%(levelname)-8s %(message)s')
 
-
-def timeout_callback(arg):
-    raise TimeoutError("could not send message in time")
+FTYPES = {
+    'image/png': 'png',
+    'image/gif': 'gif',
+    'image/jpeg': 'jpg'
+}
 
 
 class BridgeXMPP(Plugin):
@@ -43,13 +45,11 @@ class BridgeXMPP(Plugin):
         cls.db = DBManager(os.path.join(
             cls.bot.get_dir(__name__), 'xmpp.db'))
 
-        print('XMPP - Connecting...')
         cls.xmpp = XMPP(cls)
         cls.xmpp.connect()
         cls.worker = Thread(target=cls.listen_to_xmpp)
         cls.worker.start()
         cls.xmpp.connected.wait()
-        print('XMPP - Connected!')
 
         cls.description = _('A bridge between Delta Chat and XMPP network.')
         cls.filters = [PluginFilter(cls.process_messages)]
@@ -58,7 +58,9 @@ class BridgeXMPP(Plugin):
             PluginCommand(
                 '/xmpp/join', ['<jid>'], _('Join to the given XMPP channel'), cls.join_cmd),
             PluginCommand('/xmpp/nick', ['[nick]'],
-                          _('Set your nick or display your current nick if no new nick is given'), cls.nick_cmd)
+                          _('Set your nick or display your current nick if no new nick is given'), cls.nick_cmd),
+            PluginCommand('/xmpp/members', [],
+                          _('Show group memeber list'), cls.members_cmd)
         ]
         cls.bot.add_commands(cls.commands)
 
@@ -105,6 +107,11 @@ class BridgeXMPP(Plugin):
         cls.xmpp.process(forever=False)
 
     @classmethod
+    def wait(cls, coro):
+        return asyncio.run_coroutine_threadsafe(
+            coro, cls.xmpp.loop).result()
+
+    @classmethod
     def process_messages(cls, ctx):
         chat = cls.bot.get_chat(ctx.msg)
         r = cls.db.execute(
@@ -123,29 +130,22 @@ class BridgeXMPP(Plugin):
                 g.send_text(text)
             return
 
-        if ctx.msg.is_text():
-            text = '{}[dc]:\n{}'.format(nick, ctx.text)
-            cls.xmpp.send_message(r[0], text, mtype='groupchat')
-            for g in cls.get_cchats(r[0]):
-                if g.id != chat.id:
-                    g.send_text(text)
-        elif ctx.msg.filename:
-            text = '{}[dc]:\n{}'.format(nick, ctx.text)
-            cls.xmpp.send_message(r[0], text, mtype='groupchat')
-            url = await cls.xmpp['xep_0363'].upload_file(
-                ctx.msg.filename, timeout=10, timeout_callback=tcallback)
-            html = '<body xmlns="http://www.w3.org/1999/xhtml">{0}<br/><a href="{1}">{1}</a></body>'
-            html = html.format(text, url)
-            for g in cls.get_cchats(r[0]):
-                if g.id != chat.id:
-                    g.send_text('{}\n{}'.format(text, url))
-        else:
-            chat.send_text(_('Unsuported message'))
+        text = '{}[dc]:\n{}'.format(nick, ctx.text)
+        if ctx.msg.filename:
+            coro = cls.xmpp['xep_0363'].upload_file(
+                ctx.msg.filename, timeout=10)
+            url = cls.wait(coro)
+            text = '\n{}'.format(url)
+
+        cls.xmpp.send_message(r[0], text, mtype='groupchat')
+        for g in cls.get_cchats(r[0]):
+            if g.id != chat.id:
+                g.send_text(text)
 
     @classmethod
     def xmpp2dc(cls, msg):
         for g in cls.get_cchats(msg['mucroom']):
-            g.send_text('{0[mucnick]}:\n{0[body]}'.format(msg))
+            g.send_text('{0[mucnick]}[xmpp]:\n{0[body]}'.format(msg))
 
     @classmethod
     def nick_cmd(cls, ctx):
@@ -170,8 +170,32 @@ class BridgeXMPP(Plugin):
         chat.send_text(text)
 
     @classmethod
-    def join_cmd(cls, ctx):
+    def members_cmd(cls, ctx):
         chat = cls.bot.get_chat(ctx.msg)
+
+        r = cls.db.execute(
+            'SELECT channel from cchats WHERE id=?', (chat.id,)).fetchone()
+        if not r:
+            chat.send_text(_('This is not an XMPP channel'))
+            return
+
+        me = cls.bot.get_contact()
+        text = _('Group Members:\n\n')
+
+        for g in cls.get_cchats(r[0]):
+            for c in g.get_contacts():
+                if c != me:
+                    text += '• {}[dc]\n'.format(
+                        cls.get_nick(c.addr))
+
+        for u in cls.xmpp['xep_0045'].get_roster(r[0]):
+            if u and u != cls.xmpp.nick:
+                text += '• {}[xmpp]\n'.format(u)
+
+        chat.send_text(text)
+
+    @classmethod
+    def join_cmd(cls, ctx):
         sender = ctx.msg.get_sender_contact()
         if not ctx.text:
             return
@@ -187,12 +211,33 @@ class BridgeXMPP(Plugin):
 
         for g in chats:
             if sender in g.get_contacts():
-                chat.send_text(
-                    _('You are already a member of that group'))
+                g.send_text(
+                    _('You are already a member of this group'))
                 return
+
         g = cls.bot.create_group('🇽 '+ch['jid'], [sender])
         cls.db.execute('INSERT INTO cchats VALUES (?,?)',
                        (g.id, ch['jid']))
+
+        def callback(fut):
+            try:
+                vcard = fut.result()
+                avatar = vcard['vcard_temp']['PHOTO']
+                filetype = FTYPES.get(avatar['TYPE'], 'png')
+                filename = cls.bot.get_blobpath(
+                    'xmpp-avatar.{}'.format(filetype))
+                with open(filename, 'wb') as img:
+                    img.write(avatar['BINVAL'])
+                g.set_profile_image(filename)
+            except IqError as e:
+                logging.exception(e)
+            finally:
+                done.set()
+
+        done = Event()
+        cls.xmpp['xep_0054'].get_vcard(
+            ch['jid'], cached=True, timeout=5).add_done_callback(callback)
+        done.wait()
 
         text = _(
             '** {}[dc] joined the group').format(cls.get_nick(sender.addr))
@@ -216,10 +261,13 @@ class XMPP(ClientXMPP):
         self.add_event_handler("message", self.message)
 
         self.register_plugin('xep_0045')  # Multi-User Chat
+        self.register_plugin('xep_0054')  # vcard-temp
         self.register_plugin('xep_0363')  # HTTP File Upload
+        self.register_plugin('xep_0128')  # Service Discovery Extensions
+        # self.register_plugin('xep_0071')  # XHTML-IM
 
     def join_muc(self, jid):
-        self.plugin['xep_0045'].join_muc(jid, self.nick)
+        self['xep_0045'].join_muc(jid, self.nick)
 
     def session_start(self, event):
         self.send_presence(
@@ -227,7 +275,6 @@ class XMPP(ClientXMPP):
         self.get_roster()
 
         for jid in self.bridge.get_channels():
-            print('JOINING: ', jid)
             self.join_muc(jid)
 
         self.connected.set()
@@ -241,9 +288,26 @@ class XMPP(ClientXMPP):
             self.join_muc(msg['body'][6:])
             return
 
+        args = self.get_args('/members', msg['body'])
+        if args is not None:
+            me = self.bridge.bot.get_contact()
+            text = _('Delta Chat members:\n\n')
+            for g in self.bridge.get_cchats(msg['mucroom']):
+                for c in g.get_contacts():
+                    if c != me:
+                        text += '• {}[dc]\n'.format(
+                            self.bridge.get_nick(c.addr))
+            msg.reply(text).send()
+            return
+
         args = self.get_args('/help', msg['body'])
         if args is not None:
-            msg.reply('I am SimpleBot a DeltaChat <--> XMPP bridge\n/join <channel> to add me to that xmpp channel.\n/help show this message.\nSource code: https://github.com/adbenitez/simplebot').send()
+            t = '\n'.join('I am SimpleBot a DeltaChat <--> XMPP bridge',
+                          '/join <channel>  to add me to that xmpp channel.',
+                          '/members show DC member list'
+                          '/help  show this message.',
+                          'Source code: https://github.com/adbenitez/simplebot')
+            msg.reply(t).send()
             return
 
         args = self.get_args('/keys', msg['body'])
