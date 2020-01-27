@@ -156,7 +156,7 @@ class BridgeXMPP(Plugin):
             if new_nick == addr:
                 cls.db.execute('DELETE FROM nicks WHERE addr=?', (addr,))
                 text = _('** Nick: {}').format(addr)
-            elif '@' in new_nick or ':' in new_nick or len(new_nick) > 30:
+            elif '@' in new_nick or ':' in new_nick or new_nick.endswith('[dc]') or len(new_nick) > 30:
                 text = _(
                     '** Invalid nick, "@" and ":" not allowed, and nick should be less than 30 characters')
             elif cls.db.execute('SELECT * FROM nicks WHERE nick=?', (new_nick,)).fetchone():
