@@ -119,17 +119,15 @@ class Admin(Plugin):
 
         groups = 0
         private = 0
-        messages = 0
         chats = cls.bot.get_chats()
         for c in chats:
             if cls.bot.is_group(c):
                 groups += 1
             else:
                 private += 1
-            messages += len(c.get_messages())
         contacts = len(cls.bot.account.get_contacts())
-        text += _('Groups: {:,}\nPrivate Chats: {:,}\nContacts: {:,}\nMessages: {:,}\n\n').format(
-            groups, private, contacts, messages)
+        text += _('Groups: {:,}\nPrivate Chats: {:,}\nContacts: {:,}\n\n').format(
+            groups, private, contacts)
 
         # TODO: check server flags
         imap = imaplib.IMAP4_SSL(
