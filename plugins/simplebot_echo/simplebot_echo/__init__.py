@@ -32,7 +32,7 @@ class Echo(Plugin):
         if not ctx.text:
             f = ctx.msg.get_mime_headers()['from']
             name = ctx.msg.get_sender_contact().display_name
-            text = 'From: {}\nDisplay Name:{}'.format(f, name)
+            text = 'From: {}\nDisplay Name: {}'.format(f, name)
             chat.send_text(text)
         else:
             chat.send_text(ctx.text)
