@@ -8,7 +8,7 @@ from simplebot import Plugin, PluginCommand
 class Echo(Plugin):
 
     name = 'Echo'
-    version = '0.3.0'
+    version = '0.4.0'
 
     @classmethod
     def activate(cls, bot):
@@ -30,6 +30,9 @@ class Echo(Plugin):
     def echo_cmd(cls, ctx):
         chat = cls.bot.get_chat(ctx.msg)
         if not ctx.text:
-            chat.send_text('🤖')
+            f = ctx.msg.get_mime_headers()['from']
+            name = ctx.msg.get_sender_contact().display_name
+            text = 'From: {}\nDisplay Name:{}'.format(f, name)
+            chat.send_text(text)
         else:
             chat.send_text(ctx.text)
