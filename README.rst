@@ -13,8 +13,8 @@ but note that the operator of the bot service can look into
 messages that are sent to it. See also: https://github.com/Simon-Laux/ZHV/
 
 
-Official Plugins
-----------------
+Plugins
+-------
 
 - **Admin:** Administration tools for bot operators.
 - **Avatar:** Generates `cats <https://www.peppercarrot.com/extras/html/2016_cat-generator>`_ and `birds <https://www.peppercarrot.com/extras/html/2019_bird-generator>`_ avatars.
