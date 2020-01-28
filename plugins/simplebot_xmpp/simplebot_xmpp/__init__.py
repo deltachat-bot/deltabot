@@ -298,11 +298,11 @@ class XMPP(ClientXMPP):
 
         args = self.get_args('/help', msg['body'])
         if args is not None:
-            t = '\n'.join('I am SimpleBot a DeltaChat <--> XMPP bridge',
-                          '/join <channel>  to add me to that xmpp channel.',
-                          '/members show DC member list'
-                          '/help  show this message.',
-                          'Source code: https://github.com/adbenitez/simplebot')
+            t = '\n'.join(['I am SimpleBot a DeltaChat <--> XMPP bridge',
+                           '/join <channel>  to add me to that xmpp channel.',
+                           '/members show DC member list'
+                           '/help  show this message.',
+                           'Source code: https://github.com/adbenitez/simplebot'])
             msg.reply(t).send()
             return
 
