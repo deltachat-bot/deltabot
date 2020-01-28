@@ -71,7 +71,17 @@ class BridgeXMPP(Plugin):
         if r:
             return r[0]
         else:
-            return addr
+            i = 1
+            while True:
+                nick = 'User{}'.format(i)
+                r = cls.db.execute(
+                    'SELECT nick FROM nicks WHERE nick=?', (nick,)).fetchone()
+                if not r:
+                    cls.db.execute(
+                        'INSERT OR REPLACE INTO nicks VALUES (?,?)', (addr, nick))
+                    break
+                i += 1
+            return nick
 
     @classmethod
     def get_channels(cls):
