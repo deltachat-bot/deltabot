@@ -316,7 +316,7 @@ class XMPP(ClientXMPP):
         if msg['type'] == 'groupchat':
             self.bridge.xmpp2dc(msg)
         elif msg['type'] in ('chat', 'normal'):
-            msg.reply('Send /help to learn how to use me').send()
+            msg.reply('Send !help to learn how to use me').send()
 
 
 class DBManager:
