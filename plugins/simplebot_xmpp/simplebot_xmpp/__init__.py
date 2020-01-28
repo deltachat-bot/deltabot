@@ -279,16 +279,16 @@ class XMPP(ClientXMPP):
         if msg['mucnick'] == self.nick:
             return
 
-        args = self.get_args('/join', msg['body'])
+        args = self.get_args('!join', msg['body'])
         if args is not None:
             self.join_muc(msg['body'][6:])
             return
 
-        args = self.get_args('/members', msg['body'])
+        args = self.get_args('!members', msg['body'])
         if args is not None:
             me = self.bridge.bot.get_contact()
             text = _('Delta Chat members:\n\n')
-            for g in self.bridge.get_cchats(msg['mucroom']):
+            for g in self.bridge.get_cchats(msg['from'].bare):
                 for c in g.get_contacts():
                     if c != me:
                         text += '• {}[dc]\n'.format(
@@ -296,7 +296,7 @@ class XMPP(ClientXMPP):
             msg.reply(text).send()
             return
 
-        args = self.get_args('/help', msg['body'])
+        args = self.get_args('!help', msg['body'])
         if args is not None:
             t = '\n'.join(['I am SimpleBot a DeltaChat <--> XMPP bridge',
                            '/join <channel>  to add me to that xmpp channel.',
@@ -306,7 +306,7 @@ class XMPP(ClientXMPP):
             msg.reply(t).send()
             return
 
-        args = self.get_args('/keys', msg['body'])
+        args = self.get_args('!keys', msg['body'])
         if args is not None:
             text = '\n'.join('{}: {}'.format(
                 k, msg[k]) for k in msg.keys())
