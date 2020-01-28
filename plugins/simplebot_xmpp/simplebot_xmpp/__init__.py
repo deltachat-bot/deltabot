@@ -239,11 +239,7 @@ class BridgeXMPP(Plugin):
             ch['jid'], cached=True, timeout=5).add_done_callback(callback)
         done.wait()
 
-        text = _(
-            '** {}[dc] joined the group').format(cls.get_nick(sender.addr))
-        cls.xmpp.send_message(ch['jid'], text, mtype='groupchat')
-        for c in chats:
-            c.send_text(text)
+        text = _('** You joined {}').format(ch['jid'])
         g.send_text(text)
 
 
