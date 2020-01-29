@@ -446,7 +446,7 @@ class FacebookBridge(Plugin):
                 if cls.worker.deactivated.is_set():
                     return
                 with cls.pool:
-                    Thread(target=_task).start()
+                    Thread(target=_task, args=(addr)).start()
             for i in range(cls.pool_size):
                 cls.pool.acquire()
             for i in range(cls.pool_size):
