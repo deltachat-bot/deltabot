@@ -245,7 +245,8 @@ class BridgeXMPP(Plugin):
             ch['jid'], cached=True, timeout=5).add_done_callback(callback)
         done.wait()
 
-        text = _('** You joined {}').format(ch['jid'])
+        nick = cls.get_nick(sender.addr)
+        text = _('** You joined {} as {}').format(ch['jid'], nick)
         g.send_text(text)
 
 
