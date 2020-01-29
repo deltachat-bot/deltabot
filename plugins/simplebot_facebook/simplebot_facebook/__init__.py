@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from enum import IntEnum
-from threading import Thread, Event
+from threading import Thread, Event, BoundedSemaphore
 import gettext
 import json
 import os
@@ -45,6 +45,8 @@ class FacebookBridge(Plugin):
                                    languages=[bot.locale], fallback=True)
         lang.install()
 
+        cls.pool_size = 5
+        cls.pool = BoundedSemaphore(value=cls.pool_size)
         cls.code_events = dict()
         cls.worker = Thread(target=cls.listen_to_fb)
         cls.worker.deactivated = Event()
@@ -422,6 +424,20 @@ class FacebookBridge(Plugin):
 
     @classmethod
     def listen_to_fb(cls):
+
+        def _task(addr):
+            with cls.pool:
+                try:
+                    onlogin = Event()
+                    Thread(target=cls._login, args=(
+                        onlogin, addr), daemon=True).start()
+                    onlogin.wait(60)
+                    if onlogin.user is None:
+                        return
+                    cls._send_fb2dc(onlogin.user, addr)
+                except Exception as ex:
+                    cls.bot.logger.exception(ex)
+
         while True:
             if cls.worker.deactivated.is_set():
                 return
@@ -429,16 +445,12 @@ class FacebookBridge(Plugin):
             for addr in map(lambda u: u[0], cls.db.execute('SELECT addr FROM users WHERE status=?', (Status.ENABLED,))):
                 if cls.worker.deactivated.is_set():
                     return
-                try:
-                    onlogin = Event()
-                    Thread(target=cls._login, args=(
-                        onlogin, addr), daemon=True).start()
-                    onlogin.wait(60*5)
-                    if onlogin.user is None:
-                        continue
-                    cls._send_fb2dc(onlogin.user, addr)
-                except Exception as ex:
-                    cls.bot.logger.exception(ex)
+                with cls.pool:
+                    Thread(target=_task).start()
+            for i in range(cls.pool_size):
+                cls.pool.acquire()
+            for i in range(cls.pool_size):
+                cls.pool.release()
             cls.worker.deactivated.wait(cls.cfg.getint('delay'))
 
 
