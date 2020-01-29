@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from enum import IntEnum
 from threading import Thread, Event
-import functools
 import gettext
 import json
 import os
@@ -9,7 +8,6 @@ import sqlite3
 
 from fbchat import Client, Message, ThreadType, FBchatException, ImageAttachment, FileAttachment, AudioAttachment, VideoAttachment
 from simplebot import Plugin, PluginCommand, PluginFilter
-import deltachat as dc
 import bs4
 import requests
 
