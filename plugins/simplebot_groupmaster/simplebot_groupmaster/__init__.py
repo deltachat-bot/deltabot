@@ -111,9 +111,6 @@ class GroupMaster(Plugin):
             contacts = chat.get_contacts()
             nick = cls.get_nick(sender.addr)
             if sender not in contacts:
-                for g in cls.get_mchats(mg['id']):
-                    if g.id != chat.id:
-                        g.send_text('** Group left by {}'.format(nick))
                 return
             ctx.text = '{}:\n{}'.format(
                 nick, ctx.text) if ctx.text else nick
@@ -523,11 +520,6 @@ class GroupMaster(Plugin):
                         mg['name'], [sender])
                     cls.db.execute(
                         'INSERT INTO mchats VALUES (?,?)', (g.id, mg['id']))
-                    text = _(
-                        '** {} joined the group').format(cls.get_nick(sender.addr))
-                    for chat in cls.get_mchats(mg['id']):
-                        if chat.id != g.id:
-                            chat.send_text(text)
                     img = cls.db.execute(
                         'SELECT image, extension FROM mg_images WHERE mgroup=?', (mg['id'],)).fetchone()
                     if img:
