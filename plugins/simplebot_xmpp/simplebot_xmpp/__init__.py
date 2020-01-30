@@ -141,7 +141,7 @@ class BridgeXMPP(Plugin):
             coro = cls.xmpp['xep_0363'].upload_file(
                 ctx.msg.filename, timeout=10)
             url = cls.wait(coro)
-            text = '\n{}'.format(url)
+            text += '\n{}'.format(url)
 
         cls.xmpp.send_message(r[0], text, mtype='groupchat')
         for g in cls.get_cchats(r[0]):
