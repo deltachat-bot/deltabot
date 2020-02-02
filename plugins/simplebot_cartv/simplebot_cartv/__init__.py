@@ -54,7 +54,7 @@ class CarTV(Plugin):
         if ctx.text:
             if ctx.text not in channels:
                 chat.send_text(
-                    _('Channel must be one of: {}').format('\n'.join(channels)))
+                    _('Channel must be one of:\n{}').format('\n'.join(channels)))
                 return
             chans = [ctx.text]
         else:
