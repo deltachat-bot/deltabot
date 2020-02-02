@@ -203,10 +203,6 @@ class WebGrabber(Plugin):
         cls.bot.send_html(chat, html, cls.name, ctx.msg.text, ctx.mode)
 
     @classmethod
-    def url_cmd(cls, ctx):
-        cls._send_text(cls.bot.get_chat(ctx.msg), ctx.text)
-
-    @classmethod
     def web_cmd(cls, ctx):
         def _task():
             with cls.pool:
