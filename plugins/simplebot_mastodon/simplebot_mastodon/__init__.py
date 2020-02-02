@@ -312,13 +312,16 @@ class MastodonBridge(Plugin):
                             cls.db.execute(
                                 'INSERT INTO priv_chats VALUES (?,?,?,?)', (g.id, acct.lower(), acc['api_url'], acc['username']))
 
-                            file_name = cls.bot.get_blobpath(
-                                'mastodon-avatar.jpg')
                             r = requests.get(dm.account.avatar_static)
-                            with open(file_name, 'wb') as fd:
+                            fname = r.url.split(
+                                '/').pop().split('?')[0].split('#')[0]
+                            if '.' not in fname:
+                                fname = 'mastodon-avatar.jpg'
+                            fname = cls.bot.get_blobpath(fname)
+                            with open(fname, 'wb') as fd:
                                 fd.write(r.content)
 
-                            g.set_profile_image(file_name)
+                            g.set_profile_image(fname)
                             g.send_text(text)
 
                     chat = cls.bot.get_chat(acc['notifications'])
