@@ -3,6 +3,7 @@ from threading import Thread, Event
 import asyncio
 import gettext
 import os
+import re
 import sqlite3
 
 from simplebot import Plugin, PluginCommand, PluginFilter
@@ -18,6 +19,7 @@ FTYPES = {
     'image/gif': 'gif',
     'image/jpeg': 'jpg'
 }
+nick_re = re.compile(r'[a-zA-Z0-9]{1,30}$')
 
 
 class BridgeXMPP(Plugin):
@@ -162,9 +164,9 @@ class BridgeXMPP(Plugin):
             if new_nick == addr:
                 cls.db.execute('DELETE FROM nicks WHERE addr=?', (addr,))
                 text = _('** Nick: {}').format(addr)
-            elif '@' in new_nick or ':' in new_nick or new_nick.endswith('[dc]') or len(new_nick) > 30:
+            elif not nick_re.match(new_nick):
                 text = _(
-                    '** Invalid nick, "@" and ":" not allowed, and nick should be less than 30 characters')
+                    '** Invalid nick, only letters and numbers are allowed, and nick should be less than 30 characters')
             elif cls.db.execute('SELECT * FROM nicks WHERE nick=?', (new_nick,)).fetchone():
                 text = _('** Nick already taken')
             else:
