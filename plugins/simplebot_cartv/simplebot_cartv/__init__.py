@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
+from datetime import date
 import gettext
+import html
 import os
 
 from simplebot import Plugin, PluginCommand
-
 import requests
-import html
-from datetime import date
+
 
 url = "http://www.tvcubana.icrt.cu/cartv/cartv-core/app.php?action=dia&canal={0}&fecha={1}"
 
 tv_emoji = '📺'
 cal_emoji = '📆'
-aster_emoji = '✳️'
+aster_emoji = '✳'
 
 channels = [
     'Cubavision',
@@ -25,10 +25,11 @@ channels = [
     'Habana'
 ]
 
-class Cartv(Plugin):
 
-    name = 'Cartv'
-    version = '0.3.0'
+class CarTV(Plugin):
+
+    name = 'Cartelera TV'
+    version = '0.1.0'
 
     @classmethod
     def activate(cls, bot):
@@ -39,11 +40,10 @@ class Cartv(Plugin):
                                    languages=[bot.locale], fallback=True)
         lang.install()
 
-        cls.description = _('Mostrar cartelera de la television cubana')
-        cls.long_description = _(
-            '/cartv <channel> ej: /cartv Cubavision o /cartv para mostrar todos los canales')
+        cls.description = 'Muestra la cartelera de la TV cubana'
+        cls.long_description = 'Por ejemplo: /cartv Cubavision\n/cartv para mostrar todos los canales'
         cls.commands = [
-            PluginCommand('/cartv', ['[text]'], _('Mostrar cartelera para el canal <text> ej: /cartv Cubavision'), cls.cartv_cmd)]
+            PluginCommand('/cartv', ['[canal]'], 'Mostrar cartelera para el canal dado', cls.cartv_cmd)]
         cls.bot.add_commands(cls.commands)
 
     @classmethod
@@ -51,28 +51,32 @@ class Cartv(Plugin):
         chat = cls.bot.get_chat(ctx.msg)
         today = date.today().strftime('%d-%m-%Y')
 
-        if not ctx.text:
-            for channel in channels:
-                res = requests.get(url.format(channel, today))
-                res.raise_for_status()
-                msg = cls.parser(res.text)
-                chat.send_text(msg)
+        if ctx.text:
+            if ctx.text not in channels:
+                chat.send_text(
+                    _('Channel must be one of: {}').format('\n'.join(channels)))
+                return
+            chans = [ctx.text]
         else:
-            res = requests.get(url.format(ctx.text, today))
-            res.raise_for_status()
-            msg = cls.parser(res.text)
-            chat.send_text(msg)
+            chans = channels
+
+        text = ''
+        for chan in chans:
+            with requests.get(url.format(chan, today)) as req:
+                req.raise_for_status()
+                text += cls.format_channel(req.text)
+            text += '\n\n'
+        chat.send_text(text)
 
     @classmethod
-    def parser(cls, ogly_text):
-        lines = html.unescape(ogly_text).split('\n')
+    def format_channel(cls, text):
+        lines = html.unescape(text).splitlines()
+        lines = [l.strip().replace('\t', ' ') for l in lines]
 
-        beuty_text = tv_emoji + ' ' + lines[0] + '\n'
-        beuty_text += cal_emoji + ' ' + lines[1] + '\n'
+        text = '{} {}\n'.format(tv_emoji, lines[0])
+        text += '{} {}\n'.format(cal_emoji, lines[1])
 
-        for i in range(2, len(lines)):
-            beuty_text += aster_emoji + ' ' + lines[i] + '\n'
+        for l in lines[2:]:
+            text += '{} {}\n'.format(aster_emoji, l)
 
-        beuty_text = beuty_text.replace('\t', ' ')
-
-        return beuty_text
+        return text

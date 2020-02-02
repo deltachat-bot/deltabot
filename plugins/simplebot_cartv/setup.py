@@ -6,7 +6,7 @@ from setuptools import setup
 
 
 MODULE_NAME = 'simplebot_cartv'
-CLASS_NAME = 'Cartv'
+CLASS_NAME = 'CarTV'
 with open(os.path.join(MODULE_NAME, '__init__.py'), 'rt', encoding='utf8') as fh:
     source = fh.read()
 PLUGIN_NAME = re.search(r'name = \'(.*?)\'', source, re.M).group(1)
@@ -15,7 +15,7 @@ VERSION = re.search(r'version = \'(.*?)\'', source, re.M).group(1)
 setup(
     name=MODULE_NAME,
     version=VERSION,
-    author='adbenitez',
+    author='The SimpleBot Contributors',
     author_email='adbenitez@nauta.cu',
     description='A plugin for SimpleBot, a Delta Chat bot (http://delta.chat/)',
     long_description='For more info visit https://github.com/adbenitez/simplebot',
