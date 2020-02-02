@@ -42,11 +42,10 @@ class Meme(Plugin):
         with requests.get(url, headers=HEADERS) as r:
             r.raise_for_status()
             soup = bs4.BeautifulSoup(r.text, 'html.parser')
-        img = soup.find('div', class_='storyContent').img
-        img_url = img['src'].split('?')[0]
-        ctx.text = '{}\n\n{}'.format(img['alt'], img_url)
+        img = soup('div', class_='storyContent')[-1].img
+        ctx.text = '{}\n\n{}'.format(img['alt'], img['src'])
 
-        with requests.get(img_url, headers=HEADERS) as r:
+        with requests.get(img['src'], headers=HEADERS) as r:
             r.raise_for_status()
             fpath = cls.bot.get_blobpath('meme.png')
             with open(fpath, 'wb') as fd:
