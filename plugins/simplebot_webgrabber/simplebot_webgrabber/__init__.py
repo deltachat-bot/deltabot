@@ -154,7 +154,7 @@ class WebGrabber(Plugin):
                     #     bot_addr=cls.bot.get_address(), root=root, url=url)
                     # soup.body.append(t)
                     cls.bot.send_html(
-                        chat, str(soup), cls.name, url, mode)
+                        chat, str(soup), cls.name, r.url, mode)
                 else:
                     max_size = cls.cfg.getint('max-size')
                     chunks = b''
