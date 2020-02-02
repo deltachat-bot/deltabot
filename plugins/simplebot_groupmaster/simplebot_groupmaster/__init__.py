@@ -715,7 +715,7 @@ class GroupMaster(Plugin):
             template = cls.env.get_template('list.html')
             html = template.render(
                 plugin=cls, bot_addr=cls.bot.get_address(), groups=groups)
-            cls.bot.send_html(chat, html, cls.name, ctx.mode)
+            cls.bot.send_html(chat, html, cls.name, ctx.msg.text, ctx.mode)
 
     @classmethod
     def me_cmd(cls, ctx):

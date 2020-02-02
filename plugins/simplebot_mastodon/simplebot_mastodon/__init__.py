@@ -330,7 +330,7 @@ class MastodonBridge(Plugin):
                         else:
                             html = cls.toots2html(mentions, url)
                             cls.bot.send_html(
-                                chat, html, cls.name, pref['mode'])
+                                chat, html, cls.name, '', pref['mode'])
                 except mastodon.MastodonUnauthorizedError:
                     cls.delete_account(acc)
                     cls.bot.get_chat(acc['addr']).send_text(
@@ -558,7 +558,7 @@ class MastodonBridge(Plugin):
                     cls.toots2text([toots[-1]], url)))
             else:
                 html = cls.toots2html([toots[-1]], url)
-                cls.bot.send_html(chat, html, cls.name, ctx.mode)
+                cls.bot.send_html(chat, html, cls.name, ctx.msg.text, ctx.mode)
         else:
             chat.send_text(_('Nothing found'))
 
@@ -705,7 +705,7 @@ class MastodonBridge(Plugin):
         else:
             html = cls.toots2html(
                 toots, url, template='profile.html', user=user)
-            cls.bot.send_html(chat, html, cls.name, ctx.mode)
+            cls.bot.send_html(chat, html, cls.name, ctx.msg.text, ctx.mode)
 
     @classmethod
     def timeline_cmd(cls, ctx):
@@ -737,7 +737,7 @@ class MastodonBridge(Plugin):
                     cls.toots2text(toots, url)))
             else:
                 html = cls.toots2html(toots, url)
-                cls.bot.send_html(chat, html, cls.name, ctx.mode)
+                cls.bot.send_html(chat, html, cls.name, ctx.msg.text, ctx.mode)
         else:
             chat.send_text(_('Nothing found for {}').format(timeline))
 

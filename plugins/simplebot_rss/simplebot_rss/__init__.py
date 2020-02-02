@@ -137,7 +137,8 @@ class RSS(Plugin):
                 else:
                     html = cls.env.get_template('items.html').render(
                         plugin=cls, title=feed['title'], entries=entries)
-                    cls.bot.send_html(group, html, cls.name, ctx.mode)
+                    cls.bot.send_html(group, html, cls.name,
+                                      ctx.msg.text, ctx.mode)
 
     @classmethod
     def info_cmd(cls, ctx):
@@ -167,7 +168,7 @@ class RSS(Plugin):
             template = cls.env.get_template('feeds.html')
             addr = cls.bot.get_address()
             html = template.render(plugin=cls, feeds=feeds, bot_addr=addr)
-            cls.bot.send_html(chat, html, cls.name, ctx.mode)
+            cls.bot.send_html(chat, html, cls.name, ctx.msg.text, ctx.mode)
 
     @classmethod
     def unsubscribe_cmd(cls, ctx):
@@ -275,7 +276,7 @@ class RSS(Plugin):
                                 g.send_text(text)
                             else:
                                 cls.bot.send_html(
-                                    g, html, cls.name, pref['mode'])
+                                    g, html, cls.name, '', pref['mode'])
                         else:
                             ids = feed['chats'].split()
                             ids.remove(gid)
