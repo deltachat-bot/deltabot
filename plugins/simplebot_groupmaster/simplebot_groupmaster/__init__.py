@@ -99,7 +99,17 @@ class GroupMaster(Plugin):
         if r:
             return r[0]
         else:
-            return addr
+            i = 1
+            while True:
+                nick = 'User{}'.format(i)
+                r = cls.db.execute(
+                    'SELECT nick FROM nicks WHERE nick=?', (nick,)).fetchone()
+                if not r:
+                    cls.db.execute(
+                        'INSERT OR REPLACE INTO nicks VALUES (?,?)', (addr, nick))
+                    break
+                i += 1
+            return nick
 
     @classmethod
     def process_messages(cls, ctx):
@@ -301,10 +311,7 @@ class GroupMaster(Plugin):
         addr = ctx.msg.get_sender_contact().addr
         new_nick = ' '.join(ctx.text.split())
         if new_nick:
-            if new_nick == addr:
-                cls.db.execute('DELETE FROM nicks WHERE addr=?', (addr,))
-                text = _('** Nick: {}').format(addr)
-            elif '@' in new_nick or ':' in new_nick or len(new_nick) > 30:
+            if new_nick != addr and ('@' in new_nick or ':' in new_nick or len(new_nick) > 30):
                 text = _(
                     '** Invalid nick, "@" and ":" not allowed, and nick should be less than 30 characters')
             elif cls.db.execute('SELECT * FROM nicks WHERE nick=?', (new_nick,)).fetchone():
