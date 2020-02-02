@@ -9,3 +9,4 @@ Changelog
 - XMPP channel avatar is shown in Delta Chat
 - added commands to list group members
 - generate random default nick
+- allow only ASCII characters and numbers in nicks
