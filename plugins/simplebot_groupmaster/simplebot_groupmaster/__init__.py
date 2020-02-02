@@ -4,6 +4,7 @@ from urllib.parse import quote_plus
 import gettext
 import os
 import random
+import re
 import string
 import sqlite3
 
@@ -14,6 +15,8 @@ from simplebot import Plugin, Mode, PluginFilter, PluginCommand
 GROUP_URL = 'http://delta.chat/group/'
 MGROUP_URL = 'http://delta.chat/mega-group/'
 CHANNEL_URL = 'http://delta.chat/channel/'
+
+nick_re = re.compile(r'[a-zA-Z0-9 ]{1,30}$')
 
 
 def rmprefix(text, prefix):
@@ -311,9 +314,9 @@ class GroupMaster(Plugin):
         addr = ctx.msg.get_sender_contact().addr
         new_nick = ' '.join(ctx.text.split())
         if new_nick:
-            if new_nick != addr and ('@' in new_nick or ':' in new_nick or len(new_nick) > 30):
+            if new_nick != addr and not nick_re.match(new_nick):
                 text = _(
-                    '** Invalid nick, "@" and ":" not allowed, and nick should be less than 30 characters')
+                    '** Invalid nick, only letters, numbers and space are allowed, and nick should be less than 30 characters')
             elif cls.db.execute('SELECT * FROM nicks WHERE nick=?', (new_nick,)).fetchone():
                 text = _('** Nick already taken')
             else:
