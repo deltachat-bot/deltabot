@@ -11,3 +11,4 @@ SimpleBot Changelog
 - now `X-Mailer` header includes "SimpleBot <version>" `#39 <https://github.com/adbenitez/simplebot/pull/39>`_
 - the bot now ignores other SimpleBot instances `83aeb4c <https://github.com/adbenitez/simplebot/commit/83aeb4c580b0937269e633c75873b3c38f506d59>`_
 - allow to update password `42d1ea7`_
+- added `text` argument to `send_html()`
