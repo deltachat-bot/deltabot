@@ -96,7 +96,7 @@ class FacebookBridge(Plugin):
     def _login(cls, onlogin, addr):
         def _on2fa():
             onlogin.set()
-            cls.db.execute(
+            cls.db.commit(
                 'UPDATE users SET status=? WHERE addr=?', (Status.DISABLED, addr))
             code_ev = Event()
             cls.code_events[addr] = code_ev
@@ -117,13 +117,13 @@ class FacebookBridge(Plugin):
                 u['username'], u['password'], u['cookie'], _on2fa)
             cookie = json.dumps(onlogin.user.getSession())
             if onlogin.is_set():
-                cls.db.execute(
+                cls.db.commit(
                     'UPDATE users SET cookie=?, status=? WHERE addr=?', (cookie, Status.ENABLED, addr))
             else:
-                cls.db.execute(
+                cls.db.commit(
                     'UPDATE users SET cookie=? WHERE addr=?', (cookie, addr))
         except FBchatException as ex:
-            cls.db.execute(
+            cls.db.commit(
                 'UPDATE users SET status=? WHERE addr=?', (Status.DISABLED, addr))
             cls.bot.logger.exception(ex)
             cls.bot.get_chat(addr).send_text(
@@ -200,7 +200,7 @@ class FacebookBridge(Plugin):
     def password_cmd(cls, ctx):
         addr = ctx.msg.get_sender_contact().addr
         chat = cls.bot.get_chat(ctx.msg)
-        cls.db.execute(
+        cls.db.commit(
             'UPDATE users SET password=? WHERE addr=?', (ctx.text, addr))
         chat.send_text(_('Password updated'))
 
@@ -236,8 +236,8 @@ class FacebookBridge(Plugin):
     def disable_cmd(cls, ctx):
         addr = ctx.msg.get_sender_contact().addr
         chat = cls.bot.get_chat(ctx.msg)
-        cls.db.execute('UPDATE users SET status=? WHERE addr=?',
-                       (Status.DISABLED, addr))
+        cls.db.commit('UPDATE users SET status=? WHERE addr=?',
+                      (Status.DISABLED, addr))
         chat.send_text(
             _('Account disabled'))
 
@@ -245,24 +245,24 @@ class FacebookBridge(Plugin):
     def enable_cmd(cls, ctx):
         addr = ctx.msg.get_sender_contact().addr
         chat = cls.bot.get_chat(ctx.msg)
-        cls.db.execute('UPDATE users SET status=? WHERE addr=?',
-                       (Status.ENABLED, addr))
+        cls.db.commit('UPDATE users SET status=? WHERE addr=?',
+                      (Status.ENABLED, addr))
         chat.send_text(_('Account enabled'))
 
     @classmethod
     def mute_cmd(cls, ctx):
         addr = ctx.msg.get_sender_contact().addr
         chat = cls.bot.get_chat(ctx.msg)
-        cls.db.execute('UPDATE groups SET status=? WHERE group_id=? AND addr=?',
-                       (Status.DISABLED, chat.id, addr))
+        cls.db.commit('UPDATE groups SET status=? WHERE group_id=? AND addr=?',
+                      (Status.DISABLED, chat.id, addr))
         chat.send_text(_('Group muted'))
 
     @classmethod
     def unmute_cmd(cls, ctx):
         addr = ctx.msg.get_sender_contact().addr
         chat = cls.bot.get_chat(ctx.msg)
-        cls.db.execute('UPDATE groups SET status=? WHERE group_id=? AND addr=?',
-                       (Status.ENABLED, chat.id, addr))
+        cls.db.commit('UPDATE groups SET status=? WHERE group_id=? AND addr=?',
+                      (Status.ENABLED, chat.id, addr))
         chat.send_text(_('Group unmuted'))
 
     @classmethod
@@ -315,7 +315,7 @@ class FacebookBridge(Plugin):
                 _('Your account is disabled, use /fb/enable to enable it.'))
             return
         if group['status'] == Status.DISABLED:
-            cls.db.execute(
+            cls.db.commit(
                 'UPDATE groups SET status=? WHERE group_id=?', (Status.ENABLED, chat.id))
 
         Thread(target=cls._send_dc2fb, args=(
@@ -367,7 +367,7 @@ class FacebookBridge(Plugin):
                 else:
                     members = g.get_contacts()
                 if me not in members or len(members) != 2:
-                    cls.db.execute(
+                    cls.db.commit(
                         'DELETE FROM groups WHERE group_id=?', (g.id,))
                     continue
                 thread_type = ThreadType(row['thread_type'])
@@ -495,6 +495,10 @@ class DBManager:
             )
 
     def execute(self, statement, args=(), get='all'):
+        r = self.db.execute(statement, args)
+        return r.fetchall() if get == 'all' else r.fetchone()
+
+    def commit(self, statement, args=(), get='all'):
         with self.db:
             r = self.db.execute(statement, args)
             return r.fetchall() if get == 'all' else r.fetchone()
