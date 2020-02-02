@@ -34,6 +34,9 @@ class FacebookBridge(Plugin):
         if not cls.cfg.get('max-size'):
             cls.cfg['max-size'] = '1048576'
             save = True
+        if not cls.cfg.get('pool-size'):
+            cls.cfg['pool-size'] = '10'
+            save = True
         if save:
             cls.bot.save_config()
 
@@ -45,7 +48,7 @@ class FacebookBridge(Plugin):
                                    languages=[bot.locale], fallback=True)
         lang.install()
 
-        cls.pool_size = 5
+        cls.pool_size = cls.cfg.getint('pool-size')
         cls.pool = BoundedSemaphore(value=cls.pool_size)
         cls.code_events = dict()
         cls.worker = Thread(target=cls.listen_to_fb)
@@ -431,7 +434,7 @@ class FacebookBridge(Plugin):
                     onlogin = Event()
                     Thread(target=cls._login, args=(
                         onlogin, addr), daemon=True).start()
-                    onlogin.wait(60)
+                    onlogin.wait(30)
                     if onlogin.user is None:
                         return
                     cls._send_fb2dc(onlogin.user, addr)
