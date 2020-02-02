@@ -43,7 +43,7 @@ Misc
 - **Translator:** Allows to translate text. Example: /tr en es hello world.
 - **WebGrabber:** Browse the web using Delta Chat.
 - **Wikiquote:** Get quotes from Wikiquote.
-- **XKCD:** See xkcd.com comics in Delta Chat.
+- **XKCD:** See https://xkcd.com/ comics in Delta Chat.
 
 Cuba
 ~~~~
