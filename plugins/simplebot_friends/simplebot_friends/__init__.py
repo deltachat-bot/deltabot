@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import gettext
 import os
-import re
 import sqlite3
 
 from simplebot import Plugin, Mode, PluginCommand
@@ -11,7 +10,7 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 class DeltaFriends(Plugin):
 
     name = 'DeltaFriends'
-    version = '0.3.0'
+    version = '0.4.0'
 
     MAX_BIO_LEN = 500
 
@@ -71,7 +70,7 @@ class DeltaFriends(Plugin):
         html = cls.env.get_template('index.html').render(
             plugin=cls, bot_addr=cls.bot.get_address(), bio=bio)
         chat = cls.bot.get_chat(ctx.msg)
-        cls.bot.send_html(chat, html, cls.name, ctx.mode)
+        cls.bot.send_html(chat, html, cls.name, ctx.msg.text, ctx.mode)
 
     @classmethod
     def list_cmd(cls, ctx):
@@ -85,7 +84,7 @@ class DeltaFriends(Plugin):
         else:
             html = cls.env.get_template('list.html').render(
                 plugin=cls, friends=friends)
-            cls.bot.send_html(chat, html, cls.name, ctx.mode)
+            cls.bot.send_html(chat, html, cls.name, ctx.msg.text, ctx.mode)
 
     @classmethod
     def join_cmd(cls, ctx):

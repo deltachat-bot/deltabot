@@ -57,7 +57,7 @@ class Helper(Plugin):
             bot_addr = cls.bot.get_address()
             html = cls.template.render(
                 plugin=cls, plugins=plugins, bot_addr=bot_addr)
-            cls.bot.send_html(chat, html, cls.name, ctx.mode)
+            cls.bot.send_html(chat, html, cls.name, ctx.msg.text, ctx.mode)
 
     @classmethod
     def on_cmd_processed(cls, ctx):

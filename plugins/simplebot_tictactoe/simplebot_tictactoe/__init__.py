@@ -77,7 +77,8 @@ class TicTacToe(Plugin):
             board = [board[:3], board[3:6], board[6:]]
             html = cls.env.get_template('index.html').render(
                 plugin=cls, bot_addr=bot_addr, gid=chat.id, board=board)
-            cls.bot.send_html(priv_chat, html, cls.name, ctx.mode)
+            cls.bot.send_html(priv_chat, html, cls.name,
+                              chat.get_name(), ctx.mode)
             chat.send_text(
                 _('{} is your turn...\n\n{}').format(game['turn'], b.pretty_str()))
 
