@@ -10,3 +10,4 @@ Changelog
 - added commands to list group members
 - generate random default nick
 - allow only ASCII characters and numbers in nicks
+- added `/xmpp/remove` command to quick a DC member from the group
