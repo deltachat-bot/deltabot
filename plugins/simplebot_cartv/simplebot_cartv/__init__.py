@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-from datetime import date
+from datetime import datetime
 import gettext
 import html
 import os
 
 from simplebot import Plugin, PluginCommand
+import pytz
 import requests
 
 
@@ -49,7 +50,8 @@ class CarTV(Plugin):
     @classmethod
     def cartv_cmd(cls, ctx):
         chat = cls.bot.get_chat(ctx.msg)
-        today = date.today().strftime('%d-%m-%Y')
+        eastern = pytz.timezone("US/Eastern")
+        today = datetime.now(eastern).strftime('%d-%m-%Y')
 
         if ctx.text:
             if ctx.text not in channels:
