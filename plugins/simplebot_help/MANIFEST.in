@@ -1,2 +1,0 @@
-recursive-include simplebot_help/templates *
-recursive-include simplebot_help/locale *

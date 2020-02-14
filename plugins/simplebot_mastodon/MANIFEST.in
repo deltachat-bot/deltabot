@@ -1,4 +1,0 @@
-recursive-include simplebot_mastodon/locale *
-recursive-include simplebot_mastodon/templates *
-include simplebot_mastodon/mastodon-logo.png
-include *.rst

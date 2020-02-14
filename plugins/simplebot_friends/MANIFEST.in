@@ -1,2 +1,0 @@
-recursive-include simplebot_friends/templates *
-recursive-include simplebot_friends/locale *
