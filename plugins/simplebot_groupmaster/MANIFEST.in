@@ -1,3 +1,0 @@
-recursive-include simplebot_groupmaster/templates *
-recursive-include simplebot_groupmaster/locale *
-include *.rst
