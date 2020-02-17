@@ -13,12 +13,6 @@ but note that the operator of the bot service can look into
 messages that are sent to it. See also: https://github.com/Simon-Laux/ZHV/
 
 
-Plugins
--------
-
-See: https://github.com/SimpleBot-Inc/simplebot_plugins
-
-
 Install
 -------
 
@@ -59,11 +53,10 @@ Install `Delta Chat`_ and add your bot's email address as a contact and
 start chatting with it! You can also add the bot as a member to a group chat.
 
 
-Contributors
-============
+Plugins
+-------
 
-- Asiel Díaz Benítez (@adbenitez)
-- Luis Antonio Correa Leyva (@correaleyval)
+See: https://github.com/SimpleBot-Inc/simplebot_plugins
 
 
 License
