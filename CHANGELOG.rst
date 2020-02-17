@@ -1,5 +1,5 @@
-SimpleBot Changelog
-*******************
+Changelog
+*********
 
 0.10.0
 ------
