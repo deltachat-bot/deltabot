@@ -177,7 +177,7 @@ class SimpleBot(DeltaBot):
 
         botcfg = self.get_config(__name__)
         botcfg.setdefault(
-            'start_msg', 'This is SimpleBot, a free software bot for the Delta Chat aplication.\n\nSource code: https://github.com/adbenitez/simplebot')
+            'start_msg', 'This is SimpleBot, a free software bot for the Delta Chat aplication.\n\nSource code: https://github.com/SimpleBot-Inc/simplebot')
         botcfg.setdefault('displayname', 'SimpleBot🤖')
         botcfg.setdefault('avatar', '1')
         botcfg.setdefault('mdns_enabled', '0')
