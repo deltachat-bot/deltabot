@@ -23,7 +23,7 @@ setup(
     author_email='adbenitez@nauta.cu',
     url='https://github.com/SimpleBot-Inc/simplebot',
     packages=[MODULE_NAME],
-    classifiers=['Development Status :: 3 - Alpha',
+    classifiers=['Development Status :: 4 - Beta',
                  'Intended Audience :: Developers',
                  'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
                  'Operating System :: POSIX',
