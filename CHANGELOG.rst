@@ -1,6 +1,10 @@
 Changelog
 *********
 
+`Unreleased`_
+-------------
+
+
 0.10.0
 ------
 
@@ -12,3 +16,6 @@ Changelog
 - the bot now ignores other SimpleBot instances `83aeb4c`_
 - allow to update password `42d1ea7`_
 - added `text` argument to `send_html()`
+
+
+.. _Unreleased: https://github.com/SimpleBot-Inc/simplebot/compare/v0.10.0...HEAD
