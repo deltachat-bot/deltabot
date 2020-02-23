@@ -157,23 +157,23 @@ class DeltaBot:
             self.account.stop_threads()
 
     @account_hookimpl
-    def process_ffi_event(self, ffi_event):
-        ev = ffi_event
+    def process_incoming_message(self, message):
         try:
-            if ev.name in ('DC_EVENT_MSGS_CHANGED', 'DC_EVENT_INCOMING_MSG') and ev.data2 != 0:
-                msg = self.account.get_message_by_id(int(ev.data2))
-                if msg.get_sender_contact() == self.get_contact():
-                    self.on_self_message(msg)
+            if message.get_sender_contact() == self.get_contact():
+                self.on_self_message(message)
+            else:
+                message.contact_request = message.chat.is_deaddrop()
+                if message.text and message.text.startswith(_CMD_PREFIX):
+                    self.on_command(message)
                 else:
-                    msg.contact_request = (
-                        ev.name == 'DC_EVENT_MSGS_CHANGED')
-                    if msg.text and msg.text.startswith(_CMD_PREFIX):
-                        self.on_command(msg)
-                    else:
-                        self.on_message(msg)
-            elif ev.name == 'DC_EVENT_MSG_DELIVERED':
-                msg = self.account.get_message_by_id(int(ev.data2))
-                self.on_message_delivered(msg)
+                    self.on_message(message)
+        except Exception as ex:
+            self.logger.exception(ex)
+
+    @account_hookimpl
+    def process_message_delivered(self, message):
+        try:
+            self.on_message_delivered(message)
         except Exception as ex:
             self.logger.exception(ex)
 
