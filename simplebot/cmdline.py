@@ -37,8 +37,8 @@ def info(ctx):
     if not bot.is_configured():
         fail(ctx, "account not configured, use 'simplebot init'")
 
-    info = bot.account.get_infostring()
-    print(info)
+    for key, val in bot.account.get_info().items():
+        print("{:30s}: {}".format(key, val))
 
 
 @click.command()
