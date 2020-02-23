@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 import logging
 import logging.handlers
+from threading import Event
 import os
 
 import deltachat as dc
+from deltachat.hookspec import account_hookimpl
+from deltachat.tracker import ConfigureTracker
+from deltachat.eventlogger import FFIEventLogger
 
 
 _CMD_PREFIX = '/'
@@ -46,19 +50,24 @@ class DeltaBot:
         self.account.set_config('sentbox_watch', '0')
         self.account.set_config('mvbox_watch', '0')
         self.account.set_config('bcc_self', '0')
+        self._shutdown_event = Event()
+        self.account.add_account_plugin(self)
+        self.account.add_account_plugin(FFIEventLogger(self.account, ""))
 
     def is_configured(self):
         return bool(self.account.is_configured())
 
     def configure(self, email, password):
-        self.account.configure(addr=email, mail_pw=password)
-        self.account.start_threads()
-        configured = self._wait_configuration_progress(1000) >= 1000
-        self.account.stop_threads()
-        if configured:
-            self.logger.info('Bot configured successfully!')
-        else:
-            self.logger.info('Configuration failed')
+        with self.account.temp_plugin(ConfigureTracker()) as configtracker:
+            self.account.start_threads()
+            self.account.configure(addr=email, mail_pw=password)
+            try:
+                configtracker.wait_finish()
+            except configtracker.ConfigureFailed:
+                self.logger.error('Bot configuration failed')
+            else:
+                self.logger.info('Bot configured successfully!')
+            self.account.stop_threads()
 
     def get_blobdir(self):
         return self.account.get_blobdir()
@@ -136,30 +145,37 @@ class DeltaBot:
         else:
             return False
 
+    @account_hookimpl
+    def after_shutdown(self):
+        self._shutdown_event.set()
+
     def start(self):
         self.account.start_threads()
         try:
-            while True:
-                try:
-                    ev = self.account._evlogger.get()
-                    if ev[0] in ('DC_EVENT_MSGS_CHANGED', 'DC_EVENT_INCOMING_MSG') and ev[2] != 0:
-                        msg = self.account.get_message_by_id(int(ev[2]))
-                        if msg.get_sender_contact() == self.get_contact():
-                            self.on_self_message(msg)
-                        else:
-                            msg.contact_request = (
-                                ev[0] == 'DC_EVENT_MSGS_CHANGED')
-                            if msg.text and msg.text.startswith(_CMD_PREFIX):
-                                self.on_command(msg)
-                            else:
-                                self.on_message(msg)
-                    elif ev[0] == 'DC_EVENT_MSG_DELIVERED':
-                        msg = self.account.get_message_by_id(int(ev[2]))
-                        self.on_message_delivered(msg)
-                except Exception as ex:
-                    self.logger.exception(ex)
+            self._shutdown_event.wait()
         finally:
             self.account.stop_threads()
+
+    @account_hookimpl
+    def process_ffi_event(self, ffi_event):
+        ev = ffi_event
+        try:
+            if ev.name in ('DC_EVENT_MSGS_CHANGED', 'DC_EVENT_INCOMING_MSG') and ev.data2 != 0:
+                msg = self.account.get_message_by_id(int(ev.data2))
+                if msg.get_sender_contact() == self.get_contact():
+                    self.on_self_message(msg)
+                else:
+                    msg.contact_request = (
+                        ev.name == 'DC_EVENT_MSGS_CHANGED')
+                    if msg.text and msg.text.startswith(_CMD_PREFIX):
+                        self.on_command(msg)
+                    else:
+                        self.on_message(msg)
+            elif ev.name == 'DC_EVENT_MSG_DELIVERED':
+                msg = self.account.get_message_by_id(int(ev.data2))
+                self.on_message_delivered(msg)
+        except Exception as ex:
+            self.logger.exception(ex)
 
     def get_contact(self, addr=None):
         if addr is None:
@@ -197,15 +213,6 @@ class DeltaBot:
 
     def is_group(self, chat):
         return chat.get_type() in (dc.const.DC_CHAT_TYPE_GROUP, dc.const.DC_CHAT_TYPE_VERIFIED_GROUP)
-
-    def _wait_configuration_progress(self, target):
-        while 1:
-            evt_name, data1, data2 = \
-                self.account._evlogger.get_matching(
-                    "DC_EVENT_CONFIGURE_PROGRESS")
-            if data1 >= target or data1 == 0:
-                self.logger.info("CONFIG PROGRESS {}".format(data1))
-                return data1
 
     def _init_logger(self):
         logger = logging.Logger('DeltaBot')
