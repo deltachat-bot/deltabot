@@ -50,7 +50,6 @@ class DeltaBot:
         self.account.set_config('sentbox_watch', '0')
         self.account.set_config('mvbox_watch', '0')
         self.account.set_config('bcc_self', '0')
-        self._shutdown_event = Event()
         self.account.add_account_plugin(self)
         self.account.add_account_plugin(FFIEventLogger(self.account, ""))
 
@@ -145,16 +144,12 @@ class DeltaBot:
         else:
             return False
 
-    @account_hookimpl
-    def after_shutdown(self):
-        self._shutdown_event.set()
-
     def start(self):
-        self.account.start_threads()
+        self.account.start()
         try:
-            self._shutdown_event.wait()
+            self.account.wait_shutdown()
         finally:
-            self.account.stop_threads()
+            self.account.shutdown()
 
     @account_hookimpl
     def process_incoming_message(self, message):
