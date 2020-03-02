@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 import logging
 import logging.handlers
-from threading import Event
 import os
 
 import deltachat as dc
 from deltachat.hookspec import account_hookimpl
 from deltachat.tracker import ConfigureTracker
-from deltachat.eventlogger import FFIEventLogger
 
 
 _CMD_PREFIX = '/'
@@ -34,6 +32,20 @@ class Filter():
         return False
 
 
+class CommandDef:
+    def __init__(self, cmd, args, description, func):
+        self.cmd = cmd
+        self.description = description
+        self.args = args
+        self.func = func
+
+    def __call__(self, ctx):
+        return self.func(ctx)
+
+    def __eq__(self, c):
+        return c.__dict__ == self.__dict__
+
+
 class DeltaBot:
     def __init__(self, basedir, os_name=None):
         self.commands = []
@@ -51,22 +63,26 @@ class DeltaBot:
         self.account.set_config('mvbox_watch', '0')
         self.account.set_config('bcc_self', '0')
         self.account.add_account_plugin(self)
-        self.account.add_account_plugin(FFIEventLogger(self.account, ""))
+        # self.account.add_account_plugin(FFIEventLogger(self.account, ""))
+
+    def register_command(self, name, description, args, func):
+        cmd = CommandDef(name, description, args, func=func)
+        self.commands.append(cmd)
 
     def is_configured(self):
         return bool(self.account.is_configured())
 
     def configure(self, email, password):
         with self.account.temp_plugin(ConfigureTracker()) as configtracker:
-            self.account.start_threads()
-            self.account.configure(addr=email, mail_pw=password)
+            self.account.update_config(dict(addr=email, mail_pw=password))
+            self.account.start()
             try:
                 configtracker.wait_finish()
             except configtracker.ConfigureFailed:
                 self.logger.error('Bot configuration failed')
             else:
                 self.logger.info('Bot configured successfully!')
-            self.account.stop_threads()
+            self.account.shutdown()
 
     def get_blobdir(self):
         return self.account.get_blobdir()
@@ -83,15 +99,11 @@ class DeltaBot:
     def add_commands(self, commands):
         self.commands.extend(commands)
 
-    def remove_commands(self, commands):
-        for c in commands:
-            self.commands.remove(c)
-
-    def add_command(self, cmd):
-        self.commands.append(cmd)
-
-    def remove_command(self, cmd):
-        self.commands.remove(cmd)
+    def remove_command(self, name):
+        for i, cmd in self.commands:
+            if cmd[0] == name:
+                self.commands.remove(i)
+                return True
 
     def add_filters(self, filters):
         self.filters.extend(filters)
@@ -207,7 +219,7 @@ class DeltaBot:
         return group
 
     def is_group(self, chat):
-        return chat.get_type() in (dc.const.DC_CHAT_TYPE_GROUP, dc.const.DC_CHAT_TYPE_VERIFIED_GROUP)
+        return chat.is_group()
 
     def _init_logger(self):
         logger = logging.Logger('DeltaBot')
