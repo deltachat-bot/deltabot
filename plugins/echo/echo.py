@@ -18,7 +18,7 @@ def deltabot_configure(bot):
             'To use it you can simply send a message starting with '
             'the command /echo. For example:\n/echo hello world'),
         func=process_command_echo
-    ))
+    )
 
 
 def process_command_echo(command):
