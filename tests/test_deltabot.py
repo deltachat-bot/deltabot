@@ -1,19 +1,22 @@
 
-
-def test_help(cmd):
-    cmd.run_ok([], """
-        *bot management*
-        *init*
-        *serve*
-    """)
+import os
+import pytest
 
 
-class TestInit:
-    def test_basic(self, mycmd, session_liveconfig):
-        config = session_liveconfig.get(0)
-        mycmd.run_ok(["init", config["addr"], config["mail_pw"]], """
-            *DeltaBot*INFO*success*
-        """)
-        mycmd.run_ok(["info"], """
-            *database_version*
-        """)
+from deltabot.deltabot import DeltaBot
+from deltabot.cmdline import make_logger
+
+
+@pytest.fixture
+def bot(acfactory):
+    import logging
+    account = acfactory.get_unconfigured_account()
+    basedir = os.path.dirname(account.db_path)
+    logger = make_logger(basedir, logging.DEBUG)
+    return DeltaBot(account, logger)
+
+
+def test_builtin_plugins(bot):
+    assert "deltabot.builtin.echo" in bot.list_plugins()
+    bot.remove_plugin(name="deltabot.builtin.echo")
+    assert "deltabot.builtin.echo" not in bot.list_plugins()
