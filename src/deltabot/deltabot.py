@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
-import logging
-import logging.handlers
-import os
 
 import deltachat as dc
 from deltachat import account_hookimpl
 from deltachat.tracker import ConfigureTracker
 
 
-_CMD_PREFIX = '/'
+CMD_PREFIX = '/'
 
 
 class Filter():
@@ -17,7 +14,10 @@ class Filter():
 
 
 class CommandDef:
+    """ Definition of a '/COMMAND' with args. """
     def __init__(self, cmd, args, description, func):
+        if cmd[0] != CMD_PREFIX:
+            raise ValueError("cmd {!r} must start with {!}".format(cmd, CMD_PREFIX))
         self.cmd = cmd
         self.description = description
         self.args = args
@@ -31,27 +31,56 @@ class CommandDef:
 
 
 class DeltaBot:
-    def __init__(self, basedir, os_name=None):
+    def __init__(self, account, logger):
+        self.account = account
+        self.logger = logger
         self.commands = []
         self.filters = []
+        self._plugin_names = set()
 
-        self.basedir = os.path.abspath(os.path.expanduser(basedir))
-        if not os.path.exists(basedir):
-            os.makedirs(basedir)
-
-        self._init_logger()
-        self.account = _get_account(self.basedir, os_name)
-        self.account.set_config('save_mime_headers', '1')
-        self.account.set_config('e2ee_enabled', '1')
-        self.account.set_config('sentbox_watch', '0')
-        self.account.set_config('mvbox_watch', '0')
-        self.account.set_config('bcc_self', '0')
+        # set some useful bot defaults
+        self.account.update_config(dict(
+            save_mime_headers=1,
+            e2ee_enabled=1,
+            sentbox_watch=0,
+            mvbox_watch=0,
+            bcc_self=0
+        ))
         self.account.add_account_plugin(self)
-        # self.account.add_account_plugin(FFIEventLogger(self.account, ""))
+        self._register_builtin_plugins()
 
+    # =========================================================
+    # deltabot plugin management  API
+    # =========================================================
+    def _register_builtin_plugins(self):
+        self.logger.debug("registering builtin plugins")
+        from deltabot.builtin import echo
+        self.add_plugin_module("deltabot.builtin.echo", echo)
+
+    def add_plugin_module(self, name, module):
+        """ add a named deltabot plugin python module. """
+        self.logger.debug("registering new plugin {!r}".format(name))
+        self.account.add_account_plugin(module, name=name)
+        self._plugin_names.add(name)
+
+    def remove_plugin(self, name):
+        """ remove a named deltabot plugin. """
+        self.logger.debug("removing plugin {!r}".format(name))
+        if name in self._plugin_names:
+            self.account._pm.unregister(name=name)
+            self._plugin_names.remove(name)
+
+    def list_plugins(self):
+        """ return a dict name->deltabot plugin object mapping. """
+        return {plugin_name: self.account._pm.get_plugin(name=plugin_name)
+                for plugin_name in self._plugin_names}
+
+    # =========================================================
+    # deltabot command API
+    # =========================================================
     def register_command(self, name, description, args, func):
-        cmd = CommandDef(name, description, args, func=func)
-        self.commands.append(cmd)
+        self.logger.debug("registering new command {!r}".format(name))
+        self.commands.append(CommandDef(name, description, args, func=func))
 
     def is_configured(self):
         return bool(self.account.is_configured())
@@ -154,7 +183,7 @@ class DeltaBot:
                 self.on_self_message(message)
             else:
                 message.contact_request = message.chat.is_deaddrop()
-                if message.text and message.text.startswith(_CMD_PREFIX):
+                if message.text and message.text.startswith(CMD_PREFIX):
                     self.on_command(message)
                 else:
                     self.on_message(message)
@@ -204,30 +233,3 @@ class DeltaBot:
 
     def is_group(self, chat):
         return chat.is_group()
-
-    def _init_logger(self):
-        logger = logging.Logger('DeltaBot')
-        logger.parent = None
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-        chandler = logging.StreamHandler()
-        chandler.setLevel(logging.DEBUG)
-        chandler.setFormatter(formatter)
-        logger.addHandler(chandler)
-
-        log_path = os.path.join(self.basedir, 'logs.txt')
-        fhandler = logging.handlers.RotatingFileHandler(
-            log_path, backupCount=5, maxBytes=2000000)
-        fhandler.setLevel(logging.DEBUG)
-        fhandler.setFormatter(formatter)
-        logger.addHandler(fhandler)
-
-        self.logger = logger
-
-
-def _get_account(basedir, os_name):
-    db_path = os.path.join(basedir, "account.db")
-    acc = dc.Account(db_path, os_name=os_name)
-    acc.db_path = db_path
-    return acc
