@@ -29,46 +29,51 @@ Within an Delta Chat app, you may now send a chat `/help` message to
 commands in the reply.
 
 
-Implementing an echo bot
-------------------------
+Implementing a calculator bot
+-----------------------------
 
-Here is an "echo" chat bot Python module::
+Here is a complete "calculator" chat bot for performing additions::
 
-    # contents of echo.py
-    from deltabot.hookspec import deltabot_hookimpl
+    # contents of mycalc.py
+    from deltabot import deltabot_hookimpl
 
     @deltabot_hookimpl
     def deltabot_configure(bot, trans):
-        deltabot_account.add_command(
-            name="/echo",
+        bot.add_command(
+            name="/mycalc",
             version="1.0",
-            description=trans('Echoes back the given text.'),
+            description=trans('caculcates result of arithmetic integer expression'),
             long_description=trans(
-                'To use it you can simply send a message starting with '
-                'the command /echo. For example:\n/echo hello world'),
-            func=process_command_echo
+                'send "/calc 23+20" to the bot to get the result "43" back'),
+            func=process_command_mycalc
         )
 
 
-    def process_command_echo(command):
-        assert command.arg0 == "/echo"
+    def process_command_mycalc(command):
+        assert command.arg0 == "/mycalc"
         text = command.payload
-        if not text:
-            message = command.message
-            f = message.get_mime_headers()['from']
-            name = message.get_sender_contact().display_name
-            text = 'From: {}\nDisplay Name: {}'.format(f, name)
-        command.message.chat.send_text(text)
+
+        # don't directly use eval() as it could execute arbitrary code
+        parts = text.split("+-*/")
+        try:
+            for part in parts:
+                int(part)
+        except ValueError:
+            reply = "ExpressionError: {!r}".format(text)
+        else:
+            reply = "result of {!r}: {}".format(text, eval(text))
+
+        command.message.chat.send_text(reply)
 
 Register the new "echo bot"::
 
-    deltabot add-plugin echo.py
+    $ deltabot add-plugin mycalc.py
 
-Now start serving again::
+Now start serving the chat bot::
 
-    deltabot serve
+    $ deltabot serve
 
-and text a `/echo hello123` message, and see the message arriving back.
+and text a `/calc 23+20-1` message, and see the result message arriving back.
 
 
 note for users

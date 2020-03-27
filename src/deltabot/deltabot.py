@@ -4,27 +4,11 @@ import logging.handlers
 import os
 
 import deltachat as dc
-from deltachat.hookspec import account_hookimpl
+from deltachat import account_hookimpl
 from deltachat.tracker import ConfigureTracker
 
 
 _CMD_PREFIX = '/'
-
-
-class Command():
-    def __init__(self, cmd, args, description, action):
-        if not cmd.startswith(_CMD_PREFIX):
-            raise ValueError('Commands must start with {}'.format(_CMD_PREFIX))
-        self.cmd = cmd
-        self.args = args
-        self.description = description
-        self._action = action
-
-    def __call__(self, msg, args):
-        return self._action(msg, args)
-
-    def __eq__(self, c):
-        return c.cmd == self.cmd
 
 
 class Filter():
