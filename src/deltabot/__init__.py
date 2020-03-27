@@ -7,7 +7,10 @@ import sqlite3
 import zipfile
 import zlib
 
-from .deltabot import DeltaBot, Command, Filter
+from .deltabot import DeltaBot, Filter
+from .hookspec import deltabot_hookspec, deltabot_hookimpl  # noqa
+from .deltabot import CommandDef as PluginCommand
+
 import html2text
 import pkg_resources
 
@@ -45,11 +48,6 @@ class Plugin(ABC):
         is disabled/removed, do clean up here."""
         cls.bot.remove_commands(cls.commands)
         cls.bot.remove_filters(cls.filters)
-
-
-class PluginCommand(Command):
-    def __call__(self, ctx):
-        return self._action(ctx)
 
 
 class PluginFilter(Filter):
