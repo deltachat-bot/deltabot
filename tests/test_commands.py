@@ -23,7 +23,7 @@ def test_builtin(mock_bot):
 
 
 def test_register(mock_bot):
-    def my_command(commands):
+    def my_command(command):
         """ my commands example. """
 
     mock_bot.commands.register(name="/example", func=my_command)
