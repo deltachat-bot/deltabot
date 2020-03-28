@@ -64,7 +64,7 @@ def info(ctx):
 def list_plugins(ctx):
     """list deltabot plugins. """
     bot = ctx.parent.bot
-    for name, plugin in bot.list_plugins().items():
+    for name, plugin in bot.plugins.items():
         print("{:25s}: {}".format(name, plugin))
 
 

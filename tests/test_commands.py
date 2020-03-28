@@ -16,3 +16,20 @@ def test_parse_command_docstring():
     short, long = parse_command_docstring(func)
     assert short == "short description."
     assert long == "long description."
+
+
+def test_builtin(mock_bot):
+    assert "/echo" in mock_bot.commands.dict()
+
+
+def test_register(mock_bot):
+    def my_command(commands):
+        """ my commands example. """
+
+    mock_bot.commands.register(name="/example", func=my_command)
+    assert "/example" in mock_bot.commands.dict()
+    with pytest.raises(ValueError):
+        mock_bot.commands.register(name="/example", func=my_command)
+
+    mock_bot.commands.unregister("/example")
+    assert "/example" not in mock_bot.commands.dict()
