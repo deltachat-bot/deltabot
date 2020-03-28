@@ -14,7 +14,7 @@ if __name__ == "__main__":
 
     setuptools.setup(
         name=MODULE_NAME,
-        description='Delta Chat bot running and implementation plugin system',
+        description='Deltabot: Extensible bot system for Delta Chat',
         setup_requires=['setuptools_scm'],
         use_scm_version = True,
         long_description=long_desc,
@@ -26,7 +26,7 @@ if __name__ == "__main__":
         packages = setuptools.find_packages('src'),
         classifiers=['Development Status :: 4 - Beta',
                      'Intended Audience :: Developers',
-                     'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+                     'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
                      'Operating System :: POSIX',
                      'Operating System :: MacOS :: MacOS X',
                      'Topic :: Utilities',
@@ -34,6 +34,8 @@ if __name__ == "__main__":
         entry_points='''
             [console_scripts]
             deltabot=deltabot.cmdline:bot_main
+            [pytest11]
+            deltabot.pytestplugin=deltabot.pytestplugin
         ''',
         python_requires='>=3.5',
         install_requires=['click>=6.0', 'deltachat', 'html2text'],
