@@ -1,31 +1,35 @@
 # -*- coding: utf-8 -*-
-import gettext
-import os
 from deltabot.hookspec import deltabot_hookimpl
 
 
 @deltabot_hookimpl
 def deltabot_configure(bot):
-    localedir = os.path.join(os.path.dirname(__file__), 'locale')
-    lang = gettext.translation('deltabot_echo', localedir=localedir,
-                               languages=[bot.locale], fallback=True)
-    _ = lang.gettext
-
-    bot.register_command(
-        name="/echo",
-        description=_('Echoes back the given text.'),
-        long_description=_(
-            'To use it you can simply send a message starting with '
-            'the command /echo. For example:\n/echo hello world'),
-        func=process_command_echo
-    )
+    bot.register_command(name="/echo", func=process_command_echo)
 
 
 def process_command_echo(command):
+    """ Echoes back the received message.
+
+    To use it you can simply send a message starting with
+    the command /echo. For example:
+
+        /echo hello world
+    """
     text = command.payload
     if not text:
         message = command.message
-        f = message.get_mime_headers()['from']
-        name = message.get_sender_contact().display_name
-        text = 'From: {}\nDisplay Name: {}'.format(f, name)
-    command.message.chat.send_text(text)
+        contact = message.get_sender_contact()
+        text = 'From: {} <{}>'.format(contact.display_name, contact.addr)
+    return text
+
+
+def test_mock_echo(mocker):
+    assert mocker.run_command("/echo").startswith("From")
+    assert mocker.run_command("/echo hello") == "hello"
+
+
+def test_echo(bot_tester):
+    msg_reply = bot_tester.send_command("/echo")
+    assert msg_reply.text.startswith("From")
+    assert bot_tester.own_addr in msg_reply.text
+    assert bot_tester.own_displayname in msg_reply.text
