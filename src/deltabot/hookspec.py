@@ -14,3 +14,11 @@ class DeltaBotSpecs:
     @deltabot_hookspec
     def deltabot_configure(self, bot):
         """ configure a bot instance. called Once at initialization"""
+
+    @deltabot_hookspec
+    def deltabot_process_incoming(self, message, bot):
+        """ process an incoming message and return a reply Message or None.
+
+        If a reply message is returned, it will be sent back to
+        the chat where the original message came in.
+        """

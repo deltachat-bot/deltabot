@@ -22,8 +22,9 @@ def process_command_echo(command):
 
 
 def test_mock_echo(mocker):
-    assert mocker.run_command("/echo").startswith("From")
-    assert mocker.run_command("/echo hello") == "hello"
+    reply = mocker.run_command("/echo")
+    assert reply.msg.text.startswith("From")
+    assert mocker.run_command("/echo hello").msg.text == "hello"
 
 
 def test_echo(bot_tester):

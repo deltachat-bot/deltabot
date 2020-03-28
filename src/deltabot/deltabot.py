@@ -5,6 +5,7 @@ from deltachat import account_hookimpl
 from deltachat.tracker import ConfigureTracker
 
 from .commands import Commands
+from .filters import Filters
 from .plugins import Plugins
 
 
@@ -22,10 +23,11 @@ class DeltaBot:
         #: plugin subsystem for adding/removing plugins and calling plugin hooks
         self.plugins = Plugins(bot=self)
 
-        #: commands subsystem for registering/executing commands
+        #: commands subsystem for registering/executing '/*' commands in incoming messages
         self.commands = Commands(self)
 
-        self.filters = []
+        #: filter subsystem for registering/performing filters on incoming messages
+        self.filters = Filters(self)
 
         # set some useful bot defaults
         self.account.update_config(dict(
@@ -65,19 +67,6 @@ class DeltaBot:
         msg.set_text(text)
         chat.send_msg(msg)
 
-    def add_filters(self, filters):
-        self.filters.extend(filters)
-
-    def remove_filters(self, filters):
-        for f in filters:
-            self.filters.remove(f)
-
-    def add_filter(self, f):
-        self.filters.append(f)
-
-    def remove_filter(self, f):
-        self.filters.remove(f)
-
     def on_message_delivered(self, msg):
         pass
 
@@ -99,21 +88,26 @@ class DeltaBot:
             # to block or ignore an original contact request
             message.was_contact_request = message.chat.is_deaddrop()
             message.accept_sender_contact()
-
             self.logger.info("incoming message from {} id={} chat={} text={!r}".format(
                 message.get_sender_contact().addr,
                 message.id, message.chat.id, message.text[:50]))
-            res = self.commands.process_command_message(message)
-            if res:
-                reply = message.chat.send_text(res)
-                self.logger.info("sending reply to chat={}: text={!r}".format(
-                    reply.chat.id, reply.text[:50]))
+
+            # If this is a "/" command we don't apply filters.
+            reply = self.commands.process_command_message(message)
+            if reply:
+                self.send_reply(reply)
             else:
-                self.logger.info("no action for message from {} id={}".format(
-                    message.get_sender_contact().addr, message.id
-                ))
+                for reply in self.filters.process_incoming(message):
+                    self.send_reply(reply)
+
         except Exception as ex:
             self.logger.exception(ex)
+
+    def send_reply(self, reply):
+        msg = reply.chat.send_msg(reply.msg)
+        self.logger.info("reply id={} chat={} sent with text: {!r}".format(
+            msg.id, msg.chat, msg.text[:50]
+        ))
 
     @account_hookimpl
     def process_message_delivered(self, message):

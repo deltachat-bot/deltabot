@@ -2,6 +2,8 @@
 from collections import OrderedDict
 
 
+from .reply import TextReply
+
 CMD_PREFIX = '/'
 
 
@@ -38,11 +40,13 @@ class Commands:
         if cmd_def is None:
             reply = "unknown command {!r}".format(cmd_name)
             self.logger.warn(reply)
-            return reply
+            return TextReply(message, text=reply)
 
         payload = parts[0] if parts else ""
         cmd = IncomingCommand(bot=self.bot, cmd_def=cmd_def, payload=payload, message=message)
-        return cmd.cmd_def.func(cmd)
+        res = cmd.cmd_def.func(cmd)
+        if res:
+            return TextReply(message, text=res)
 
 
 class CommandDef:
