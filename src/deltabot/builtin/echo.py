@@ -4,16 +4,14 @@ from deltabot.hookspec import deltabot_hookimpl
 
 @deltabot_hookimpl
 def deltabot_configure(bot):
-    bot.register_command(name="/echo", func=process_command_echo)
+    bot.commands.register(name="/echo", func=process_command_echo)
 
 
 def process_command_echo(command):
-    """ Echoes back the received message.
+    """ Echoes back received message.
 
     To use it you can simply send a message starting with
-    the command /echo. For example:
-
-        /echo hello world
+    the command '/echo'. Example: `/echo hello world`
     """
     text = command.payload
     if not text:
