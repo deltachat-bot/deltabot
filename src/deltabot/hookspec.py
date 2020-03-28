@@ -18,9 +18,5 @@ class DeltaBotSpecs:
         return pm
 
     @deltabot_hookspec
-    def deltabot_configure(bot):
+    def deltabot_configure(self, bot):
         """ configure a bot instance. called Once at initialization"""
-
-    @deltabot_hookspec
-    def deltabot_shutdown(bot):
-        """ called once when the bot shuts down. """

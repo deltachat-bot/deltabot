@@ -27,8 +27,7 @@ def bot_main(ctx, basedir, stdout_loglevel):
         os.makedirs(basedir)
 
     db_path = os.path.join(basedir, "account.db")
-    account = deltachat.Account(db_path, os_name="deltabot/{}".format(sys.platform))
-
+    account = deltachat.Account(db_path, "deltabot/{}".format(sys.platform))
     loglevel = getattr(logging, stdout_loglevel.upper())
     logger = make_logger(basedir, loglevel)
     ctx.bot = DeltaBot(account, logger)
@@ -84,6 +83,7 @@ def serve(ctx, locale):
         fail(ctx, "account not configured: {}".format(bot.account.db_path))
 
     bot.start()
+    bot.account.wait_shutdown()
 
 
 def fail(ctx, msg):

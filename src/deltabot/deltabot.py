@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 
+from collections import OrderedDict
+
 import deltachat as dc
 from deltachat import account_hookimpl
 from deltachat.tracker import ConfigureTracker
+
+from . import hookspec
 
 
 CMD_PREFIX = '/'
@@ -15,28 +19,38 @@ class Filter():
 
 class CommandDef:
     """ Definition of a '/COMMAND' with args. """
-    def __init__(self, cmd, args, description, func):
+    def __init__(self, cmd, short, long, func):
         if cmd[0] != CMD_PREFIX:
             raise ValueError("cmd {!r} must start with {!}".format(cmd, CMD_PREFIX))
         self.cmd = cmd
-        self.description = description
-        self.args = args
+        self.long = long
+        self.short = short
         self.func = func
-
-    def __call__(self, ctx):
-        return self.func(ctx)
 
     def __eq__(self, c):
         return c.__dict__ == self.__dict__
 
 
+class IncomingCommand:
+    """ incoming command request. """
+    def __init__(self, bot, cmd_def, payload, message):
+        self.bot = bot
+        self.cmd_def = cmd_def
+        self.payload = payload
+        self.message = message
+
+
+class CommandNotFound(LookupError):
+    """Command was not found. """
+
+
 class DeltaBot:
     def __init__(self, account, logger):
         self.account = account
+        self._pm = hookspec.DeltaBotSpecs._make_plugin_manager()
         self.logger = logger
-        self.commands = []
+        self._cmd_defs = OrderedDict()
         self.filters = []
-        self._plugin_names = set()
 
         # set some useful bot defaults
         self.account.update_config(dict(
@@ -48,10 +62,12 @@ class DeltaBot:
         ))
         self.account.add_account_plugin(self)
         self._register_builtin_plugins()
+        self._pm.hook.deltabot_configure(bot=self)
 
     # =========================================================
     # deltabot plugin management  API
     # =========================================================
+
     def _register_builtin_plugins(self):
         self.logger.debug("registering builtin plugins")
         from deltabot.builtin import echo
@@ -60,27 +76,40 @@ class DeltaBot:
     def add_plugin_module(self, name, module):
         """ add a named deltabot plugin python module. """
         self.logger.debug("registering new plugin {!r}".format(name))
-        self.account.add_account_plugin(module, name=name)
-        self._plugin_names.add(name)
+        self._pm.register(plugin=module, name=name)
+        self._pm.check_pending()
 
     def remove_plugin(self, name):
         """ remove a named deltabot plugin. """
         self.logger.debug("removing plugin {!r}".format(name))
-        if name in self._plugin_names:
-            self.account._pm.unregister(name=name)
-            self._plugin_names.remove(name)
+        self._pm.unregister(name=name)
 
     def list_plugins(self):
         """ return a dict name->deltabot plugin object mapping. """
-        return {plugin_name: self.account._pm.get_plugin(name=plugin_name)
-                for plugin_name in self._plugin_names}
+        return dict(self._pm.list_name_plugin())
 
     # =========================================================
     # deltabot command API
     # =========================================================
-    def register_command(self, name, description, args, func):
-        self.logger.debug("registering new command {!r}".format(name))
-        self.commands.append(CommandDef(name, description, args, func=func))
+    def register_command(self, name, func):
+        short, long = parse_command_docstring(func)
+        cmd_def = CommandDef(name, short=short, long=long, func=func)
+        if name in self._cmd_defs:
+            raise ValueError("command {!r} already registered".format(name))
+        self._cmd_defs[name] = cmd_def
+        self.logger.debug("registered new command {!r}".format(name))
+
+    def _process_command_message(self, message):
+        assert message.text.startswith(CMD_PREFIX)
+        parts = message.text.split(maxsplit=1)
+        cmd_name = parts.pop(0)
+        cmd_def = self._cmd_defs.get(cmd_name)
+        if cmd_def is None:
+            raise CommandNotFound("unknown {!r} command in message {!r}".format(
+                cmd_name, message))
+        payload = parts[0] if parts else ""
+        cmd = IncomingCommand(bot=self, cmd_def=cmd_def, payload=payload, message=message)
+        return cmd.cmd_def.func(cmd)
 
     def is_configured(self):
         return bool(self.account.is_configured())
@@ -109,15 +138,6 @@ class DeltaBot:
         msg.set_text(text)
         chat.send_msg(msg)
 
-    def add_commands(self, commands):
-        self.commands.extend(commands)
-
-    def remove_command(self, name):
-        for i, cmd in self.commands:
-            if cmd[0] == name:
-                self.commands.remove(i)
-                return True
-
     def add_filters(self, filters):
         self.filters.extend(filters)
 
@@ -131,62 +151,24 @@ class DeltaBot:
     def remove_filter(self, f):
         self.filters.remove(f)
 
-    @staticmethod
-    def get_args(cmd, msg):
-        """Return the args for the given command or None if the command does not match."""
-        if type(msg) is dc.message.Message:
-            msg = msg.text
-        msg = msg.strip()
-        if msg and msg.split()[0] == cmd:
-            return msg[len(cmd):].strip()
-        return None
-
     def on_message_delivered(self, msg):
         pass
 
-    def on_self_message(self, msg):
-        pass
-
-    def on_message(self, msg):
-        processed = False
-        for f in self.filters:
-            try:
-                if f(msg):
-                    processed = True
-            except Exception as ex:
-                self.logger.exception(ex)
-        return processed
-
-    def on_command(self, msg):
-        for c in self.commands:
-            args = self.get_args(c.cmd, msg)
-            if args is not None:
-                try:
-                    c(msg, args)
-                    return True
-                except Exception as ex:
-                    self.logger.exception(ex)
-        else:
-            return False
-
     def start(self):
         self.account.start()
-        try:
-            self.account.wait_shutdown()
-        finally:
-            self.account.shutdown()
+
+    def wait(self):
+        self.account.wait_shutdown()
 
     @account_hookimpl
     def process_incoming_message(self, message):
         try:
-            if message.get_sender_contact() == self.get_contact():
-                self.on_self_message(message)
-            else:
-                message.contact_request = message.chat.is_deaddrop()
-                if message.text and message.text.startswith(CMD_PREFIX):
-                    self.on_command(message)
-                else:
-                    self.on_message(message)
+            message.was_contact_request = message.chat.is_deaddrop()
+            message.accept_sender_contact()
+            if message.text and message.text.startswith(CMD_PREFIX):
+                res = self._process_command_message(message)
+                if res:
+                    message.chat.send_text(res)
         except Exception as ex:
             self.logger.exception(ex)
 
@@ -233,3 +215,12 @@ class DeltaBot:
 
     def is_group(self, chat):
         return chat.is_group()
+
+
+def parse_command_docstring(func):
+    description = func.__doc__
+    if not description:
+        raise ValueError("command {!r} needs to have a docstring".format(func))
+
+    lines = description.strip().split("\n")
+    return lines.pop(0), "\n".join(lines).strip()
