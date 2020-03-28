@@ -29,51 +29,27 @@ Within an Delta Chat app, you may now send a chat `/help` message to
 commands in the reply.
 
 
-Implementing a calculator bot
------------------------------
+Try out an example "calculator" bot (TOBEDONE)
+----------------------------------------------
 
 Here is a complete "calculator" chat bot for performing additions::
 
-    # contents of mycalc.py
-    from deltabot import deltabot_hookimpl
-
-    @deltabot_hookimpl
-    def deltabot_configure(bot, trans):
-        bot.add_command(
-            name="/mycalc",
-            version="1.0",
-            description=trans('caculcates result of arithmetic integer expression'),
-            long_description=trans(
-                'send "/calc 23+20" to the bot to get the result "43" back'),
-            func=process_command_mycalc
-        )
+    # contents of example/mycalc.py
 
 
-    def process_command_mycalc(command):
-        assert command.arg0 == "/mycalc"
-        text = command.payload
+Test the "mycalc bot"::
 
-        # don't directly use eval() as it could execute arbitrary code
-        parts = text.split("+-*/")
-        try:
-            for part in parts:
-                int(part)
-        except ValueError:
-            reply = "ExpressionError: {!r}".format(text)
-        else:
-            reply = "result of {!r}: {}".format(text, eval(text))
+    $ deltabot test example/mycalc.py
 
-        command.message.chat.send_text(reply)
+Register the new "mycalc bot"::
 
-Register the new "echo bot"::
-
-    $ deltabot add-plugin mycalc.py
+    $ deltabot add-module example/mycalc.py
 
 Now start serving the chat bot::
 
     $ deltabot serve
 
-and text a `/calc 23+20-1` message, and see the result message arriving back.
+and text a `/mycalc 23+20-1` message, and see the result message arriving back.
 
 
 note for users
