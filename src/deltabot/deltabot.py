@@ -155,9 +155,11 @@ class DeltaBot:
         pass
 
     def start(self):
+        addr = self.account.get_config("addr")
+        self.logger.info("bot connected at: {}".format(addr))
         self.account.start()
 
-    def wait(self):
+    def wait_shutdown(self):
         self.account.wait_shutdown()
 
     @account_hookimpl
@@ -165,10 +167,15 @@ class DeltaBot:
         try:
             message.was_contact_request = message.chat.is_deaddrop()
             message.accept_sender_contact()
+            self.logger.info("incoming message from {} id={} chat={} text={!r}".format(
+                message.get_sender_contact().addr,
+                message.id, message.chat.id, message.text[:50]))
             if message.text and message.text.startswith(CMD_PREFIX):
                 res = self._process_command_message(message)
                 if res:
-                    message.chat.send_text(res)
+                    reply = message.chat.send_text(res)
+                    self.logger.info("sending reply to chat={}: text={!r}".format(
+                        reply.chat.id, reply.text[:50]))
         except Exception as ex:
             self.logger.exception(ex)
 

@@ -15,7 +15,7 @@ from .deltabot import DeltaBot
               envvar="DELTABOT_BASEDIR",
               help="directory where simplebot state is stored")
 @click.option("--stdout-loglevel", type=str,
-              default="WARN",
+              default="INFO",
               envvar="DELTABOT_STDOUT_LOGLEVEL",
               help="logging level for stdout logging")
 @click.version_option()
