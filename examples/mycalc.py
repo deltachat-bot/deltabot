@@ -1,29 +1,31 @@
 
+import re
+
 from deltabot import deltabot_hookimpl
 
+
 @deltabot_hookimpl
-def deltabot_configure(bot, trans):
-    bot.add_command(
+def deltabot_configure(bot):
+    bot.commands.register(
         name="/mycalc",
-        version="1.0",
-        description=trans('caculcates result of arithmetic integer expression'),
-        long_description=trans(
-            'send "/calc 23+20" to the bot to get the result "43" back'),
         func=process_command_mycalc
     )
 
 
 def process_command_mycalc(command):
-    assert command.arg0 == "/mycalc"
+    """caculcates result of arithmetic integer expression.
+
+    send "/mycalc 23+20" to the bot to get the result "43" back
+    """
     text = command.payload
 
     # don't directly use eval() as it could execute arbitrary code
-    parts = text.split("+-*/")
+    parts = re.split(r"[\+\-\*\/]", text)
     try:
         for part in parts:
             int(part.strip())
     except ValueError:
-        reply = "ExpressionError: {!r}".format(text)
+        reply = "ExpressionError: {!r} not an int in {!r}".format(part, text)
     else:
         # now it's safe to use eval
         reply = "result of {!r}: {}".format(text, eval(text))
@@ -31,7 +33,15 @@ def process_command_mycalc(command):
     return reply
 
 
-def test_bot_mycalc(testbot):
-    cmd = testbot.make_command("/mycalc 23+20-1")
-    res = process_command_mycalc(cmd)
-    assert res == "42"
+class TestMyCalc:
+    def test_mock_calc(self, mocker):
+        reply = mocker.run_command("/mycalc 1+1")
+        assert reply.msg.text.endswith("2")
+
+    def test_mock_calc_fail(self, mocker):
+        reply = mocker.run_command("/mycalc 1w+1")
+        assert "ExpressionError" in reply.msg.text
+
+    def test_bot_mycalc(self, bot_tester):
+        msg_reply = bot_tester.send_command("/mycalc 10*13+2")
+        assert msg_reply.text.endswith("132")

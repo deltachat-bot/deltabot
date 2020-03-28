@@ -38,7 +38,7 @@ class DeltaBot:
             bcc_self=0
         ))
         self.account.add_account_plugin(self)
-        self.plugins.hook.deltabot_configure(bot=self)
+        self.plugins.hook.deltabot_configure.call_historic(kwargs=dict(bot=self))
 
     def is_configured(self):
         return bool(self.account.is_configured())
