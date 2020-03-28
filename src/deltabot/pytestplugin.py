@@ -42,7 +42,7 @@ def mocker(mock_bot):
 
         def run_command(self, text):
             msg = self.make_incoming_message(text)
-            return self.bot._process_command_message(msg)
+            return self.bot.commands.process_command_message(msg)
 
     return Mocker()
 
