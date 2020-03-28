@@ -23,6 +23,12 @@ class Commands:
         self._cmd_defs[name] = cmd_def
         self.logger.debug("registered new command {!r}".format(name))
 
+    def unregister(self, name):
+        return self._cmd_defs.pop(name)
+
+    def dict(self):
+        return self._cmd_defs.copy()
+
     def process_command_message(self, message):
         if not message.text.startswith(CMD_PREFIX):
             return None

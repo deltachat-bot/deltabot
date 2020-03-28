@@ -4,8 +4,8 @@ import deltachat as dc
 from deltachat import account_hookimpl
 from deltachat.tracker import ConfigureTracker
 
-from . import hookspec
 from .commands import Commands
+from .plugins import Plugins
 
 
 class Filter():
@@ -16,8 +16,11 @@ class Filter():
 class DeltaBot:
     def __init__(self, account, logger):
         self.account = account
-        self._pm = hookspec.DeltaBotSpecs._make_plugin_manager()
+
         self.logger = logger
+
+        #: plugin subsystem for adding/removing plugins and calling plugin hooks
+        self.plugins = Plugins(bot=self)
 
         #: commands subsystem for registering/executing commands
         self.commands = Commands(self)
@@ -33,32 +36,7 @@ class DeltaBot:
             bcc_self=0
         ))
         self.account.add_account_plugin(self)
-        self._register_builtin_plugins()
-        self._pm.hook.deltabot_configure(bot=self)
-
-    # =========================================================
-    # deltabot plugin management  API
-    # =========================================================
-
-    def _register_builtin_plugins(self):
-        self.logger.debug("registering builtin plugins")
-        from deltabot.builtin import echo
-        self.add_plugin_module("deltabot.builtin.echo", echo)
-
-    def add_plugin_module(self, name, module):
-        """ add a named deltabot plugin python module. """
-        self.logger.debug("registering new plugin {!r}".format(name))
-        self._pm.register(plugin=module, name=name)
-        self._pm.check_pending()
-
-    def remove_plugin(self, name):
-        """ remove a named deltabot plugin. """
-        self.logger.debug("removing plugin {!r}".format(name))
-        self._pm.unregister(name=name)
-
-    def list_plugins(self):
-        """ return a dict name->deltabot plugin object mapping. """
-        return dict(self._pm.list_name_plugin())
+        self.plugins.hook.deltabot_configure(bot=self)
 
     def is_configured(self):
         return bool(self.account.is_configured())
