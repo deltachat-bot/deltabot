@@ -9,13 +9,22 @@ def test_general_help(cmd):
 
 
 class TestInit:
-    def test_basic(self, mycmd, session_liveconfig):
+    def test_ok_then_info(self, mycmd, session_liveconfig):
         config = session_liveconfig.get(0)
-        mycmd.run_ok(["--stdout-loglevel", "info", "init", config["addr"], config["mail_pw"]], """
-            *deltabot*INFO*success*
+        mycmd.run_ok(["--stdout-loglevel=info", "init", config["addr"], config["mail_pw"]], """
+            *deltabot*INFO*Success*
         """)
         mycmd.run_ok(["info"], """
             *database_version*
+        """)
+
+    def test_fail_then_ok(self, mycmd, session_liveconfig):
+        config = session_liveconfig.get(0)
+        mycmd.run_fail(["--stdout-loglevel", "info", "init", config["addr"], "Wrongpw"], """
+            *deltabot*ERR*
+        """)
+        mycmd.run_ok(["--stdout-loglevel=info", "init", config["addr"], config["mail_pw"]], """
+            *deltabot*INFO*Success*
         """)
 
 
