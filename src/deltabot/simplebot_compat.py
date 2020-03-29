@@ -7,7 +7,7 @@ import zipfile
 import zlib
 import html2text
 import pkg_resources
-from .deltabot import DeltaBot, Filter
+from .bot import DeltaBot, Filter
 from . import __version__
 
 

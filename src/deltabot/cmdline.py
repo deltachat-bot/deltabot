@@ -6,7 +6,7 @@ import logging.handlers
 import click
 
 import deltachat
-from .deltabot import DeltaBot
+from .bot import DeltaBot
 
 
 @click.command(cls=click.Group, context_settings=dict(help_option_names=["-h", "--help"]))

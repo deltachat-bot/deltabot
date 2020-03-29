@@ -6,10 +6,11 @@ from queue import Queue
 
 import pytest
 
-from deltabot.cmdline import make_logger
-from deltabot.deltabot import DeltaBot
 from deltachat.message import Message
 from deltachat import account_hookimpl
+
+from .cmdline import make_logger
+from .bot import DeltaBot
 
 
 @pytest.fixture
