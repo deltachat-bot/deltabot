@@ -3,6 +3,8 @@ from collections import OrderedDict
 
 
 from .reply import TextReply
+from . import deltabot_hookimpl
+
 
 CMD_PREFIX = '/'
 
@@ -16,6 +18,7 @@ class Commands:
         self.bot = bot
         self.logger = bot.logger
         self._cmd_defs = OrderedDict()
+        self.bot.plugins.add_module("commands-{}".format(id(bot)), self)
 
     def register(self, name, func):
         short, long = parse_command_docstring(func)
@@ -31,7 +34,8 @@ class Commands:
     def dict(self):
         return self._cmd_defs.copy()
 
-    def process_command_message(self, message):
+    @deltabot_hookimpl
+    def deltabot_incoming_message(self, message):
         if not message.text.startswith(CMD_PREFIX):
             return None
         parts = message.text.split(maxsplit=1)
@@ -40,7 +44,7 @@ class Commands:
         if cmd_def is None:
             reply = "unknown command {!r}".format(cmd_name)
             self.logger.warn(reply)
-            return TextReply(message, text=reply)
+            return TextReply(message, text=reply, terminal=True)
 
         payload = parts[0] if parts else ""
         cmd = IncomingCommand(bot=self.bot, cmd_def=cmd_def, payload=payload, message=message)

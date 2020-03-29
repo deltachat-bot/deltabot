@@ -1,6 +1,7 @@
 
 from collections import OrderedDict
 
+from . import deltabot_hookimpl
 from .commands import parse_command_docstring
 from .reply import TextReply
 
@@ -10,6 +11,7 @@ class Filters:
         self.bot = bot
         self.logger = bot.logger
         self._filter_defs = OrderedDict()
+        self.bot.plugins.add_module("filters-{}".format(id(bot)), self)
 
     def register(self, name, func):
         short, long = parse_command_docstring(func)
@@ -25,7 +27,8 @@ class Filters:
     def dict(self):
         return self._filter_defs.copy()
 
-    def process_incoming(self, message):
+    @deltabot_hookimpl
+    def deltabot_incoming_message(self, message):
         l = []
         for name, filter_def in self._filter_defs.items():
             self.logger.debug("calling filter {!r} on message id={}".format(name, message.id))
