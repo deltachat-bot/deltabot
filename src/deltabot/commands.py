@@ -2,7 +2,6 @@
 from collections import OrderedDict
 
 
-from .reply import TextReply
 from . import deltabot_hookimpl
 
 
@@ -35,7 +34,7 @@ class Commands:
         return self._cmd_defs.copy()
 
     @deltabot_hookimpl
-    def deltabot_incoming_message(self, message):
+    def deltabot_incoming_message(self, message, replies):
         if not message.text.startswith(CMD_PREFIX):
             return None
         parts = message.text.split(maxsplit=1)
@@ -44,13 +43,15 @@ class Commands:
         if cmd_def is None:
             reply = "unknown command {!r}".format(cmd_name)
             self.logger.warn(reply)
-            return TextReply(message, text=reply, terminal=True)
+            replies.add(text=reply)
+            return True
 
         payload = parts[0] if parts else ""
         cmd = IncomingCommand(bot=self.bot, cmd_def=cmd_def, payload=payload, message=message)
         res = cmd.cmd_def.func(cmd)
         if res:
-            return TextReply(message, text=res)
+            replies.add(text=res)
+            return True
 
 
 class CommandDef:

@@ -2,6 +2,7 @@
 
 import deltachat as dc
 from deltachat import account_hookimpl
+from deltachat.message import Message
 from deltachat.tracker import ConfigureTracker
 
 from .commands import Commands
@@ -83,16 +84,16 @@ class DeltaBot:
                 message.get_sender_contact().addr,
                 message.id, message.chat.id, message.text[:50]))
 
-            res = self.plugins.hook.deltabot_incoming_message(message=message, bot=self)
-            for reply in iter_flat(res):
-                self.send_reply(reply)
-                if reply.terminal:
-                    break
+            replies = Replies(self.account)
+            self.plugins.hook.deltabot_incoming_message(message=message, bot=self, replies=replies)
+            for msg in replies.get_reply_messages():
+                self.send_reply(msg, reply_to=message)
+
         except Exception as ex:
             self.logger.exception(ex)
 
-    def send_reply(self, reply):
-        msg = reply.chat.send_msg(reply.msg)
+    def send_reply(self, message, reply_to):
+        msg = reply_to.chat.send_msg(message)
         self.logger.info("reply id={} chat={} sent with text: {!r}".format(
             msg.id, msg.chat, msg.text[:50]
         ))
@@ -142,9 +143,24 @@ class DeltaBot:
         return chat.is_group()
 
 
-def iter_flat(obj):
-    if isinstance(obj, (list, tuple)):
-        for x in obj:
-            yield from iter_flat(x)
-    else:
-        yield obj
+class Replies:
+    def __init__(self, account):
+        self.account = account
+        self._replies = []
+
+    def add(self, text=None, filename=None):
+        """ Add a text or file-based reply. """
+        self._replies.append((text, filename))
+
+    def get_reply_messages(self):
+        for text, file in self._replies:
+            if file:
+                view_type = "file"
+            else:
+                view_type = "text"
+            msg = Message.new_empty(self.account, view_type)
+            if text is not None:
+                msg.set_text(text)
+            if file is not None:
+                msg.set_file(file)
+            yield msg
