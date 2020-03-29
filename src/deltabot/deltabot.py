@@ -79,7 +79,7 @@ class DeltaBot:
         self.account.wait_shutdown()
 
     @account_hookimpl
-    def process_incoming_message(self, message):
+    def ac_incoming_message(self, message):
         try:
             # we always accept incoming messages to remove the need
             # for bot authors to having to deal with deaddrop/contact
@@ -110,7 +110,7 @@ class DeltaBot:
         ))
 
     @account_hookimpl
-    def process_message_delivered(self, message):
+    def ac_process_message_delivered(self, message):
         try:
             self.on_message_delivered(message)
         except Exception as ex:
