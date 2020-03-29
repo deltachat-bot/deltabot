@@ -3,7 +3,6 @@ from collections import OrderedDict
 
 from . import deltabot_hookimpl
 from .commands import parse_command_docstring
-from .reply import TextReply
 
 
 class Filters:
@@ -28,14 +27,12 @@ class Filters:
         return self._filter_defs.copy()
 
     @deltabot_hookimpl
-    def deltabot_incoming_message(self, message):
-        l = []
+    def deltabot_incoming_message(self, message, replies):
         for name, filter_def in self._filter_defs.items():
             self.logger.debug("calling filter {!r} on message id={}".format(name, message.id))
             res = filter_def.func(message)
             if res:
-                l.append(TextReply(message, text=res))
-        return l
+                replies.add(text=res)
 
 
 class FilterDef:

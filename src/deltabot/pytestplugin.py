@@ -10,7 +10,7 @@ from deltachat.message import Message
 from deltachat import account_hookimpl
 
 from .cmdline import make_logger
-from .bot import DeltaBot
+from .bot import DeltaBot, Replies
 
 
 @pytest.fixture
@@ -46,8 +46,14 @@ def mocker(mock_bot):
 
         def run_command(self, text):
             msg = self.make_incoming_message(text)
-            reply = self.bot.commands.deltabot_incoming_message(message=msg)
-            return reply
+            replies = Replies(self.account)
+            self.bot.commands.deltabot_incoming_message(message=msg, replies=replies)
+            l = list(replies.get_reply_messages())
+            if not l:
+                raise ValueError("no reply for command {!r}".format(text))
+            if len(l) > 1:
+                raise ValueError("more than one reply for {!r}".format(text))
+            return l[0]
 
     return Mocker()
 

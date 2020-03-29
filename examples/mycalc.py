@@ -35,12 +35,12 @@ def process_command_mycalc(command):
 
 class TestMyCalc:
     def test_mock_calc(self, mocker):
-        reply = mocker.run_command("/mycalc 1+1")
-        assert reply.msg.text.endswith("2")
+        reply_msg = mocker.run_command("/mycalc 1+1")
+        assert reply_msg.text.endswith("2")
 
     def test_mock_calc_fail(self, mocker):
-        reply = mocker.run_command("/mycalc 1w+1")
-        assert "ExpressionError" in reply.msg.text
+        reply_msg = mocker.run_command("/mycalc 1w+1")
+        assert "ExpressionError" in reply_msg.text
 
     def test_bot_mycalc(self, bot_tester):
         msg_reply = bot_tester.send_command("/mycalc 10*13+2")

@@ -20,10 +20,9 @@ class DeltaBotSpecs:
         commands and filters.
         """
 
-    @deltabot_hookspec
-    def deltabot_incoming_message(self, message, bot):
-        """ process an incoming message, optionally returning a Reply object.
+    @deltabot_hookspec(firstresult=True)
+    def deltabot_incoming_message(self, message, bot, replies):
+        """ process an incoming message and schedules replies if any.
 
-        If a Reply is returned, it will be sent back to
-        the chat where the original message came in.
+        :param replies: call replies.add() to schedule a reply.
         """
