@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+import threading
+from queue import Queue
+
 import deltachat as dc
 from deltachat import account_hookimpl
 from deltachat import Message, Contact
@@ -26,7 +29,7 @@ class DeltaBot:
         self.filters = Filters(self)
 
         # process dc events
-        self._eventhandling = IncomingEventHandling(self)
+        self._eventhandler = IncomingEventHandler(self)
 
         # set some useful bot defaults on the account
         self.account.update_config(dict(
@@ -105,44 +108,96 @@ class DeltaBot:
         """ Start bot threads and processing messages. """
         addr = self.account.get_config("addr")
         self.logger.info("bot connected at: {}".format(addr))
-        self.account.start()
+        self._eventhandler.start()
+        if not self.account._threads.is_started():
+            self.account.start()
 
     def wait_shutdown(self):
         """ Wait and block until bot account is shutdown. """
         self.account.wait_shutdown()
+        self._eventhandler.stop()
+
+    def trigger_shutdown(self):
+        """ Trigger a shutdown of the bot. """
+        self._eventhandler.stop()
+        self.account.shutdown()
 
 
-class IncomingEventHandling:
+class CheckAll:
+    def __init__(self, bot):
+        self.bot = bot
+
+    def perform(self):
+        for chat in self.bot.account.get_chats():
+            CheckChat(self.bot, chat).perform()
+
+
+class CheckChat:
+    def __init__(self, bot, chat):
+        self.bot = bot
+        self.chat = chat
+
+    def perform(self):
+        logger = self.bot.logger
+        logger.debug("checking chat id={}".format(self.chat.id))
+        for message in self.chat.get_messages():
+            try:
+                if message.is_in_fresh():
+                    replies = Replies(message.account)
+                    logger.info("processing incoming fresh message id={}".format(message.id))
+                    self.bot.plugins.hook.deltabot_incoming_message(
+                        message=message,
+                        bot=self.bot,
+                        replies=replies
+                    )
+                    for msg in replies.get_reply_messages():
+                        msg = message.chat.send_msg(msg)
+                        logger.info("reply id={} chat={} sent with text: {!r}".format(
+                            msg.id, msg.chat, msg.text[:50]
+                        ))
+                    self.bot.account.mark_seen_messages([message])
+                    logger.info("processing message id={} FINISHED".format(message.id))
+            except Exception as ex:
+                logger.exception("processing message={} failed: {}".format(
+                    message.id, ex))
+
+
+class IncomingEventHandler:
     def __init__(self, bot):
         self.bot = bot
         self.logger = bot.logger
         self.plugins = bot.plugins
         self.bot.account.add_account_plugin(self)
+        self._checks = Queue()
+        self._checks.put(CheckAll(bot))
+
+    def start(self):
+        self._thread = t = threading.Thread(target=self.event_worker, name="bot-event-handler")
+        t.setDaemon(1)
+        t.start()
+
+    def stop(self):
+        self._checks.put(None)
+
+    def event_worker(self):
+        self.logger.debug("event-worker startup")
+        while 1:
+            check = self._checks.get()
+            if check is None:
+                break
+            check.perform()
 
     @account_hookimpl
     def ac_incoming_message(self, message):
-        try:
-            # we always accept incoming messages to remove the need  for
-            # bot authors to having to deal with deaddrop/contact requests.
-            message.accept_sender_contact()
-            self.logger.info("incoming message from {} id={} chat={} text={!r}".format(
-                message.get_sender_contact().addr,
-                message.id, message.chat.id, message.text[:50]))
+        # we always accept incoming messages to remove the need  for
+        # bot authors to having to deal with deaddrop/contact requests.
+        message.accept_sender_contact()
+        self.logger.info("incoming message from {} id={} chat={} text={!r}".format(
+            message.get_sender_contact().addr,
+            message.id, message.chat.id, message.text[:50]))
 
-            replies = Replies(message.account)
-            self.plugins.hook.deltabot_incoming_message(
-                message=message,
-                bot=self.bot,
-                replies=replies
-            )
-            for msg in replies.get_reply_messages():
-                msg = message.chat.send_msg(msg)
-                self.logger.info("reply id={} chat={} sent with text: {!r}".format(
-                    msg.id, msg.chat, msg.text[:50]
-                ))
-
-        except Exception as ex:
-            self.logger.exception(ex)
+        # message is now in fresh state, schedule a check
+        self._checks.put(CheckChat(self.bot, message.chat))
 
     @account_hookimpl
     def ac_message_delivered(self, message):
