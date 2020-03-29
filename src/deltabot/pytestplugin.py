@@ -86,4 +86,4 @@ class BotTester:
 
     def send_command(self, text):
         self.bot_chat.send_text(text)
-        return self._replies.get(timeout=5)
+        return self._replies.get(timeout=30)

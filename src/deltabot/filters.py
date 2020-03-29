@@ -10,7 +10,7 @@ class Filters:
         self.bot = bot
         self.logger = bot.logger
         self._filter_defs = OrderedDict()
-        self.bot.plugins.add_module("filters-{}".format(id(bot)), self)
+        self.bot.plugins.add_module("filters", self)
 
     def register(self, name, func):
         short, long = parse_command_docstring(func)

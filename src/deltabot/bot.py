@@ -2,7 +2,7 @@
 
 import deltachat as dc
 from deltachat import account_hookimpl
-from deltachat.message import Message
+from deltachat import Message, Contact
 from deltachat.tracker import ConfigureTracker
 
 from .commands import Commands
@@ -25,6 +25,9 @@ class DeltaBot:
         #: filter subsystem for registering/performing filters on incoming messages
         self.filters = Filters(self)
 
+        # process dc events
+        self._eventhandling = IncomingEventHandling(self)
+
         # set some useful bot defaults on the account
         self.account.update_config(dict(
             save_mime_headers=1,
@@ -33,46 +36,88 @@ class DeltaBot:
             mvbox_watch=0,
             bcc_self=0
         ))
-        self.account.add_account_plugin(self)
         self.plugins.hook.deltabot_init.call_historic(kwargs=dict(bot=self))
 
+    @property
+    def self_contact(self):
+        """ this bot's contact (with .addr and .display_name attributes). """
+        return self.account.get_self_contact()
+
+    def get_contact(self, ref):
+        """ return Contact object (create one if needed) for the specified 'ref'.
+
+        ref can be a Contact, email address string or contact id.
+        """
+        if isinstance(ref, str):
+            return self.account.create_contact(ref)
+        elif isinstance(ref, int):
+            return self.account.get_contact_by_id(ref)
+        elif isinstance(ref, Contact):
+            return ref
+
+    def get_chat(self, ref):
+        """ Return a 1:1 chat (creating one if needed) from the specified ref object.
+
+        ref can be a Message, Contact, email address string or chat-id integer.
+        """
+        if isinstance(ref, dc.message.Message):
+            return self.account.create_chat_by_message(ref)
+        elif isinstance(ref, dc.contact.Contact):
+            return self.account.create_chat_by_contact(ref)
+        elif isinstance(ref, str) and '@' in ref:
+            return self.account.create_contact(ref).get_chat()
+        elif type(ref) is int:
+            try:
+                return self.account.get_chat_by_id(ref)
+            except ValueError:
+                return None
+
+    def create_group(self, name, members=[]):
+        """ Create a new group chat. """
+        group = self.account.create_group_chat(name)
+        for member in map(self.get_contact, members):
+            group.add_contact(member)
+        return group
+
     def is_configured(self):
+        """ Return True if this bot account is successfully configured. """
         return bool(self.account.is_configured())
 
-    def configure(self, email, password):
+    def perform_configure_address(self, email, password):
+        """ perform initial email/password bot account configuration.  """
+        assert not self.is_configured()
+        assert not self.account._threads.is_started()
         with self.account.temp_plugin(ConfigureTracker()) as configtracker:
             self.account.update_config(dict(addr=email, mail_pw=password))
             self.account.start()
             try:
                 configtracker.wait_finish()
-            except configtracker.ConfigureFailed:
-                self.logger.error('Bot configuration failed')
+            except configtracker.ConfigureFailed as ex:
+                success = False
+                self.logger.error('Failed to configure: {}'.format(ex))
             else:
-                self.logger.info('Bot configured successfully!')
+                success = True
+                self.logger.info('Successfully configured {}'.format(email))
             self.account.shutdown()
-
-    def get_blobdir(self):
-        return self.account.get_blobdir()
-
-    def set_name(self, name):
-        self.account.set_config('displayname', name)
-
-    def send_file(self, chat, path, text, view_type='file'):
-        msg = dc.message.Message.new_empty(self.account, view_type)
-        msg.set_file(path)
-        msg.set_text(text)
-        chat.send_msg(msg)
-
-    def on_message_delivered(self, msg):
-        pass
+            return success
 
     def start(self):
+        """ Start bot threads and processing messages. """
         addr = self.account.get_config("addr")
         self.logger.info("bot connected at: {}".format(addr))
         self.account.start()
 
     def wait_shutdown(self):
+        """ Wait and block until bot account is shutdown. """
         self.account.wait_shutdown()
+
+
+class IncomingEventHandling:
+    def __init__(self, bot):
+        self.bot = bot
+        self.logger = bot.logger
+        self.plugins = bot.plugins
+        self.bot.account.add_account_plugin(self)
 
     @account_hookimpl
     def ac_incoming_message(self, message):
@@ -84,63 +129,25 @@ class DeltaBot:
                 message.get_sender_contact().addr,
                 message.id, message.chat.id, message.text[:50]))
 
-            replies = Replies(self.account)
-            self.plugins.hook.deltabot_incoming_message(message=message, bot=self, replies=replies)
+            replies = Replies(message.account)
+            self.plugins.hook.deltabot_incoming_message(
+                message=message,
+                bot=self.bot,
+                replies=replies
+            )
             for msg in replies.get_reply_messages():
-                self.send_reply(msg, reply_to=message)
+                msg = message.chat.send_msg(msg)
+                self.logger.info("reply id={} chat={} sent with text: {!r}".format(
+                    msg.id, msg.chat, msg.text[:50]
+                ))
 
         except Exception as ex:
             self.logger.exception(ex)
-
-    def send_reply(self, message, reply_to):
-        msg = reply_to.chat.send_msg(message)
-        self.logger.info("reply id={} chat={} sent with text: {!r}".format(
-            msg.id, msg.chat, msg.text[:50]
-        ))
 
     @account_hookimpl
     def ac_message_delivered(self, message):
-        try:
-            self.on_message_delivered(message)
-        except Exception as ex:
-            self.logger.exception(ex)
-
-    def get_contact(self, addr=None):
-        if addr is None:
-            return self.account.get_self_contact()
-        else:
-            return self.account.create_contact(addr.strip())
-
-    def get_chat(self, ref):
-        if type(ref) is dc.message.Message:
-            return self.account.create_chat_by_message(ref)
-        elif type(ref) is dc.contact.Contact:
-            return self.account.create_chat_by_contact(ref)
-        elif type(ref) is str and '@' in ref:
-            c = self.account.create_contact(ref.strip())
-            return self.account.create_chat_by_contact(c)
-        elif type(ref) is int:
-            try:
-                return self.account.get_chat_by_id(ref)
-            except ValueError:
-                return None
-
-    def get_chats(self):
-        return self.account.get_chats()
-
-    def get_address(self):
-        return self.get_contact().addr
-
-    def create_group(self, name, members=[]):
-        group = self.account.create_group_chat(name)
-        for member in members:
-            if type(member) is str:
-                member = self.account.create_contact(member.strip())
-            group.add_contact(member)
-        return group
-
-    def is_group(self, chat):
-        return chat.is_group()
+        self.logger.info("message id={} chat={} delivered to smtp".format(
+            message.id, message.chat.id))
 
 
 class Replies:

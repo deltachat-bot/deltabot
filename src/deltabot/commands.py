@@ -17,7 +17,7 @@ class Commands:
         self.bot = bot
         self.logger = bot.logger
         self._cmd_defs = OrderedDict()
-        self.bot.plugins.add_module("commands-{}".format(id(bot)), self)
+        self.bot.plugins.add_module("commands", self)
 
     def register(self, name, func):
         short, long = parse_command_docstring(func)

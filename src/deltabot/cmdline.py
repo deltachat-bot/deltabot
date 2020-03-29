@@ -40,11 +40,13 @@ def bot_main(ctx, basedir, stdout_loglevel):
 def init(ctx, emailaddr, password):
     """initialize account with emailadr and password.
 
-    This will verify smtp/imap connectivity.
+    This will set and verify smtp/imap connectivity using the provided credentials.
     """
     if "@" not in emailaddr:
         fail(ctx, "invalid email address: {}".format(emailaddr))
-    ctx.parent.bot.configure(emailaddr, password)
+    success = ctx.parent.bot.perform_configure_address(emailaddr, password)
+    if not success:
+        fail(ctx, "failed to configure with: {}".format(emailaddr))
 
 
 @click.command()
