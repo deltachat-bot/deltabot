@@ -72,7 +72,7 @@ class BotTester:
         self._replies = Queue()
 
     @account_hookimpl
-    def process_incoming_message(self, message):
+    def ac_incoming_message(self, message):
         if message.chat == self.bot_chat:
             self._replies.put(message)
 
