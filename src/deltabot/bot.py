@@ -76,22 +76,18 @@ class DeltaBot:
     @account_hookimpl
     def ac_incoming_message(self, message):
         try:
-            # we always accept incoming messages to remove the need
-            # for bot authors to having to deal with deaddrop/contact
-            # request.  But we record whether it was one in case
-            # a bot author still wants to act on it. This way it's still possible
-            # to block or ignore an original contact request
-            message.was_contact_request = message.chat.is_deaddrop()
+            # we always accept incoming messages to remove the need  for
+            # bot authors to having to deal with deaddrop/contact requests.
             message.accept_sender_contact()
             self.logger.info("incoming message from {} id={} chat={} text={!r}".format(
                 message.get_sender_contact().addr,
                 message.id, message.chat.id, message.text[:50]))
 
-            # If this is a "/" command we don't apply filters.
             reply = self.commands.process_command_message(message)
             if reply:
                 self.send_reply(reply)
             else:
+                # If this message is not a command we apply all filters
                 for reply in self.filters.process_incoming(message):
                     self.send_reply(reply)
 
