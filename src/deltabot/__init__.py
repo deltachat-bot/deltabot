@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from .hookspec import deltabot_hookspec, deltabot_hookimpl  # noqa
+from .bot import DeltaBot  # noqa
 
 from pkg_resources import get_distribution, DistributionNotFound
 try:

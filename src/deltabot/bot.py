@@ -9,11 +9,6 @@ from .filters import Filters
 from .plugins import Plugins
 
 
-class Filter():
-    def __call__(self, msg):
-        return False
-
-
 class DeltaBot:
     def __init__(self, account, logger):
         self.account = account
