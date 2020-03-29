@@ -46,7 +46,8 @@ def mocker(mock_bot):
 
         def run_command(self, text):
             msg = self.make_incoming_message(text)
-            return self.bot.commands.process_command_message(msg)
+            reply = self.bot.commands.deltabot_incoming_message(message=msg)
+            return reply
 
     return Mocker()
 

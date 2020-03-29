@@ -83,14 +83,11 @@ class DeltaBot:
                 message.get_sender_contact().addr,
                 message.id, message.chat.id, message.text[:50]))
 
-            reply = self.commands.process_command_message(message)
-            if reply:
+            res = self.plugins.hook.deltabot_incoming_message(message=message, bot=self)
+            for reply in iter_flat(res):
                 self.send_reply(reply)
-            else:
-                # If this message is not a command we apply all filters
-                for reply in self.filters.process_incoming(message):
-                    self.send_reply(reply)
-
+                if reply.terminal:
+                    break
         except Exception as ex:
             self.logger.exception(ex)
 
@@ -143,3 +140,11 @@ class DeltaBot:
 
     def is_group(self, chat):
         return chat.is_group()
+
+
+def iter_flat(obj):
+    if isinstance(obj, (list, tuple)):
+        for x in obj:
+            yield from iter_flat(x)
+    else:
+        yield obj
