@@ -24,7 +24,7 @@ class DeltaBot:
         #: filter subsystem for registering/performing filters on incoming messages
         self.filters = Filters(self)
 
-        # set some useful bot defaults
+        # set some useful bot defaults on the account
         self.account.update_config(dict(
             save_mime_headers=1,
             e2ee_enabled=1,
@@ -33,7 +33,7 @@ class DeltaBot:
             bcc_self=0
         ))
         self.account.add_account_plugin(self)
-        self.plugins.hook.deltabot_configure.call_historic(kwargs=dict(bot=self))
+        self.plugins.hook.deltabot_init.call_historic(kwargs=dict(bot=self))
 
     def is_configured(self):
         return bool(self.account.is_configured())
@@ -98,7 +98,7 @@ class DeltaBot:
         ))
 
     @account_hookimpl
-    def ac_process_message_delivered(self, message):
+    def ac_message_delivered(self, message):
         try:
             self.on_message_delivered(message)
         except Exception as ex:

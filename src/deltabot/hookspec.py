@@ -12,8 +12,13 @@ class DeltaBotSpecs:
     If you write a plugin you probably want to implement one or more hooks.
     """
     @deltabot_hookspec(historic=True)
-    def deltabot_configure(self, bot):
-        """ configure a bot instance. called Once at initialization"""
+    def deltabot_init(self, bot):
+        """ initialize a bot instance. called before the bot starts serving requests.
+
+        Note that plugins that register after DeltaBot initizliation
+        will still be called to have a chance to register their
+        commands and filters.
+        """
 
     @deltabot_hookspec
     def deltabot_incoming_message(self, message, bot):

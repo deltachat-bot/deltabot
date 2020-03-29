@@ -3,7 +3,7 @@ from deltabot.hookspec import deltabot_hookimpl
 
 
 @deltabot_hookimpl
-def deltabot_configure(bot):
+def deltabot_init(bot):
     bot.commands.register(name="/echo", func=process_command_echo)
 
 
