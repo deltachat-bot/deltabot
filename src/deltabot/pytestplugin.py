@@ -16,15 +16,17 @@ from .bot import DeltaBot, Replies
 @pytest.fixture
 def mock_bot(acfactory, request):
     account = acfactory.get_configured_offline_account()
-    return make_bot(account, request.module)
+    return make_bot(request, account, request.module)
 
 
-def make_bot(account, plugin_module):
+def make_bot(request, account, plugin_module):
     basedir = os.path.dirname(account.db_path)
     logger = make_logger(basedir, logging.DEBUG)
     bot = DeltaBot(account, logger)
     if not plugin_module.__name__.startswith("deltabot.builtin."):
         bot.plugins.add_module(plugin_module.__name__, plugin_module)
+    request.addfinalizer(bot.trigger_shutdown)
+    bot.start()
     return bot
 
 
@@ -61,7 +63,7 @@ def mocker(mock_bot):
 @pytest.fixture
 def bot_tester(acfactory, request):
     ac1, ac2 = acfactory.get_two_online_accounts()
-    bot = make_bot(ac2, request.module)
+    bot = make_bot(request, ac2, request.module)
     return BotTester(ac1, bot)
 
 

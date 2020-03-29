@@ -13,18 +13,19 @@ def process_command_echo(command):
     To use it you can simply send a message starting with
     the command '/echo'. Example: `/echo hello world`
     """
-    text = command.payload
-    if not text:
-        message = command.message
-        contact = message.get_sender_contact()
-        text = 'From: {} <{}>'.format(contact.display_name, contact.addr)
-    return text
+    message = command.message
+    contact = message.get_sender_contact()
+    sender = 'From: {} <{}>'.format(contact.display_name, contact.addr)
+    return "{}\n{!r}".format(sender, command.payload)
 
 
 def test_mock_echo(mocker):
     reply = mocker.run_command("/echo")
     assert reply.text.startswith("From")
-    assert mocker.run_command("/echo hello").text == "hello"
+
+    reply = mocker.run_command("/echo hello")
+    assert reply.text.startswith("From")
+    assert reply.text.endswith("'hello'")
 
 
 def test_echo(bot_tester):
