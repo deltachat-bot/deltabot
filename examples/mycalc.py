@@ -5,7 +5,7 @@ from deltabot import deltabot_hookimpl
 
 
 @deltabot_hookimpl
-def deltabot_configure(bot):
+def deltabot_init(bot):
     bot.commands.register(
         name="/mycalc",
         func=process_command_mycalc
