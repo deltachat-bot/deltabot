@@ -15,8 +15,9 @@ class Plugins:
 
     def _register_builtin_plugins(self):
         self.logger.debug("registering builtin plugins")
-        from deltabot.builtin import echo
+        from deltabot.builtin import echo, db
         self.add_module(echo.__name__, echo)
+        self.add_module(db.__name__, db)
 
     def add_module(self, name, module):
         """ add a named deltabot plugin python module. """
