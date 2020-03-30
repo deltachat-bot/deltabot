@@ -18,9 +18,21 @@ class DeltaBotSpecs:
         commands and filters.
         """
 
+    @deltabot_hookspec
+    def deltabot_shutdown(self, bot):
+        """ shutdown all resources of the bot. """
+
     @deltabot_hookspec(firstresult=True)
     def deltabot_incoming_message(self, message, bot, replies):
         """ process an incoming fresh message.
 
         :param replies: call replies.add() to schedule a reply.
         """
+
+    @deltabot_hookspec(firstresult=True)
+    def deltabot_store_setting(self, key, value):
+        """ store a named bot setting persistently. """
+
+    @deltabot_hookspec(firstresult=True)
+    def deltabot_get_setting(self, key):
+        """ get a named persistent bot setting."""

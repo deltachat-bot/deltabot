@@ -28,7 +28,7 @@ class DeltaBot:
         #: filter subsystem for registering/performing filters on incoming messages
         self.filters = Filters(self)
 
-        # process dc events
+        # process dc events and turn them into deltabot ones
         self._eventhandler = IncomingEventHandler(self)
 
         # set some useful bot defaults on the account
@@ -41,6 +41,20 @@ class DeltaBot:
         ))
         self.plugins.hook.deltabot_init.call_historic(kwargs=dict(bot=self))
 
+    def store_setting(self, key, value):
+        """ Store a bot setting. """
+        self.plugins.hook.deltabot_store_setting(key=key, value=value)
+
+    def get_setting(self, key, default=None):
+        """ Get a bot setting. """
+        res = self.plugins.hook.deltabot_get_setting(key=key)
+        if not res:
+            res = default
+        return res
+
+    #
+    # API for getting at and creating contacts and chats
+    #
     @property
     def self_contact(self):
         """ this bot's contact (with .addr and .display_name attributes). """
@@ -82,12 +96,17 @@ class DeltaBot:
             group.add_contact(member)
         return group
 
+    #
+    # configuration related API
+    #
+
     def is_configured(self):
         """ Return True if this bot account is successfully configured. """
         return bool(self.account.is_configured())
 
     def perform_configure_address(self, email, password):
         """ perform initial email/password bot account configuration.  """
+        # XXX support reconfiguration (changed password at least)
         assert not self.is_configured()
         assert not self.account._threads.is_started()
         with self.account.temp_plugin(ConfigureTracker()) as configtracker:
@@ -104,6 +123,9 @@ class DeltaBot:
             self.account.shutdown()
             return success
 
+    #
+    # start/wait/shutdown API
+    #
     def start(self):
         """ Start bot threads and processing messages. """
         addr = self.account.get_config("addr")
@@ -120,6 +142,7 @@ class DeltaBot:
     def trigger_shutdown(self):
         """ Trigger a shutdown of the bot. """
         self._eventhandler.stop()
+        self.plugins.hook.deltabot_shutdown(bot=self)
         self.account.shutdown()
 
 
