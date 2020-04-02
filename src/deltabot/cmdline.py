@@ -2,10 +2,14 @@
 
 import os
 import sys
+import copy
+
 import logging.handlers
 import click
 
 import deltachat
+from .plugins import get_global_plugin_manager
+from . import deltabot_hookimpl
 from .bot import DeltaBot
 
 
@@ -30,7 +34,7 @@ def bot_main(ctx, basedir, stdout_loglevel):
     account = deltachat.Account(db_path, "deltabot/{}".format(sys.platform))
     loglevel = getattr(logging, stdout_loglevel.upper())
     logger = make_logger(basedir, loglevel)
-    ctx.bot = DeltaBot(account, logger)
+    ctx.bot = DeltaBot(account, logger, plugin_manager=ctx.obj)
 
 
 @click.command()
@@ -114,11 +118,25 @@ def make_logger(logdir, stdout_loglevel):
     return logger
 
 
-bot_main.add_command(init)
-bot_main.add_command(info)
-bot_main.add_command(list_plugins)
-bot_main.add_command(serve)
+class CmdlinePlugin:
+    @deltabot_hookimpl
+    def deltabot_init_cmdline(self, plugin_manager, bot_main):
+        bot_main.add_command(init)
+        bot_main.add_command(info)
+        bot_main.add_command(list_plugins)
+        bot_main.add_command(serve)
 
 
-if __name__ == "__main__":
-    bot_main()
+def main():
+    pm = get_global_plugin_manager()
+    click_group = _get_click_group(pm)
+    # pass plugin manager as obj context attribute
+    return click_group(obj=pm)
+
+
+def _get_click_group(pm):
+    pm.register(CmdlinePlugin(), "cmdline_plugin")
+    pm.check_pending()
+    click_group = copy.deepcopy(bot_main)
+    pm.hook.deltabot_init_cmdline(bot_main=click_group, plugin_manager=pm)
+    return click_group

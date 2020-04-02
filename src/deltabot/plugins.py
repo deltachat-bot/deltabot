@@ -5,19 +5,11 @@ from .hookspec import spec_name, DeltaBotSpecs
 
 
 class Plugins:
-    def __init__(self, bot):
-        self.bot = bot
-        self.logger = bot.logger
-        self._pm = pluggy.PluginManager(spec_name)
-        self._pm.add_hookspecs(DeltaBotSpecs)
+    def __init__(self, logger, plugin_manager):
+        assert plugin_manager
+        self._pm = plugin_manager
+        self.logger = logger
         self.hook = self._pm.hook
-        self._register_builtin_plugins()
-
-    def _register_builtin_plugins(self):
-        self.logger.debug("registering builtin plugins")
-        from deltabot.builtin import echo, db
-        self.add_module(echo.__name__, echo)
-        self.add_module(db.__name__, db)
 
     def add_module(self, name, module):
         """ add a named deltabot plugin python module. """
@@ -37,3 +29,26 @@ class Plugins:
     def items(self):
         """ return (name, plugin obj) list. """
         return self._pm.list_name_plugin()
+
+
+_pm = None
+
+
+def get_global_plugin_manager():
+    global _pm
+    if _pm is None:
+        _pm = make_plugin_manager()
+    return _pm
+
+
+def make_plugin_manager():
+    from deltabot.builtin import echo, db
+
+    pm = pluggy.PluginManager(spec_name)
+    pm.add_hookspecs(DeltaBotSpecs)
+
+    # register builtin modules
+    pm.register(plugin=echo, name=".builtin.echo")
+    pm.register(plugin=db, name=".builtin.db")
+    pm.check_pending()
+    return pm
