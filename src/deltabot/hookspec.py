@@ -9,6 +9,15 @@ deltabot_hookimpl = pluggy.HookimplMarker(spec_name)
 class DeltaBotSpecs:
     """ per DeltaBot instance hook specifications. """
 
+    @deltabot_hookspec
+    def deltabot_init_cmdline(self, bot_main, plugin_manager):
+        """ initialize the deltabot main "click" command before argument parsing.
+
+        :param bot_main: a :class:`click.Group` instance where you can add sub commands
+                         or options before the group's command line parsing is invoked.
+        :param plugin_manager: a :class:`deltabot.plugins.PluginManager` instance that the command
+        """
+
     @deltabot_hookspec(historic=True)
     def deltabot_init(self, bot):
         """ init a bot -- called before the bot starts serving requests.

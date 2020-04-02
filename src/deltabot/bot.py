@@ -10,17 +10,23 @@ from deltachat.tracker import ConfigureTracker
 
 from .commands import Commands
 from .filters import Filters
-from .plugins import Plugins
+from .plugins import Plugins, get_global_plugin_manager
 
 
 class DeltaBot:
-    def __init__(self, account, logger):
+    def __init__(self, account, logger, plugin_manager=None):
+
+        # by default we will use the global instance of the
+        # plugin_manager.
+        if plugin_manager is None:
+            plugin_manager = get_global_plugin_manager()
+
         self.account = account
 
         self.logger = logger
 
         #: plugin subsystem for adding/removing plugins and calling plugin hooks
-        self.plugins = Plugins(bot=self)
+        self.plugins = Plugins(logger=logger, plugin_manager=plugin_manager)
 
         #: commands subsystem for registering/executing '/*' commands in incoming messages
         self.commands = Commands(self)
