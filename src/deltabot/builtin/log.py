@@ -29,3 +29,12 @@ def make_logger(logdir, stdout_loglevel):
     logger.addHandler(fhandler)
 
     return logger
+
+
+def test_logger_loglevel(capfd, tmpdir):
+    logger = make_logger(tmpdir.strpath, stdout_loglevel=logging.INFO)
+    logger.info("hello")
+    logger.debug("world")
+    out, err = capfd.readouterr()
+    assert "hello" in err
+    assert "world" not in err
