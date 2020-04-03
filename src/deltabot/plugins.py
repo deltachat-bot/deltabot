@@ -42,7 +42,7 @@ def get_global_plugin_manager():
 
 
 def make_plugin_manager():
-    from deltabot.builtin import echo, db, cmdline
+    from deltabot.builtin import echo, db, cmdline, log
 
     pm = pluggy.PluginManager(spec_name)
     pm.add_hookspecs(DeltaBotSpecs)
@@ -51,5 +51,6 @@ def make_plugin_manager():
     pm.register(plugin=echo, name=".builtin.echo")
     pm.register(plugin=db, name=".builtin.db")
     pm.register(plugin=cmdline, name=".builtin.cmdline")
+    pm.register(plugin=log, name=".builtin.log")
     pm.check_pending()
     return pm
