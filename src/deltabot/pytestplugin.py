@@ -1,6 +1,6 @@
 
 import os
-import logging
+import py
 from email.utils import parseaddr
 from queue import Queue
 
@@ -10,9 +10,10 @@ from _pytest.pytester import LineMatcher
 from deltachat.message import Message
 from deltachat import account_hookimpl
 
-from .cmdline import make_logger, _get_click_group
+from . import cmdline
+from .parser import get_base_parser
 from .plugins import make_plugin_manager
-from .bot import DeltaBot, Replies
+from .bot import Replies
 
 
 @pytest.fixture
@@ -28,10 +29,11 @@ def make_bot(request, account, plugin_module):
     pm = make_plugin_manager()
 
     # initialize command line
-    _ = _get_click_group(pm)
+    parser = get_base_parser(pm)
 
-    logger = make_logger(basedir, logging.DEBUG)
-    bot = DeltaBot(account, logger, plugin_manager=pm)
+    args = parser.main_parse_argv(["deltabot", "--basedir", basedir])
+
+    bot = cmdline.make_bot(args=args, plugin_manager=pm, account=account)
 
     # we auto-register the (non-builtin) module
     # which contains the test which requested this bot
@@ -105,44 +107,64 @@ class BotTester:
         return self._replies.get(timeout=30)
 
 
-class ClickRunner:
+@pytest.fixture
+def plugin_manager():
+    return make_plugin_manager()
+
+
+class CmdlineRunner:
     def __init__(self):
-        self._rootargs = []
+        self._rootargs = ["deltabot"]
 
     def set_basedir(self, account_dir):
-        self._rootargs.insert(0, "--basedir")
-        self._rootargs.insert(1, account_dir)
+        self._rootargs.append("--basedir={}".format(account_dir))
 
-    def invoke(self, args, input):
-        from click.testing import CliRunner
-
+    def invoke(self, args):
         # create a new plugin manager for each command line invocation
         pm = make_plugin_manager()
-        click_group = _get_click_group(pm)
+        parser = get_base_parser(pm)
         argv = self._rootargs + args
-        return CliRunner().invoke(
-            click_group, argv,
-            catch_exceptions=False,
-            input=input,
-            obj=pm
-        )
+        code, message = 0, None
+        cap = py.io.StdCaptureFD(mixed=True)
+        try:
+            try:
+                args = parser.main_parse_argv(argv)
+                bot = cmdline.make_bot(args=args, plugin_manager=pm)
+                parser.main_run(bot=bot, args=args)
+                code = 0
+            except SystemExit as ex:
+                code = ex.code
+                message = str(ex)
+            except Exception as ex:
+                code = 127
+                message = str(ex)
+        finally:
+            output, _ = cap.reset()
+        return InvocationResult(code, message, output)
 
-    def run_ok(self, args, fnl=None, input=None):
+    def run_ok(self, args, fnl=None):
         __tracebackhide__ = True
-        res = self.invoke(args, input)
+        res = self.invoke(args)
         if res.exit_code != 0:
             print(res.output)
             raise Exception("cmd exited with %d: %s" % (res.exit_code, args))
         return _perform_match(res.output, fnl)
 
-    def run_fail(self, args, fnl=None, input=None, code=None):
+    def run_fail(self, args, fnl=None, code=None):
         __tracebackhide__ = True
-        res = self.invoke(args, input)
+        res = self.invoke(args)
         if res.exit_code == 0 or (code is not None and res.exit_code != code):
             print(res.output)
             raise Exception("got exit code {!r}, expected {!r}, output: {}".format(
                 res.exit_code, code, res.output))
         return _perform_match(res.output, fnl)
+
+
+class InvocationResult:
+    def __init__(self, code, message, output):
+        self.exit_code = code
+        self.message = message
+        self.output = output
 
 
 def _perform_match(output, fnl):
@@ -161,7 +183,7 @@ def _perform_match(output, fnl):
 @pytest.fixture
 def cmd():
     """ invoke a command line subcommand with a unique plugin manager. """
-    return ClickRunner()
+    return CmdlineRunner()
 
 
 @pytest.fixture

@@ -10,12 +10,22 @@ class DeltaBotSpecs:
     """ per DeltaBot instance hook specifications. """
 
     @deltabot_hookspec
-    def deltabot_init_cmdline(self, bot_main, plugin_manager):
-        """ initialize the deltabot main "click" command before argument parsing.
+    def deltabot_init_parser(self, parser):
+        """ initialize the deltabot main parser with new options and subcommands.
 
-        :param bot_main: a :class:`click.Group` instance where you can add sub commands
-                         or options before the group's command line parsing is invoked.
-        :param plugin_manager: a :class:`deltabot.plugins.PluginManager` instance that the command
+        :param parser: a :class:`deltabot.parser.MyArgumentParser` instance where you can
+                        call `add_subcommand(name, func)` to get a sub parser where you
+                        can then add arguments.
+        """
+
+    @deltabot_hookspec
+    def deltabot_add_generic_options(self, parser, subcommand_name):
+        """ add generic option to a (sub) parser.
+
+        :param parser: a :class:`deltabot.parser.MyArgumentParser` instance where you can
+                        call `add_subcommand(name, func)` to get a sub parser where you
+                        can then add arguments.
+        :param subcommand_name: sub command name or None if this is the top level parser.
         """
 
     @deltabot_hookspec(historic=True)
