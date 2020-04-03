@@ -2,8 +2,8 @@
 
 def test_general_help(cmd):
     cmd.run_ok([], """
-        *bot management*
         *init*
+        *info*
         *serve*
     """)
 
