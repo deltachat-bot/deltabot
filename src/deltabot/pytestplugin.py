@@ -10,8 +10,7 @@ from _pytest.pytester import LineMatcher
 from deltachat.message import Message
 from deltachat import account_hookimpl
 
-from . import cmdline
-from .parser import get_base_parser
+from .parser import get_base_parser, make_bot_from_args
 from .plugins import make_plugin_manager
 from .bot import Replies
 
@@ -33,7 +32,7 @@ def make_bot(request, account, plugin_module):
 
     args = parser.main_parse_argv(["deltabot", "--basedir", basedir])
 
-    bot = cmdline.make_bot(args=args, plugin_manager=pm, account=account)
+    bot = make_bot_from_args(args=args, plugin_manager=pm, account=account)
 
     # we auto-register the (non-builtin) module
     # which contains the test which requested this bot
@@ -129,7 +128,7 @@ class CmdlineRunner:
         try:
             try:
                 args = parser.main_parse_argv(argv)
-                bot = cmdline.make_bot(args=args, plugin_manager=pm)
+                bot = make_bot_from_args(args=args, plugin_manager=pm)
                 parser.main_run(bot=bot, args=args)
                 code = 0
             except SystemExit as ex:
