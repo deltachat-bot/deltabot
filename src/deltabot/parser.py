@@ -36,9 +36,9 @@ class MyArgumentParser(argparse.ArgumentParser):
             help=doc
         )
         subparser.Action = argparse.Action
+        group = subparser.add_argument_group("generic options")
         self.plugin_manager.hook.deltabot_add_generic_options(
-            parser=subparser,
-            subcommand_name=name
+            group=group, subcommand_name=name
         )
 
         inst = cls()
@@ -111,7 +111,8 @@ def get_base_parser(plugin_manager):
     parser.subparsers = subparsers = parser.add_subparsers()
 
     plugin_manager.hook.deltabot_init_parser(parser=parser)
-    plugin_manager.hook.deltabot_add_generic_options(parser=parser, subcommand_name=None)
+    group = parser.add_argument_group("generic options")
+    plugin_manager.hook.deltabot_add_generic_options(group=group, subcommand_name=None)
 
     # see http://stackoverflow.com/questions/18282403/
     # for the following two lines (py3 compat)

@@ -14,9 +14,8 @@ def deltabot_init_parser(parser):
 
 
 @deltabot_hookimpl
-def deltabot_add_generic_options(parser, subcommand_name):
-    group = parser.add_argument_group("generic options")
-    parser.add_argument(
+def deltabot_add_generic_options(group, subcommand_name):
+    group.add_argument(
         "--version", action="store_true",
         help="show program's version number and exit")
     group.add_argument(

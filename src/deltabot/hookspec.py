@@ -18,14 +18,18 @@ class DeltaBotSpecs:
                         can then add arguments.
         """
 
+    @deltabot_hookspec(firstresult=True)
+    def deltabot_get_logger(self, args):
+        """ get a logger based on the parsed command line args.
+
+        The returned logger needs to offer info/debug/warn/error methods.
+        """
+
     @deltabot_hookspec
-    def deltabot_add_generic_options(self, parser, subcommand_name):
+    def deltabot_add_generic_options(self, group, subcommand_name):
         """ add generic option to a (sub) parser.
 
-        :param parser: a :class:`deltabot.parser.MyArgumentParser` instance where you can
-                        call `add_subcommand(name, func)` to get a sub parser where you
-                        can then add arguments.
-        :param subcommand_name: sub command name or None if this is the top level parser.
+        :param group: argparse.ArgumentGroup object for adding generic options
         """
 
     @deltabot_hookspec(historic=True)
