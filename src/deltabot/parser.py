@@ -1,15 +1,8 @@
 # PYTHON_ARGCOMPLETE_OK
 
 import os
-import sys
 import py
 import argparse
-
-from deltachat import Account
-
-from .plugins import get_global_plugin_manager
-from .bot import DeltaBot
-
 
 main_description = """
 The deltabot command line offers sub commands for initialization, configuration
@@ -17,34 +10,10 @@ and web-serving of Delta Chat Bots.  New sub commands may be added via plugins.
 """
 
 
-def main(argv=None):
-    """delta.chat bot management command line interface."""
-    pm = get_global_plugin_manager()
-    parser = get_base_parser(plugin_manager=pm)
-    args = parser.main_parse_argv(argv or sys.argv)
-    bot = make_bot_from_args(args, plugin_manager=pm)
-    parser.main_run(bot=bot, args=args)
-
-
-def make_bot_from_args(args, plugin_manager, account=None):
-    basedir = os.path.abspath(os.path.expanduser(args.basedir))
-    if not os.path.exists(basedir):
-        os.makedirs(basedir)
-
-    if account is None:
-        db_path = os.path.join(basedir, "account.db")
-        account = Account(db_path, "deltabot/{}".format(sys.platform))
-
-    logger = plugin_manager.hook.deltabot_get_logger(args=args)
-    return DeltaBot(account, logger, plugin_manager=plugin_manager)
-
-
 class MyArgumentParser(argparse.ArgumentParser):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     class ArgumentError(Exception):
         """ and error from the argparse subsystem. """
+
     def error(self, error):
         """raise errors instead of printing and raising SystemExit"""
         raise self.ArgumentError(error)

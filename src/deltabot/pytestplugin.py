@@ -10,7 +10,8 @@ from _pytest.pytester import LineMatcher
 from deltachat.message import Message
 from deltachat import account_hookimpl
 
-from .parser import get_base_parser, make_bot_from_args
+from .parser import get_base_parser
+from .main import make_bot_from_args
 from .plugins import make_plugin_manager
 from .bot import Replies
 
@@ -134,9 +135,10 @@ class CmdlineRunner:
             except SystemExit as ex:
                 code = ex.code
                 message = str(ex)
-            except Exception as ex:
-                code = 127
-                message = str(ex)
+            # pass through unexpected exceptions
+            # except Exception as ex:
+            #    code = 127
+            #    message = str(ex)
         finally:
             output, _ = cap.reset()
         return InvocationResult(code, message, output)
