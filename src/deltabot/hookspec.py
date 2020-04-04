@@ -25,13 +25,6 @@ class DeltaBotSpecs:
         The returned logger needs to offer info/debug/warn/error methods.
         """
 
-    @deltabot_hookspec
-    def deltabot_add_generic_options(self, group, subcommand_name):
-        """ add generic option to a (sub) parser.
-
-        :param group: argparse.ArgumentGroup object for adding generic options
-        """
-
     @deltabot_hookspec(historic=True)
     def deltabot_init(self, bot):
         """ init a bot -- called before the bot starts serving requests.

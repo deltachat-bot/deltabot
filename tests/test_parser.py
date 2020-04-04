@@ -12,14 +12,6 @@ class TestParser:
     def test_generic(self, parser):
         args = parser.main_parse_argv(["deltabot"])
         assert args.command is None
-        assert not args.version
-        assert args.verbose == 0
-
-        args = parser.main_parse_argv(["deltabot", "--version"])
-        assert args.version
-
-        args = parser.main_parse_argv(["deltabot", "--verbose"])
-        assert args.verbose == 1
 
         args = parser.main_parse_argv(["deltabot", "--basedir=123"])
         assert args.basedir == "123"

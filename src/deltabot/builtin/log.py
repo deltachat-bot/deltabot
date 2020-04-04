@@ -5,8 +5,15 @@ from deltabot import deltabot_hookimpl
 
 
 @deltabot_hookimpl
+def deltabot_init_parser(parser):
+    parser.add_generic_option(
+        "--stdlog", choices=["info", "debug", "err", "warn"],
+        default="info", help="stdout logging level.")
+
+
+@deltabot_hookimpl
 def deltabot_get_logger(args):
-    loglevel = getattr(logging, args.stdout_loglevel.upper())
+    loglevel = getattr(logging, args.stdlog.upper())
     return make_logger(args.basedir, loglevel)
 
 
