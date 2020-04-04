@@ -1,5 +1,4 @@
 
-import argparse
 import os
 
 from deltabot.hookspec import deltabot_hookimpl
@@ -7,31 +6,20 @@ from deltabot.hookspec import deltabot_hookimpl
 
 @deltabot_hookimpl
 def deltabot_init_parser(parser):
+    from deltabot import __version__ as deltabot_version
+
     parser.add_subcommand(Init)
     parser.add_subcommand(Info)
     parser.add_subcommand(ListPlugins)
     parser.add_subcommand(Serve)
 
-
-@deltabot_hookimpl
-def deltabot_add_generic_options(group, subcommand_name):
-    group.add_argument(
-        "--version", action="store_true",
-        help="show program's version number and exit")
-    group.add_argument(
-        "-v", "--verbose", action="count", default=0, help="increase verbosity")
-    group.add_argument(
-        "--stdout-loglevel", choices=["info", "debug", "err", "warn"],
-        default="info", help="stdout logging level.")
-    # workaround for http://bugs.python.org/issue23058
-    if subcommand_name is None:
-        basedir_default = os.path.expanduser(
-            os.environ.get("DELTABOT_BASEDIR", "~/.config/deltabot"))
-    else:
-        # subcommands will have their default being suppressed, so only the
-        # main one is used
-        basedir_default = argparse.SUPPRESS
-    group.add_argument(
+    parser.add_generic_option(
+        "--version", action="version", version=deltabot_version,
+        help="show program's version number and exit"
+    )
+    basedir_default = os.path.expanduser(
+        os.environ.get("DELTABOT_BASEDIR", "~/.config/deltabot"))
+    parser.add_generic_option(
         "--basedir", action="store", metavar="DIR",
         default=basedir_default,
         help="directory for storing all deltabot state")

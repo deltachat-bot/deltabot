@@ -7,7 +7,6 @@ import argparse
 
 from deltachat import Account
 
-from . import __version__ as deltabot_version
 from .plugins import get_global_plugin_manager
 from .bot import DeltaBot
 
@@ -50,7 +49,16 @@ class MyArgumentParser(argparse.ArgumentParser):
         """raise errors instead of printing and raising SystemExit"""
         raise self.ArgumentError(error)
 
+    def add_generic_option(self, *flags, **kwargs):
+        """ add a generic argument option. """
+        if not hasattr(self, "subparsers"):
+            raise ValueError("can not add generic option to sub command")
+        if not (flags and flags[0].startswith("-")):
+            raise ValueError("can not generically add positional args")
+        self.generic_options.add_argument(*flags, **kwargs)
+
     def add_subcommand(self, cls):
+        """ Add a subcommand to deltabot. """
         if not hasattr(self, "subparsers"):
             raise ValueError("can not add sub command to subcommand")
         doc, description = parse_docstring(cls.__doc__)
@@ -63,15 +71,11 @@ class MyArgumentParser(argparse.ArgumentParser):
             help=doc
         )
         subparser.Action = argparse.Action
-        group = subparser.add_argument_group("generic options")
-        self.plugin_manager.hook.deltabot_add_generic_options(
-            group=group, subcommand_name=name
-        )
 
         inst = cls()
         meth = getattr(inst, "add_arguments", None)
         if meth is not None:
-            inst.add_arguments(parser=subparser)
+            meth(parser=subparser)
         subparser.set_defaults(subcommand_instance=inst)
 
     def main_parse_argv(self, argv):
@@ -86,8 +90,6 @@ class MyArgumentParser(argparse.ArgumentParser):
 
     def main_run(self, bot, args):
         out = CmdlineOutput()
-        if args.version:
-            out.ok_finish(deltabot_version)
 
         if args.command is None:
             out.line(self.format_usage())
@@ -135,16 +137,9 @@ def try_argcomplete(parser):
 def get_base_parser(plugin_manager):
     parser = MyArgumentParser(prog="deltabot", description=main_description)
     parser.plugin_manager = plugin_manager
-    parser.subparsers = subparsers = parser.add_subparsers()
-
+    parser.subparsers = parser.add_subparsers(dest="command")
+    parser.generic_options = parser.add_argument_group("generic options")
     plugin_manager.hook.deltabot_init_parser(parser=parser)
-    group = parser.add_argument_group("generic options")
-    plugin_manager.hook.deltabot_add_generic_options(group=group, subcommand_name=None)
-
-    # see http://stackoverflow.com/questions/18282403/
-    # for the following two lines (py3 compat)
-    subparsers.required = False
-    subparsers.dest = "command"
     return parser
 
 
