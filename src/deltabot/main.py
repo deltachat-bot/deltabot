@@ -12,8 +12,10 @@ from .bot import DeltaBot
 def main(argv=None):
     """delta.chat bot management command line interface."""
     pm = get_global_plugin_manager()
-    parser = get_base_parser(plugin_manager=pm)
-    args = parser.main_parse_argv(argv or sys.argv)
+    if argv is None:
+        argv = sys.argv
+    parser = get_base_parser(plugin_manager=pm, argv=argv)
+    args = parser.main_parse_argv(argv)
     bot = make_bot_from_args(args, plugin_manager=pm)
     parser.main_run(bot=bot, args=args)
 

@@ -24,7 +24,9 @@ class MyArgumentParser(argparse.ArgumentParser):
             raise ValueError("can not add generic option to sub command")
         if not (flags and flags[0].startswith("-")):
             raise ValueError("can not generically add positional args")
-        self.generic_options.add_argument(*flags, **kwargs)
+        inipath = kwargs.pop("inipath", None)
+        action = self.generic_options.add_argument(*flags, **kwargs)
+        action.inipath = inipath
 
     def add_subcommand(self, cls):
         """ Add a subcommand to deltabot. """
@@ -47,8 +49,20 @@ class MyArgumentParser(argparse.ArgumentParser):
             meth(parser=subparser)
         subparser.set_defaults(subcommand_instance=inst)
 
+    def _merge_ini(self):
+        p = os.path.join(self.basedir, "deltabot.ini")
+        if os.path.exists(p):
+            cfg = py.iniconfig.IniConfig(p)
+            for action in self._actions:
+                if getattr(action, "inipath", None):
+                    section, key = action.inipath.split(":")
+                    default = cfg.get(section, key)
+                    if default:
+                        action.default = default
+
     def main_parse_argv(self, argv):
         try_argcomplete(self)
+        self._merge_ini()
         try:
             return self.parse_args(argv[1:])
         except self.ArgumentError as e:
@@ -103,12 +117,16 @@ def try_argcomplete(parser):
             argcomplete.autocomplete(parser)
 
 
-def get_base_parser(plugin_manager):
+def get_base_parser(plugin_manager, argv):
     parser = MyArgumentParser(prog="deltabot", description=main_description)
     parser.plugin_manager = plugin_manager
     parser.subparsers = parser.add_subparsers(dest="command")
     parser.generic_options = parser.add_argument_group("generic options")
     plugin_manager.hook.deltabot_init_parser(parser=parser)
+
+    # preliminary set the basedir on the parser
+    args, remaining = parser.parse_known_args(argv[1:])
+    parser.basedir = args.basedir
     return parser
 
 

@@ -29,9 +29,10 @@ def make_bot(request, account, plugin_module):
     pm = make_plugin_manager()
 
     # initialize command line
-    parser = get_base_parser(pm)
+    argv = ["deltabot", "--basedir", basedir]
+    parser = get_base_parser(pm, argv=argv)
 
-    args = parser.main_parse_argv(["deltabot", "--basedir", basedir])
+    args = parser.main_parse_argv(argv)
 
     bot = make_bot_from_args(args=args, plugin_manager=pm, account=account)
 
@@ -122,7 +123,7 @@ class CmdlineRunner:
     def invoke(self, args):
         # create a new plugin manager for each command line invocation
         pm = make_plugin_manager()
-        parser = get_base_parser(pm)
+        parser = get_base_parser(pm, argv=self._rootargs)
         argv = self._rootargs + args
         code, message = 0, None
         cap = py.io.StdCaptureFD(mixed=True)
