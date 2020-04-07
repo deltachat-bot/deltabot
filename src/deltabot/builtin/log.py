@@ -8,7 +8,8 @@ from deltabot import deltabot_hookimpl
 def deltabot_init_parser(parser):
     parser.add_generic_option(
         "--stdlog", choices=["info", "debug", "err", "warn"],
-        default="info", help="stdout logging level.")
+        default="info", help="stdout logging level.",
+        inipath="log:stdlog")
 
 
 @deltabot_hookimpl

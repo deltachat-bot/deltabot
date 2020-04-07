@@ -1,11 +1,29 @@
-
+import os
 import pytest
+import textwrap
 
 
 @pytest.fixture
-def parser(plugin_manager):
+def parser(plugin_manager, tmpdir, monkeypatch):
     from deltabot.parser import get_base_parser
-    return get_base_parser(plugin_manager)
+    basedir = tmpdir.mkdir("basedir").strpath
+    argv = ["deltabot", "--basedir", basedir]
+    parser = get_base_parser(plugin_manager, argv=argv)
+    assert parser.basedir == basedir
+    monkeypatch.setenv("DELTABOT_BASEDIR", basedir)
+    return parser
+
+
+@pytest.fixture
+def makeini(parser):
+    def makeini(source):
+        s = textwrap.dedent(source)
+        p = os.path.join(parser.basedir, "deltabot.ini")
+        with open(p, "w") as f:
+            f.write(s)
+        return p
+
+    return makeini
 
 
 class TestParser:
@@ -15,6 +33,19 @@ class TestParser:
 
         args = parser.main_parse_argv(["deltabot", "--basedir=123"])
         assert args.basedir == "123"
+
+    def test_add_generic(self, parser, makeini):
+        parser.add_generic_option(
+            "--example", choices=["info", "debug", "err", "warn"],
+            default="info", help="stdout logging level.",
+            inipath="section:key")
+
+        makeini("""
+            [section]
+            key = debug
+        """)
+        args = parser.main_parse_argv(["deltabot"])
+        assert args.example == "debug"
 
 
 class TestInit:
