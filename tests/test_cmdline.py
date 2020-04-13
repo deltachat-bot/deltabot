@@ -37,5 +37,5 @@ class TestInit:
 class TestPluginManagement:
     def test_list_plugins(self, mycmd):
         mycmd.run_ok(["list-plugins"], """
-            *deltabot.builtin.echo*
+            *deltabot.builtin.*
         """)
