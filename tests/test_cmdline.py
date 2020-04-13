@@ -1,3 +1,5 @@
+import pytest
+
 
 def test_general_help(cmd):
     cmd.run_ok([], """
@@ -16,6 +18,8 @@ def test_version(cmd):
 
 class TestInit:
     def test_ok_then_info(self, mycmd, session_liveconfig):
+        if not session_liveconfig:
+            pytest.skip("no temporary accounts")
         config = session_liveconfig.get(0)
         mycmd.run_ok(["--stdlog=info", "init", config["addr"], config["mail_pw"]], """
             *deltabot*INFO*Success*
@@ -25,6 +29,8 @@ class TestInit:
         """)
 
     def test_fail_then_ok(self, mycmd, session_liveconfig):
+        if not session_liveconfig:
+            pytest.skip("no temporary accounts")
         config = session_liveconfig.get(0)
         mycmd.run_fail(["--stdlog", "info", "init", config["addr"], "Wrongpw"], """
             *deltabot*ERR*
