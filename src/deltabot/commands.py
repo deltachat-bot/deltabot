@@ -53,6 +53,23 @@ class Commands:
             replies.add(text=res)
             return True
 
+    @deltabot_hookimpl
+    def deltabot_init(self, bot):
+        assert bot == self.bot
+        self.register("/help", self.command_help)
+
+    def command_help(self, command):
+        """ reply with help message about available commands. """
+        l = []
+        l.append("**commands**")
+        for c in self._cmd_defs.values():
+            l.append("{}: {}".format(c.cmd, c.short))
+        l.append("")
+        pm = self.bot.plugins._pm
+        plugins = [pm.get_name(plug) for plug, dist in pm.list_plugin_distinfo()]
+        l.append("enabled plugins: {}".format(" ".join(plugins)))
+        return "\n".join(l)
+
 
 class CommandDef:
     """ Definition of a '/COMMAND' with args. """
