@@ -39,7 +39,9 @@ def make_bot(request, account, plugin_module):
     # we auto-register the (non-builtin) module
     # which contains the test which requested this bot
     if not plugin_module.__name__.startswith("deltabot.builtin."):
-        bot.plugins.add_module(plugin_module.__name__, plugin_module)
+        # don't re-register already registered setuptools plugins
+        if not pm.is_registered(plugin_module):
+            bot.plugins.add_module(plugin_module.__name__, plugin_module)
 
     # startup bot
     request.addfinalizer(bot.trigger_shutdown)

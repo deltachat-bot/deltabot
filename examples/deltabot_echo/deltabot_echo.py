@@ -31,6 +31,13 @@ def test_mock_echo(mocker):
     assert reply.text.endswith("'hello'")
 
 
+def test_mock_echo_help(mocker):
+    reply = mocker.run_command("/help").text.lower()
+    assert "/echo" in reply
+    assert "/help" in reply
+    assert "plugins: " in reply
+
+
 def test_echo(bot_tester):
     msg_reply = bot_tester.send_command("/echo")
     assert msg_reply.text.startswith("From")
