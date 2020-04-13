@@ -18,8 +18,8 @@ def test_parse_command_docstring():
     assert long == "long description."
 
 
-def test_echo_is_builtin(mock_bot):
-    assert "/echo" in mock_bot.commands.dict()
+# def test_echo_is_builtin(mock_bot):
+#    assert "/echo" in mock_bot.commands.dict()
 
 
 def test_register(mock_bot):

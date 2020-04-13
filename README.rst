@@ -51,6 +51,13 @@ Now start serving the chat bot::
 
 and text a `/mycalc 23+20-1` message, and see the result message arriving back.
 
+Writing setuptools plugins
+--------------------------
+
+You can implement your plugin as a proper python package or wheel
+by using setuptools.  Have a look in the `examples/deltachat_bot`
+example directory which contains a complete example.
+
 
 note for users
 --------------
