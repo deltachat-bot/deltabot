@@ -14,7 +14,7 @@ jobs: # A basic unit of work in a run
       - run: sudo chown -R circleci:circleci /usr/local/lib/python3.6/site-packages
       - run:
           command: |
-            sudo apt install python-tox 
-      - run:
-          command: |
-            tox 
+            python -m venv venv 
+            source venv/bin/activate 
+            pip install tox 
+            tox -i https://m.devpi.net/dc/master 
