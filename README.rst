@@ -16,7 +16,7 @@ To install it run the following command (preferably in a ``virtualenv``):
 Init and run a bare bot
 -----------------------
 
-Configure an e-mail address for your chat bot::
+Configure an e-mail address for your chat bot (using example credentials)::
 
     deltabot init tmp.vd9dd@testrun.org OzrSxdx5hiaD
 
