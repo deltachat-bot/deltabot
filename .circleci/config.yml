@@ -14,5 +14,5 @@ jobs: # A basic unit of work in a run
           command: |
             python -m venv venv 
             source venv/bin/activate 
-            pip install tox 
+            pip install -q tox 
             tox -i https://m.devpi.net/dc/master 
