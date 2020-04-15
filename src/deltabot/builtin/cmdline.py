@@ -23,6 +23,15 @@ def deltabot_init_parser(parser):
         "--basedir", action="store", metavar="DIR",
         default=basedir_default,
         help="directory for storing all deltabot state")
+    parser.add_generic_option("--show-ffi", action="store_true", help="show low level ffi events")
+
+
+@deltabot_hookimpl
+def deltabot_init(bot, args):
+    if args.show_ffi:
+        from deltachat.eventlogger import FFIEventLogger
+        log = FFIEventLogger(bot.account, "bot")
+        bot.account.add_account_plugin(log)
 
 
 class Init:

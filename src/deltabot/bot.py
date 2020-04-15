@@ -45,7 +45,6 @@ class DeltaBot:
             mvbox_watch=0,
             bcc_self=0
         ))
-        self.plugins.hook.deltabot_init.call_historic(kwargs=dict(bot=self))
 
     def store_setting(self, key, value):
         """ Store a bot setting. """
