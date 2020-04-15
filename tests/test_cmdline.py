@@ -3,6 +3,7 @@ import pytest
 
 def test_general_help(cmd):
     cmd.run_ok([], """
+        *show-ffi*
         *init*
         *info*
         *serve*
@@ -38,6 +39,16 @@ class TestInit:
         mycmd.run_ok(["--std=info", "init", config["addr"], config["mail_pw"]], """
             *deltabot*INFO*Success*
         """)
+
+    def test_serve(self, mycmd, session_liveconfig, monkeypatch):
+        import deltachat
+        if not session_liveconfig:
+            pytest.skip("no temporary accounts")
+        config = session_liveconfig.get(0)
+        mycmd.run_ok(["--std=info", "init", config["addr"], config["mail_pw"]], "")
+        monkeypatch.setattr(deltachat.account.Account, "wait_shutdown", lambda x: 0 / 0)
+        with pytest.raises(ZeroDivisionError):
+            mycmd.run_ok(["--show-ffi", "serve"], "")
 
 
 class TestPluginManagement:

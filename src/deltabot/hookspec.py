@@ -26,12 +26,12 @@ class DeltaBotSpecs:
         """
 
     @deltabot_hookspec(historic=True)
-    def deltabot_init(self, bot):
+    def deltabot_init(self, bot, args):
         """ init a bot -- called before the bot starts serving requests.
 
         Note that plugins that register after DeltaBot initizialition
-        will still be called in order to allow them registering their
-        commands and filters.
+        will see their hookimpl get called during plugin registration.
+        This allows "late" plugins to still register commands and filters.
         """
 
     @deltabot_hookspec
