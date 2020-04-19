@@ -52,3 +52,7 @@ class DeltaBotSpecs:
     @deltabot_hookspec(firstresult=True)
     def deltabot_get_setting(self, key):
         """ get a named persistent bot setting."""
+
+    @deltabot_hookspec(firstresult=True)
+    def deltabot_list_settings(self):
+        """ get a list of persistent (key, value) tuples. """

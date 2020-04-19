@@ -46,16 +46,27 @@ class DeltaBot:
             bcc_self=0
         ))
 
-    def store_setting(self, key, value):
-        """ Store a bot setting. """
-        self.plugins.hook.deltabot_store_setting(key=key, value=value)
+    def set(self, name, value, scope="global"):
+        """ Store a per bot setting with the given scope. """
+        assert "/" not in scope
+        key = scope + "/" + name
+        self.plugins._pm.hook.deltabot_store_setting(key=key, value=value)
 
-    def get_setting(self, key, default=None):
-        """ Get a bot setting. """
-        res = self.plugins.hook.deltabot_get_setting(key=key)
-        if not res:
-            res = default
-        return res
+    def get(self, name, default=None, scope="global"):
+        """ Get a per-bot setting from the given scope. """
+        assert "/" not in scope
+        key = scope + "/" + name
+        res = self.plugins._pm.hook.deltabot_get_setting(key=key)
+        return res if res is not None else default
+
+    def list_settings(self, scope=None):
+        """ list Get a per-bot setting from the given scope. """
+        assert scope is None or "/" not in scope
+        l = self.plugins._pm.hook.deltabot_list_settings()
+        if scope is not None:
+            s = scope + "/"
+            l = [x for x in l if x.startswith(s)]
+        return l
 
     #
     # API for getting at and creating contacts and chats

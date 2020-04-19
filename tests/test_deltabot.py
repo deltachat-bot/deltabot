@@ -40,6 +40,15 @@ class TestDeltaBot:
         assert not members
 
 
+class TestSettings:
+    def test_set_get_list(self, mock_bot):
+        mock_bot.set("a", "1")
+        mock_bot.set("b", "2")
+        l = mock_bot.list_settings()
+        assert len(l) == 2
+        assert l == [("global/a", "1"), ("global/b", "2")]
+
+
 class TestReplies:
     def test_two_text(self, mock_bot):
         r = Replies(mock_bot.account)
