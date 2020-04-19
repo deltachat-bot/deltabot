@@ -63,12 +63,16 @@ class DeltaBot:
         return res if res is not None else default
 
     def list_settings(self, scope=None):
-        """ list Get a per-bot setting from the given scope. """
+        """ list per-bot settings for the given scope.
+
+        If scope is not specified, all settings are returned.
+        """
         assert scope is None or "/" not in scope
         l = self.plugins._pm.hook.deltabot_list_settings()
         if scope is not None:
-            s = scope + "/"
-            l = [x for x in l if x.startswith(s)]
+            scope_prefix = scope + "/"
+            l = [(x[0][len(scope_prefix):], x[1])
+                 for x in l if x[0].startswith(scope_prefix)]
         return l
 
     #
