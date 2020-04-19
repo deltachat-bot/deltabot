@@ -11,7 +11,6 @@ def deltabot_init_parser(parser):
 
 @deltabot_hookimpl
 def deltabot_init(bot):
-    bot.commands.register(name="/get", func=command_get)
     bot.commands.register(name="/set", func=command_set)
 
 
@@ -63,27 +62,32 @@ class db_list:
             out.line("{}: {}".format(key, res))
 
 
-def command_get(command):
-    """get value for a key. If no key is specified, return all settings."""
-    addr = command.message.get_sender_contact().addr
-    lines = []
-    if len(command.args) == 0:
-        lines.extend(dump_settings(command.bot, scope=addr))
-    else:
-        x = command.bot.get(command.args[0], scope=addr)
-        lines.append("{}={}".format(command.args[0], x))
-    return "\n".join(lines)
-
-
 def command_set(command):
-    """get value for a key. If no key is specified, return all settings."""
+    """show all/one settings or set one particular setting.
+
+    examples:
+
+    # show all settings
+    /set
+
+    # show value for one setting
+    /set name
+
+    # set one setting
+    /set name=value
+    """
     addr = command.message.get_sender_contact().addr
-    if len(command.args) == 2:
-        name, value = command.args
+    if not command.payload:
+        return "\n".join(dump_settings(command.bot, scope=addr))
+    if "=" in command.payload:
+        name, value = command.payload.split("=", 1)
+        name = name.strip()
+        value = value.strip()
         old = command.bot.set(name, value, scope=addr)
         return "old: {}={}".format(name, repr(old))
-    elif len(command.args) == 0:
-        return "\n".join(dump_settings(command.bot, scope=addr))
+
+    x = command.bot.get(command.args[0], scope=addr)
+    return "{}={}".format(command.args[0], x)
 
 
 def dump_settings(bot, scope):
@@ -97,23 +101,20 @@ def dump_settings(bot, scope):
 
 class TestCommandSettings:
     def test_mock_get_set_empty_settings(self, mocker):
-        reply_msg = mocker.run_command("/get")
-        assert reply_msg.text.startswith("no settings")
         reply_msg = mocker.run_command("/set")
         assert reply_msg.text.startswith("no settings")
 
     def test_mock_set_works(self, mocker):
-        reply_msg = mocker.run_command("/set hello world")
+        reply_msg = mocker.run_command("/set hello=world")
         assert "old" in reply_msg.text
-        msg_reply = mocker.run_command("/get")
+        msg_reply = mocker.run_command("/set")
         assert "hello=world" == msg_reply.text
 
     def test_get_set_functional(self, bot_tester):
-        msg_reply = bot_tester.send_command("/set hello world")
-        assert "old" in msg_reply.text
-        msg_reply = bot_tester.send_command("/set hello2 world2")
-        msg_reply = bot_tester.send_command("/get hello")
+        msg_reply = bot_tester.send_command("/set hello=world")
+        msg_reply = bot_tester.send_command("/set hello2=world2")
+        msg_reply = bot_tester.send_command("/set hello")
         assert msg_reply.text == "hello=world"
-        msg_reply = bot_tester.send_command("/get")
+        msg_reply = bot_tester.send_command("/set")
         assert "hello=world" in msg_reply.text
         assert "hello2=world2" in msg_reply.text
