@@ -17,6 +17,19 @@ def test_version(cmd):
     """.format(deltabot_version))
 
 
+class TestSettings:
+    def test_get_set_list(self, mycmd, session_liveconfig):
+        mycmd.run_fail(["db_get", "hello"])
+        mycmd.run_fail(["db_set", "hello", "world"])
+        mycmd.run_ok(["db_set", "global/hello", "world"])
+        mycmd.run_ok(["db_get", "global/hello"], """
+            world
+        """)
+        mycmd.run_ok(["db_list"], """
+            global/hello: world
+        """)
+
+
 class TestInit:
     def test_ok_then_info(self, mycmd, session_liveconfig):
         if not session_liveconfig:

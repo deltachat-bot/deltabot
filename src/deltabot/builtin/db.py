@@ -14,10 +14,6 @@ class DBManager:
     def __init__(self, db_path):
         self.db = sqlite3.connect(db_path, check_same_thread=False)
         self.db.row_factory = sqlite3.Row
-        self._execute('''CREATE TABLE IF NOT EXISTS peerprefs
-                        (addr TEXT PRIMARY KEY,
-                         locale TEXT,
-                         mode INTEGER)''')
         self._execute('''CREATE TABLE IF NOT EXISTS config
                         (keyname TEXT PRIMARY KEY,
                          value TEXT)''')
@@ -29,7 +25,7 @@ class DBManager:
     @deltabot_hookimpl
     def deltabot_store_setting(self, key, value):
         old_val = self.deltabot_get_setting(key)
-        self._execute('INSERT INTO config VALUES (?,?)', (key, value))
+        self._execute('REPLACE INTO config VALUES (?,?)', (key, value))
         return old_val
 
     @deltabot_hookimpl
@@ -41,11 +37,31 @@ class DBManager:
         return row['value'] if row else None
 
     @deltabot_hookimpl
+    def deltabot_list_settings(self):
+        rows = self._execute('SELECT * FROM config').fetchall()
+        return [(row['keyname'], row["value"]) for row in rows]
+
+    @deltabot_hookimpl
     def deltabot_shutdown(self, bot):
         self.db.close()
 
 
 class TestDB:
-    def test_settings(self, mock_bot):
-        mock_bot.store_setting("hello", "world")
-        assert mock_bot.get_setting("hello") == "world"
+    def test_settings_twice(self, mock_bot):
+        mock_bot.set("hello", "world")
+        assert mock_bot.get("hello") == "world"
+        mock_bot.set("hello", "world")
+        assert mock_bot.get("hello") == "world"
+
+    def test_settings_scoped(self, mock_bot):
+        mock_bot.set("hello", "world")
+        mock_bot.set("hello", "xxx", scope="other")
+        assert mock_bot.get("hello") == "world"
+        assert mock_bot.get("hello", scope="other") == "xxx"
+
+        l = mock_bot.list_settings()
+        assert len(l) == 2
+        assert l[0][0] == "global/hello"
+        assert l[0][1] == "world"
+        assert l[1][0] == "other/hello"
+        assert l[1][1] == "xxx"
