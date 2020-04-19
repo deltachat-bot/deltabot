@@ -48,6 +48,7 @@ class Commands:
 
         payload = parts[0] if parts else ""
         cmd = IncomingCommand(bot=self.bot, cmd_def=cmd_def, payload=payload, message=message)
+        self.bot.logger.info("processing command {}".format(cmd))
         res = cmd.cmd_def.func(cmd)
         if res:
             replies.add(text=res)
@@ -92,6 +93,14 @@ class IncomingCommand:
         self.cmd_def = cmd_def
         self.payload = payload
         self.message = message
+
+    def __repr__(self):
+        return "<IncomingCommand {!r} payload={!r} msg={}>".format(
+            self.cmd_def.cmd[0], self.payload, self.message.id)
+
+    @property
+    def args(self):
+        return self.payload.split()
 
 
 def parse_command_docstring(func):
