@@ -46,15 +46,18 @@ class DeltaBot:
             bcc_self=0
         ))
 
+    #
+    # API for persistent scoped-key/value settings
+    #
     def set(self, name, value, scope="global"):
         """ Store a per bot setting with the given scope. """
-        assert "/" not in scope
+        assert "/" not in scope and "/" not in name
         key = scope + "/" + name
         self.plugins._pm.hook.deltabot_store_setting(key=key, value=value)
 
     def get(self, name, default=None, scope="global"):
         """ Get a per-bot setting from the given scope. """
-        assert "/" not in scope
+        assert "/" not in scope and "/" not in name
         key = scope + "/" + name
         res = self.plugins._pm.hook.deltabot_get_setting(key=key)
         return res if res is not None else default
