@@ -174,38 +174,26 @@ class CheckAll:
         self.bot = bot
 
     def perform(self):
-        for chat in self.bot.account.get_chats():
-            CheckChat(self.bot, chat).perform()
-
-
-class CheckChat:
-    def __init__(self, bot, chat):
-        self.bot = bot
-        self.chat = chat
-
-    def perform(self):
         logger = self.bot.logger
-        logger.debug("checking chat id={}".format(self.chat.id))
-        for message in self.chat.get_messages():
+        for message in self.bot.account.get_fresh_messages():
             try:
-                if message.is_in_fresh():
-                    replies = Replies(message.account)
-                    logger.info("processing incoming fresh message id={}".format(message.id))
-                    self.bot.plugins.hook.deltabot_incoming_message(
-                        message=message,
-                        bot=self.bot,
-                        replies=replies
-                    )
-                    for msg in replies.get_reply_messages():
-                        msg = message.chat.send_msg(msg)
-                        logger.info("reply id={} chat={} sent with text: {!r}".format(
-                            msg.id, msg.chat, msg.text[:50]
-                        ))
-                    self.bot.account.mark_seen_messages([message])
-                    logger.info("processing message id={} FINISHED".format(message.id))
+                replies = Replies(message.account)
+                logger.info("processing incoming fresh message id={}".format(message.id))
+                self.bot.plugins.hook.deltabot_incoming_message(
+                    message=message,
+                    bot=self.bot,
+                    replies=replies
+                )
+                for msg in replies.get_reply_messages():
+                    msg = message.chat.send_msg(msg)
+                    logger.info("reply id={} chat={} sent with text: {!r}".format(
+                        msg.id, msg.chat, msg.text[:50]
+                    ))
             except Exception as ex:
                 logger.exception("processing message={} failed: {}".format(
                     message.id, ex))
+            logger.info("processing message id={} FINISHED".format(message.id))
+            message.mark_seen()
 
 
 class IncomingEventHandler:
@@ -243,7 +231,7 @@ class IncomingEventHandler:
             message.id, message.chat.id, message.text[:50]))
 
         # message is now in fresh state, schedule a check
-        self._checks.put(CheckChat(self.bot, message.chat))
+        self._checks.put(CheckAll(self.bot))
 
     @account_hookimpl
     def ac_message_delivered(self, message):
