@@ -55,7 +55,7 @@ Writing setuptools plugins
 --------------------------
 
 You can implement your plugin as a proper python package or wheel
-by using setuptools.  Have a look in the `examples/deltachat_bot`
+by using setuptools.  Have a look in the `examples/deltachat_echo`
 example directory which contains a complete example.
 
 
