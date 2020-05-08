@@ -177,8 +177,8 @@ class SimpleBot(DeltaBot):
         botcfg = self.get_config(__name__)
         botcfg.setdefault(
             'start_msg', 'This is deltabot, a bot '
-            'for the Delta Chat aplication.\n\n'
-            'Source code: https://github.com/SimpleBot-Inc/simplebot'
+            'for the Delta Chat application.\n\n'
+            'Source code: https://github.com/deltachat-bot/deltabot'
         )
         botcfg.setdefault('displayname', '🤖deltabot🤖')
         botcfg.setdefault('avatar', '1')
@@ -258,7 +258,7 @@ class SimpleBot(DeltaBot):
                     'INSERT INTO preferences VALUES (?,?,?)', (addr, None, mode))
         else:
             command.msg.chat.send_text(
-                'Unknow property: {!r}'.format(prop))
+                'Unknown property: {!r}'.format(prop))
 
     def get_config(self, section):
         if not self._cfg.has_section(section):
