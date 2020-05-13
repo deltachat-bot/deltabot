@@ -50,6 +50,10 @@ class Commands:
         if cmd_def is None:
             reply = "unknown command {!r}".format(cmd_name)
             self.logger.warn(reply)
+            # when we get a way to know if an account is a bot,
+            # only ignore if there are other bots in the group
+            if message.chat.is_group():
+                return None
             replies.add(text=reply)
             return True
 
