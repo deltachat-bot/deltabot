@@ -44,7 +44,7 @@ class Commands:
         if '@' in cmd_name:
             cmd_name, addr = cmd_name.split('@', maxsplit=1)
             # ignore command in groups if it isn't for this bot
-            if is_group and self.bot.self_contact().addr != addr:
+            if is_group and self.bot.self_contact.addr != addr:
                 return None
 
         cmd_def = self._cmd_defs.get(cmd_name)

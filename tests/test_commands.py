@@ -24,7 +24,7 @@ def test_run_help(mocker):
 
 
 def test_cmd_with_mention(mocker):
-    reply = mocker.run_command("/help@" + mocker.bot.self_contact().addr)
+    reply = mocker.run_command("/help@" + mocker.bot.self_contact.addr)
     assert "/help" in reply.text
 
 
