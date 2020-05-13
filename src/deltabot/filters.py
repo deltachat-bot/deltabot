@@ -2,7 +2,7 @@
 from collections import OrderedDict
 
 from . import deltabot_hookimpl
-from .commands import parse_command_docstring
+from .commands import parse_command_docstring, CMD_PREFIX
 
 
 class Filters:
@@ -28,6 +28,8 @@ class Filters:
 
     @deltabot_hookimpl
     def deltabot_incoming_message(self, message, replies):
+        if message.text.startswith(CMD_PREFIX):
+            return None
         for name, filter_def in self._filter_defs.items():
             self.logger.debug("calling filter {!r} on message id={}".format(name, message.id))
             res = filter_def.func(message)
