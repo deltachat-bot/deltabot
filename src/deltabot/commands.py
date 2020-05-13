@@ -39,6 +39,13 @@ class Commands:
             return None
         parts = message.text.split(maxsplit=1)
         cmd_name = parts.pop(0)
+
+        # ignore command if it isn't for this bot
+        if '@' in cmd_name:
+            cmd_name, addr = cmd_name.split('@', maxsplit=1)
+            if self.bot.self_contact().addr != addr:
+                return None
+
         cmd_def = self._cmd_defs.get(cmd_name)
         if cmd_def is None:
             reply = "unknown command {!r}".format(cmd_name)
