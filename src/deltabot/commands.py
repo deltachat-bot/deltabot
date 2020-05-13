@@ -96,7 +96,7 @@ class IncomingCommand:
 
     def __repr__(self):
         return "<IncomingCommand {!r} payload={!r} msg={}>".format(
-            self.cmd_def.cmd[0], self.payload, self.message.id)
+            self.cmd_def.cmd, self.payload, self.message.id)
 
     @property
     def args(self):
