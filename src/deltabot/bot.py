@@ -155,6 +155,7 @@ class DeltaBot:
         self.logger.info("bot connected at: {}".format(addr))
         self._eventhandler.start()
         if not self.account._threads.is_started():
+            self.plugins.hook.deltabot_start(bot=self)
             self.account.start()
 
     def wait_shutdown(self):

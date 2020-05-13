@@ -34,6 +34,10 @@ class DeltaBotSpecs:
         This allows "late" plugins to still register commands and filters.
         """
 
+   @deltabot_hookspec
+    def deltabot_start(self, bot):
+        """ start serving requests. """
+
     @deltabot_hookspec
     def deltabot_shutdown(self, bot):
         """ shutdown all resources of the bot. """
