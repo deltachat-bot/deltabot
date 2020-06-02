@@ -151,11 +151,11 @@ class DeltaBot:
     #
     def start(self):
         """ Start bot threads and processing messages. """
+        self.plugins.hook.deltabot_start(bot=self)
         addr = self.account.get_config("addr")
         self.logger.info("bot connected at: {}".format(addr))
         self._eventhandler.start()
         if not self.account._threads.is_started():
-            self.plugins.hook.deltabot_start(bot=self)
             self.account.start()
 
     def wait_shutdown(self):
