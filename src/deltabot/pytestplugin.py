@@ -107,6 +107,9 @@ class BotTester:
 
     def send_command(self, text):
         self.bot_chat.send_text(text)
+        return self.get_next_incoming()
+
+    def get_next_incoming(self):
         return self._replies.get(timeout=30)
 
 
