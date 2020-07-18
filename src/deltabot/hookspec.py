@@ -46,6 +46,29 @@ class DeltaBotSpecs:
         """
 
     @deltabot_hookspec(firstresult=True)
+    def deltabot_member_added(self, chat, contact, actor, message):
+        """ When a member has been added by an actor.
+
+        :param chat: Chat where contact was added.
+        :param contact: Contact that was added.
+        :param actor: Who added the contact (None if it was our self-addr)
+        :param message: The original system message that reports the addition.
+        """
+
+    @deltabot_hookspec(firstresult=True)
+    def deltabot_member_removed(self, chat, contact, actor, message):
+        """ When a member has been removed by an actor.
+
+        When a member left a chat, the contact and the actor will be the
+        same Contact object.
+
+        :param chat: Chat where contact was removed.
+        :param contact: Contact that was removed.
+        :param actor: Who removed the contact (None if it was our self-addr)
+        :param message: The original system message that reports the removal.
+        """
+
+    @deltabot_hookspec(firstresult=True)
     def deltabot_store_setting(self, key, value):
         """ store a named bot setting persistently. """
 
