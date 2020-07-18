@@ -7,6 +7,7 @@ import deltachat as dc
 from deltachat import account_hookimpl
 from deltachat import Message, Contact
 from deltachat.tracker import ConfigureTracker
+from deltachat.message import parse_system_add_remove
 
 from .commands import Commands
 from .filters import Filters
@@ -173,15 +174,19 @@ class CheckAll:
 
     def perform(self):
         logger = self.bot.logger
+        logger.info("CheckAll perform-loop start")
         for message in self.bot.account.get_fresh_messages():
             try:
                 replies = Replies(message.account)
                 logger.info("processing incoming fresh message id={}".format(message.id))
-                self.bot.plugins.hook.deltabot_incoming_message(
-                    message=message,
-                    bot=self.bot,
-                    replies=replies
-                )
+                if message.is_system_message():
+                    self.handle_system_message(message, replies)
+                else:
+                    self.bot.plugins.hook.deltabot_incoming_message(
+                        message=message,
+                        bot=self.bot,
+                        replies=replies
+                    )
                 for msg in replies.get_reply_messages():
                     msg = message.chat.send_msg(msg)
                     logger.info("reply id={} chat={} sent with text: {!r}".format(
@@ -192,6 +197,23 @@ class CheckAll:
                     message.id, ex))
             logger.info("processing message id={} FINISHED".format(message.id))
             message.mark_seen()
+        logger.info("CheckAll perform-loop finish")
+
+    def handle_system_message(self, message, replies):
+        logger = self.bot.logger
+        res = parse_system_add_remove(message.text)
+        if res is None:
+            logger.info("ignoring system message id={} text: {}".format(
+                message.id, message.text))
+            return
+
+        action, affected, actor = res
+        hook_name = "deltabot_member_{}".format(action)
+        meth = getattr(self.bot.plugins.hook, hook_name)
+        logger.info("calling hook {}".format(hook_name))
+        meth(message=message, replies=replies, chat=message.chat,
+             actor=self.bot.account.create_contact(actor),
+             contact=self.bot.account.create_contact(affected))
 
 
 class IncomingEventHandler:
@@ -204,6 +226,7 @@ class IncomingEventHandler:
         self._checks.put(CheckAll(bot))
 
     def start(self):
+        self.logger.info("starting bot-event-handler THREAD")
         self._thread = t = threading.Thread(target=self.event_worker, name="bot-event-handler")
         t.setDaemon(1)
         t.start()
@@ -223,12 +246,20 @@ class IncomingEventHandler:
     def ac_incoming_message(self, message):
         # we always accept incoming messages to remove the need  for
         # bot authors to having to deal with deaddrop/contact requests.
-        message.get_sender_contact().create_chat()
+        message.create_chat()
         self.logger.info("incoming message from {} id={} chat={} text={!r}".format(
             message.get_sender_contact().addr,
             message.id, message.chat.id, message.text[:50]))
 
         # message is now in fresh state, schedule a check
+        self._checks.put(CheckAll(self.bot))
+
+    @account_hookimpl
+    def ac_chat_modified(self):
+        self._checks.put(CheckAll(self.bot))
+
+    @account_hookimpl
+    def ac_member_removed(self):
         self._checks.put(CheckAll(self.bot))
 
     @account_hookimpl

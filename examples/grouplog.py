@@ -1,6 +1,4 @@
 
-import re
-
 from deltabot import deltabot_hookimpl
 
 
@@ -16,18 +14,18 @@ class GroupLoggingPlugin:
             message.is_system_message(), message.text))
 
     @deltabot_hookimpl
-    def deltabot_member_added(self, chat, contact, actor, message):
-        actor.create_chat().send_message("member_added {}".format(contact.addr))
+    def deltabot_member_added(self, chat, contact, actor, message, replies):
+        replies.add("member_added {}".format(contact.addr))
 
     @deltabot_hookimpl
-    def deltabot_member_removed(self, chat, contact, actor, message):
-        actor.create_chat().send_message("member_removed {}".format(contact.addr))
+    def deltabot_member_removed(self, chat, contact, actor, message, replies):
+        replies.add("member_removed {}".format(contact.addr))
 
 
 class TestGroupLoggingPlugin:
     def test_events(self, bot_tester, acfactory, lp):
         lp.sec("creating test accounts")
-        ac1 = acfactory.get_one_online_account()
+        ac3 = acfactory.get_one_online_account()
 
         lp.sec("create a group chat with only bot and the sender account")
         chat = bot_tester.send_account.create_group_chat("test")
@@ -39,14 +37,14 @@ class TestGroupLoggingPlugin:
         assert "some" in reply.text
         assert "sys=False" in reply.text
 
-        lp.sec("add ac1 account to group chat")
-        chat.add_contact(ac1)
+        lp.sec("add ac3 account to group chat")
+        chat.add_contact(ac3)
         reply = bot_tester.get_next_incoming()
         assert "member_added" in reply.text
-        assert ac1.get_config("addr") in reply.text
+        assert ac3.get_config("addr") in reply.text
 
-        lp.sec("remove ac1 account from group chat")
-        chat.remove_contact(ac1)
+        lp.sec("remove ac3 account from group chat")
+        chat.remove_contact(ac3)
         reply = bot_tester.get_next_incoming()
         assert "member_removed" in reply.text
-        assert ac1.get_config("addr") in reply.text
+        assert ac3.get_config("addr") in reply.text

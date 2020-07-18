@@ -102,8 +102,8 @@ class BotTester:
 
     @account_hookimpl
     def ac_incoming_message(self, message):
-        if message.chat == self.bot_chat:
-            self._replies.put(message)
+        message.get_sender_contact().create_chat()
+        self._replies.put(message)
 
     def send_command(self, text):
         self.bot_chat.send_text(text)
