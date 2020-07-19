@@ -34,6 +34,12 @@ class DeltaBotSpecs:
         This allows "late" plugins to still register commands and filters.
         """
 
+    @deltabot_hookspec()
+    def deltabot_start(self, bot):
+        """ called when a bot starts listening to incoming messages and performing
+        outstanding processing of fresh messages.
+        """
+
     @deltabot_hookspec
     def deltabot_shutdown(self, bot):
         """ shutdown all resources of the bot. """
