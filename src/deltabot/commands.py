@@ -49,17 +49,20 @@ class Commands:
         payload = parts[0] if parts else ""
         cmd = IncomingCommand(bot=self.bot, cmd_def=cmd_def, payload=payload, message=message)
         self.bot.logger.info("processing command {}".format(cmd))
-        res = cmd.cmd_def.func(cmd)
-        if res:
-            replies.add(text=res)
-            return True
+        try:
+            res = cmd.cmd_def.func(command=cmd, replies=replies)
+        except Exception as ex:
+            self.logger.exception(ex)
+        else:
+            assert res is None, res
+        return True
 
     @deltabot_hookimpl
     def deltabot_init(self, bot):
         assert bot == self.bot
         self.register("/help", self.command_help)
 
-    def command_help(self, command):
+    def command_help(self, command, replies):
         """ reply with help message about available commands. """
         l = []
         l.append("**commands**")
@@ -69,7 +72,7 @@ class Commands:
         pm = self.bot.plugins._pm
         plugins = [pm.get_name(plug) for plug, dist in pm.list_plugin_distinfo()]
         l.append("enabled plugins: {}".format(" ".join(plugins)))
-        return "\n".join(l)
+        replies.add(text="\n".join(l))
 
 
 class CommandDef:
