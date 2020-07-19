@@ -30,9 +30,8 @@ class Filters:
     def deltabot_incoming_message(self, message, replies):
         for name, filter_def in self._filter_defs.items():
             self.logger.debug("calling filter {!r} on message id={}".format(name, message.id))
-            res = filter_def.func(message)
-            if res:
-                replies.add(text=res)
+            res = filter_def.func(message=message, replies=replies)
+            assert res is None
 
 
 class FilterDef:
