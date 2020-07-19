@@ -10,16 +10,16 @@ def deltabot_init(bot):
 class GroupLoggingPlugin:
     @deltabot_hookimpl
     def deltabot_incoming_message(self, message):
-        message.chat.send_text("incoming_message sys={} body={!r}".format(
+        message.chat.send_text("bot: incoming_message sys={} body={!r}".format(
             message.is_system_message(), message.text))
 
     @deltabot_hookimpl
     def deltabot_member_added(self, chat, contact, actor, message, replies):
-        replies.add("member_added {}".format(contact.addr))
+        replies.add("bot: member_added {}".format(contact.addr))
 
     @deltabot_hookimpl
     def deltabot_member_removed(self, chat, contact, actor, message, replies):
-        replies.add("member_removed {}".format(contact.addr))
+        replies.add("bot: member_removed {}".format(contact.addr))
 
 
 class TestGroupLoggingPlugin:

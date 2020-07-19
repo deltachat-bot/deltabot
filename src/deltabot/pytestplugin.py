@@ -103,6 +103,7 @@ class BotTester:
     @account_hookimpl
     def ac_incoming_message(self, message):
         message.get_sender_contact().create_chat()
+        print("queuing ac_incoming message {}".format(message))
         self._replies.put(message)
 
     def send_command(self, text):
@@ -110,7 +111,9 @@ class BotTester:
         return self.get_next_incoming()
 
     def get_next_incoming(self):
-        return self._replies.get(timeout=30)
+        reply = self._replies.get(timeout=30)
+        print("get_next_incoming got reply text: {}".format(reply.text))
+        return reply
 
 
 @pytest.fixture
