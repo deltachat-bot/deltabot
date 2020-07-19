@@ -263,6 +263,10 @@ class IncomingEventHandler:
         self._checks.put(CheckAll(self.bot))
 
     @account_hookimpl
+    def ac_member_added(self):
+        self._checks.put(CheckAll(self.bot))
+
+    @account_hookimpl
     def ac_message_delivered(self, message):
         self.logger.info("message id={} chat={} delivered to smtp".format(
             message.id, message.chat.id))
