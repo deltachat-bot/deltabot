@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import threading
-from queue import Queue
 
 import deltachat as dc
 from deltachat import account_hookimpl
@@ -222,8 +221,8 @@ class IncomingEventHandler:
         self.logger = bot.logger
         self.plugins = bot.plugins
         self.bot.account.add_account_plugin(self)
-        self._checks = Queue()
-        self._checks.put(CheckAll(bot))
+        self._needs_check = threading.Event()
+        self._running = True
 
     def start(self):
         self.logger.info("starting bot-event-handler THREAD")
@@ -232,15 +231,15 @@ class IncomingEventHandler:
         t.start()
 
     def stop(self):
-        self._checks.put(None)
+        self._running = False
+        self._needs_check.set()
 
     def event_worker(self):
         self.logger.debug("event-worker startup")
-        while 1:
-            check = self._checks.get()
-            if check is None:
-                break
-            check.perform()
+        while self._running:
+            self._needs_check.wait()
+            self._needs_check.clear()
+            CheckAll(self.bot).perform()
 
     @account_hookimpl
     def ac_incoming_message(self, message):
@@ -252,19 +251,19 @@ class IncomingEventHandler:
             message.id, message.chat.id, message.text[:50]))
 
         # message is now in fresh state, schedule a check
-        self._checks.put(CheckAll(self.bot))
+        self._needs_check.set()
 
     @account_hookimpl
     def ac_chat_modified(self):
-        self._checks.put(CheckAll(self.bot))
+        self._needs_check.set()
 
     @account_hookimpl
     def ac_member_removed(self):
-        self._checks.put(CheckAll(self.bot))
+        self._needs_check.set()
 
     @account_hookimpl
     def ac_member_added(self):
-        self._checks.put(CheckAll(self.bot))
+        self._needs_check.set()
 
     @account_hookimpl
     def ac_message_delivered(self, message):
