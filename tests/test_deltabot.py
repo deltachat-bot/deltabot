@@ -1,4 +1,6 @@
 
+import io
+
 from deltabot.bot import Replies
 
 
@@ -50,22 +52,36 @@ class TestSettings:
 
 
 class TestReplies:
-    def test_two_text(self, mock_bot):
-        r = Replies(mock_bot.account)
+    def test_two_text(self, mock_bot, mocker):
+        incoming_message = mocker.make_incoming_message("0")
+        r = Replies(incoming_message)
         r.add(text="hello")
         r.add(text="world")
-        l = list(r.get_reply_messages())
+        l = r.send_reply_messages(mock_bot.logger)
         assert len(l) == 2
         assert l[0].text == "hello"
         assert l[1].text == "world"
 
-    def test_file(self, mock_bot, tmpdir):
+    def test_filename(self, mock_bot, mocker, tmpdir):
         p = tmpdir.join("textfile")
         p.write("content")
-        r = Replies(mock_bot.account)
+        r = Replies(mocker.make_incoming_message("0"))
         r.add(text="hello", filename=p.strpath)
-        l = list(r.get_reply_messages())
+        l = r.send_reply_messages(mock_bot.logger)
         assert len(l) == 1
         assert l[0].text == "hello"
         s = open(l[0].filename).read()
         assert s == "content"
+
+    def test_file_content(self, mock_bot, mocker):
+        r = Replies(mocker.make_incoming_message("0"))
+        bytefile = io.BytesIO(b'bytecontent')
+        r.add(text="hello", filename="something.txt", bytefile=bytefile)
+
+        l = r.send_reply_messages(mock_bot.logger)
+        assert len(l) == 1
+        assert l[0].text == "hello"
+        assert l[0].filename.endswith(".txt")
+        assert "something" in l[0].filename
+        s = open(l[0].filename, "rb").read()
+        assert s == b"bytecontent"

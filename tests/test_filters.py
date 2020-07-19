@@ -31,7 +31,6 @@ def test_pseudo_downloader(bot_tester):
     def downloader(message, replies):
         """ pseudo downloader of https"""
         if "https" in message.text:
-            fn = __file__
             replies.add(text="downloaded", filename=__file__)
 
     bot_tester.bot.filters.register(name="downloader", func=downloader)

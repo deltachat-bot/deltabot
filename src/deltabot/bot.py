@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import os
 import threading
+import tempfile
+import shutil
 
 import deltachat as dc
 from deltachat import account_hookimpl
@@ -177,7 +180,7 @@ class CheckAll:
         logger.info("CheckAll perform-loop start")
         for message in self.bot.account.get_fresh_messages():
             try:
-                replies = Replies(message.account)
+                replies = Replies(message)
                 logger.info("processing incoming fresh message id={}".format(message.id))
                 if message.is_system_message():
                     self.handle_system_message(message, replies)
@@ -187,11 +190,7 @@ class CheckAll:
                         bot=self.bot,
                         replies=replies
                     )
-                for msg in replies.get_reply_messages():
-                    msg = message.chat.send_msg(msg)
-                    logger.info("reply id={} chat={} sent with text: {!r}".format(
-                        msg.id, msg.chat, msg.text[:50]
-                    ))
+                replies.send_reply_messages(logger=logger)
             except Exception as ex:
                 logger.exception("processing message={} failed: {}".format(
                     message.id, ex))
@@ -274,23 +273,52 @@ class IncomingEventHandler:
 
 
 class Replies:
-    def __init__(self, account):
-        self.account = account
+    def __init__(self, message):
+        self.incoming_message = message
         self._replies = []
 
-    def add(self, text=None, filename=None):
+    def add(self, text=None, filename=None, bytefile=None):
         """ Add a text or file-based reply. """
-        self._replies.append((text, filename))
+        if bytefile:
+            if not filename:
+                raise ValueError("missing filename suggestion, needed with bytefile")
+            if os.path.basename(filename) != filename:
+                raise ValueError("if bytefile is specified, filename must a basename, not path")
 
-    def get_reply_messages(self):
-        for text, file in self._replies:
-            if file:
+        self._replies.append((text, filename, bytefile))
+
+    def send_reply_messages(self, logger):
+        tempdir = tempfile.mkdtemp() if any(x[2] for x in self._replies) else None
+        l = []
+        try:
+            for msg in self._send_replies_to_core(tempdir):
+                logger.info("reply id={} chat={} sent with text: {!r}".format(
+                            msg.id, msg.chat, msg.text[:50]))
+                l.append(msg)
+        finally:
+            if tempdir:
+                shutil.rmtree(tempdir)
+        return l
+
+    def _send_replies_to_core(self, tempdir):
+        for text, filename, bytefile in self._replies:
+            if bytefile:
+                # XXX avoid double copy -- core will copy this file another time
+                # XXX maybe also avoid loading the file into RAM but it's max 50MB
+                filename = os.path.join(tempdir, filename)
+                with open(filename, "wb") as f:
+                    f.write(bytefile.read())
+
+            if filename:
                 view_type = "file"
             else:
                 view_type = "text"
-            msg = Message.new_empty(self.account, view_type)
+            msg = Message.new_empty(self.incoming_message.account, view_type)
             if text is not None:
                 msg.set_text(text)
-            if file is not None:
-                msg.set_file(file)
+            if filename is not None:
+                msg.set_file(filename)
+            msg = self.incoming_message.chat.send_msg(msg)
             yield msg
+
+        self._replies[:] = []
