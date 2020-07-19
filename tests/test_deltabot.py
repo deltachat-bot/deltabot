@@ -89,3 +89,18 @@ class TestReplies:
         assert "something" in l[0].filename
         s = open(l[0].filename, "rb").read()
         assert s == b"bytecontent"
+
+    def test_chat_incoming_default(self, replies):
+        replies.add(text="hello")
+        l = replies.send_reply_messages()
+        assert len(l) == 1
+        assert l[0].text == "hello"
+        assert l[0].chat == replies.incoming_message.chat
+
+    def test_different_chat(self, replies, mock_bot):
+        chat = mock_bot.account.create_group_chat("new group")
+        replies.add(text="this", chat=chat)
+        l = replies.send_reply_messages()
+        assert len(l) == 1
+        assert l[0].text == "this"
+        assert l[0].chat.id == chat.id
