@@ -180,7 +180,7 @@ class CheckAll:
         logger.info("CheckAll perform-loop start")
         for message in self.bot.account.get_fresh_messages():
             try:
-                replies = Replies(message)
+                replies = Replies(message, logger=logger)
                 logger.info("processing incoming fresh message id={}".format(message.id))
                 if message.is_system_message():
                     self.handle_system_message(message, replies)
@@ -190,7 +190,7 @@ class CheckAll:
                         bot=self.bot,
                         replies=replies
                     )
-                replies.send_reply_messages(logger=logger)
+                replies.send_reply_messages()
             except Exception as ex:
                 logger.exception("processing message={} failed: {}".format(
                     message.id, ex))
@@ -273,8 +273,9 @@ class IncomingEventHandler:
 
 
 class Replies:
-    def __init__(self, message):
+    def __init__(self, message, logger):
         self.incoming_message = message
+        self.logger = logger
         self._replies = []
 
     def add(self, text=None, filename=None, bytefile=None):
@@ -287,13 +288,13 @@ class Replies:
 
         self._replies.append((text, filename, bytefile))
 
-    def send_reply_messages(self, logger):
+    def send_reply_messages(self):
         tempdir = tempfile.mkdtemp() if any(x[2] for x in self._replies) else None
         l = []
         try:
             for msg in self._send_replies_to_core(tempdir):
-                logger.info("reply id={} chat={} sent with text: {!r}".format(
-                            msg.id, msg.chat, msg.text[:50]))
+                self.logger.info("reply id={} chat={} sent with text: {!r}".format(
+                                 msg.id, msg.chat, msg.text[:50]))
                 l.append(msg)
         finally:
             if tempdir:

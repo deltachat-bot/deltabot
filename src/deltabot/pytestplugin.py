@@ -67,9 +67,9 @@ def mocker(mock_bot):
 
         def run_command(self, text):
             msg = self.make_incoming_message(text)
-            replies = Replies(msg)
+            replies = Replies(msg, self.bot.logger)
             self.bot.commands.deltabot_incoming_message(message=msg, replies=replies)
-            l = replies.send_reply_messages(self.bot.logger)
+            l = replies.send_reply_messages()
             if not l:
                 raise ValueError("no reply for command {!r}".format(text))
             if len(l) > 1:
