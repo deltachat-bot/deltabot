@@ -1,4 +1,5 @@
 
+import inspect
 from collections import OrderedDict
 
 
@@ -20,7 +21,7 @@ class Commands:
         self.bot.plugins.add_module("commands", self)
 
     def register(self, name, func):
-        short, long = parse_command_docstring(func)
+        short, long = parse_command_docstring(func, args=["command", "replies"])
         cmd_def = CommandDef(name, short=short, long=long, func=func)
         if name in self._cmd_defs:
             raise ValueError("command {!r} already registered".format(name))
@@ -106,10 +107,14 @@ class IncomingCommand:
         return self.payload.split()
 
 
-def parse_command_docstring(func):
+def parse_command_docstring(func, args):
     description = func.__doc__
     if not description:
         raise ValueError("command {!r} needs to have a docstring".format(func))
+    funcargs = set(inspect.getargs(func.__code__).args)
+    for arg in args:
+        if arg not in funcargs:
+            raise ValueError("{!r} needs to accept {!r} argument".format(func, arg))
 
     lines = description.strip().split("\n")
     return lines.pop(0), "\n".join(lines).strip()

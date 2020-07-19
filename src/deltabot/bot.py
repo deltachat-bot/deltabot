@@ -234,6 +234,7 @@ class IncomingEventHandler:
     def stop(self):
         self._running = False
         self._needs_check.set()
+        self._thread.join(timeout=10)
 
     def event_worker(self):
         self.logger.debug("event-worker startup")
