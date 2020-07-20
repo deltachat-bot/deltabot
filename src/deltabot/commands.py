@@ -61,7 +61,8 @@ class Commands:
         else:
             reply = "unknown command {!r}".format(orig_cmd_name)
             self.logger.warn(reply)
-            replies.add(text=reply)
+            if not message.chat.is_group():
+                replies.add(text=reply)
             return True
 
         cmd = IncomingCommand(bot=self.bot, cmd_def=cmd_def, message=message,

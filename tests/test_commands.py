@@ -49,7 +49,7 @@ class TestArgParsing:
 
     @pytest.fixture
     def parse_cmd(self, mock_bot, mocker):
-        def proc(name, text):
+        def proc(name, text, group=False):
             l = []
 
             def my_command(command, replies):
@@ -58,11 +58,12 @@ class TestArgParsing:
 
             mock_bot.commands.register(name=name, func=my_command)
 
-            msg = mocker.make_incoming_message(text)
+            msg = mocker.make_incoming_message(text, group=group)
             replies = Replies(msg, mock_bot.logger)
+            mocker.replies = replies
             mock_bot.commands.deltabot_incoming_message(message=msg, replies=replies)
-            assert len(l) == 1
-            return l[0]
+            if len(l) == 1:
+                return l[0]
 
         return proc
 
@@ -106,3 +107,9 @@ class TestArgParsing:
     def test_two_commands_with_different_subparts(self, parse_cmd):
         assert parse_cmd("/some_group", "/some_group").cmd_def.cmd == "/some_group"
         assert parse_cmd("/some_other", "/some_other").cmd_def.cmd == "/some_other"
+
+    def test_unknown_command(self, parse_cmd, mocker):
+        parse_cmd("/some_group", "/unknown", group=True)
+        assert not mocker.replies.has_replies()
+        parse_cmd("/some_other", "/unknown", group=False)
+        assert mocker.replies.has_replies()
