@@ -91,18 +91,18 @@ class TestArgParsing:
         assert command.args == ["123", "456"]
         assert command.payload == "123 456"
 
-    def test_under_conflict(self, parse_cmd, mock_bot):
+    def test_under_conflict(self, parse_cmd):
         parse_cmd("/some", "/some")
         with pytest.raises(ValueError):
             parse_cmd("/some_group_long", "")
         with pytest.raises(ValueError):
             parse_cmd("/some_group", "")
 
-    def test_under_conflict2(self, parse_cmd, mock_bot):
+    def test_under_conflict2(self, parse_cmd):
         parse_cmd("/some_group", "/some_group")
         with pytest.raises(ValueError):
             parse_cmd("/some", "")
 
-    def test_two_commands_with_different_subparts(self, parse_cmd, mock_bot):
+    def test_two_commands_with_different_subparts(self, parse_cmd):
         assert parse_cmd("/some_group", "/some_group").cmd_def.cmd == "/some_group"
         assert parse_cmd("/some_other", "/some_other").cmd_def.cmd == "/some_other"
