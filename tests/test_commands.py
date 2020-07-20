@@ -78,8 +78,12 @@ class TestArgParsing:
         command = parse_cmd("/some", "/some_123_456")
         assert command.args == ["123", "456"]
 
+    def test_under_with_under_command(self, parse_cmd):
+        command = parse_cmd("/some_group", "/some_group_123_456")
+        assert command.args == ["123", "456"]
+
     def test_under_conflict(self, parse_cmd, mock_bot):
-        command = parse_cmd("/some", "/some")
+        parse_cmd("/some", "/some")
         with pytest.raises(ValueError):
             parse_cmd("/some_group_long", "")
         with pytest.raises(ValueError):
