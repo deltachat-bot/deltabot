@@ -47,19 +47,18 @@ class Commands:
             return None
         args = message.text.split()
         payload = message.text.split(maxsplit=1)[1] if len(args) > 1 else ""
-        orig_cmd_name = cmd_name = args.pop(0)
+        orig_cmd_name = args.pop(0)
 
-        while 1:
+        parts = orig_cmd_name.split("_")
+        while parts:
+            cmd_name = "_".join(parts)
             cmd_def = self._cmd_defs.get(cmd_name)
             if cmd_def is not None:
                 break
-
-            i = cmd_name.rfind("_")
-            if i != -1:
-                args.insert(0, cmd_name[i + 1:])
-                cmd_name = cmd_name[:i]
-                payload = (args[0] + " " + payload).rstrip()
-                continue
+            newarg = parts.pop()
+            args.insert(0, newarg)
+            payload = (newarg + " " + payload).rstrip()
+        else:
             reply = "unknown command {!r}".format(orig_cmd_name)
             self.logger.warn(reply)
             replies.add(text=reply)
@@ -136,9 +135,7 @@ def parse_command_docstring(func, args):
 
 
 def iter_underscore_subparts(name):
-    while 1:
-        yield name
-        i = name.rfind("_")
-        if i == -1:
-            break
-        name = name[:i]
+    parts = name.split("_")
+    while parts:
+        yield "_".join(parts)
+        parts.pop()
