@@ -69,18 +69,27 @@ class TestArgParsing:
     def test_basic(self, parse_cmd):
         command = parse_cmd("/some", "/some 123")
         assert command.args == ["123"]
+        assert command.payload == "123"
 
     def test_under1(self, parse_cmd):
         command = parse_cmd("/some", "/some_123 456")
         assert command.args == ["123", "456"]
+        assert command.payload == "123 456"
 
     def test_under2(self, parse_cmd):
         command = parse_cmd("/some", "/some_123_456")
         assert command.args == ["123", "456"]
+        assert command.payload == "123 456"
+
+    def test_multiline_payload(self, parse_cmd):
+        command = parse_cmd("/some", "/some_123 456\n789_yes")
+        assert command.args == ["123", "456", "789_yes"]
+        assert command.payload == "123 456\n789_yes"
 
     def test_under_with_under_command(self, parse_cmd):
         command = parse_cmd("/some_group", "/some_group_123_456")
         assert command.args == ["123", "456"]
+        assert command.payload == "123 456"
 
     def test_under_conflict(self, parse_cmd, mock_bot):
         parse_cmd("/some", "/some")
