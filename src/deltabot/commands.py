@@ -46,6 +46,7 @@ class Commands:
         if not message.text.startswith(CMD_PREFIX):
             return None
         args = message.text.split()
+        payload = message.text.split(maxsplit=1)[1] if len(args) > 1 else ""
         orig_cmd_name = cmd_name = args.pop(0)
 
         while 1:
@@ -57,13 +58,15 @@ class Commands:
             if i != -1:
                 args.insert(0, cmd_name[i + 1:])
                 cmd_name = cmd_name[:i]
+                payload = (args[0] + " " + payload).rstrip()
                 continue
             reply = "unknown command {!r}".format(orig_cmd_name)
             self.logger.warn(reply)
             replies.add(text=reply)
             return True
 
-        cmd = IncomingCommand(bot=self.bot, cmd_def=cmd_def, args=args, message=message)
+        cmd = IncomingCommand(bot=self.bot, cmd_def=cmd_def, message=message,
+                              args=args, payload=payload)
         self.bot.logger.info("processing command {}".format(cmd))
         try:
             res = cmd.cmd_def.func(command=cmd, replies=replies)
@@ -107,19 +110,16 @@ class CommandDef:
 
 class IncomingCommand:
     """ incoming command request. """
-    def __init__(self, bot, cmd_def, args, message):
+    def __init__(self, bot, cmd_def, args, payload, message):
         self.bot = bot
         self.cmd_def = cmd_def
         self.args = args
+        self.payload = payload
         self.message = message
 
     def __repr__(self):
         return "<IncomingCommand {!r} payload={!r} msg={}>".format(
             self.cmd_def.cmd[0], self.payload, self.message.id)
-
-    @property
-    def payload(self):
-        return " ".join(self.args)
 
 
 def parse_command_docstring(func, args):
