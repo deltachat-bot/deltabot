@@ -76,7 +76,12 @@ class db_list:
     def run(self, bot, args, out):
         res = bot.list_settings(args.scope)
         for key, res in res:
-            out.line("{}: {}".format(key, res))
+            if "\n" in res:
+                out.line("{}:".format(key))
+                for line in res.split("\n"):
+                    out.line("   " + line)
+            else:
+                out.line("{}: {}".format(key, res))
 
 
 def command_set(command, replies):
