@@ -27,7 +27,7 @@ class Commands:
                 raise ValueError("command {!r} fails to register, conflicts with: {!r}".format(
                                  name, cand_name))
         for reg_name in self._cmd_defs:
-            if reg_name.startswith(name):
+            if reg_name.startswith(name + "_"):
                 raise ValueError("command {!r} fails to register, conflicts with: {!r}".format(
                                  name, reg_name))
 
