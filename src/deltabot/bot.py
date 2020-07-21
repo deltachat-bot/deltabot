@@ -17,7 +17,7 @@ from .plugins import Plugins, get_global_plugin_manager
 
 
 class DeltaBot:
-    def __init__(self, account, logger, plugin_manager=None):
+    def __init__(self, account, logger, plugin_manager=None, args=()):
 
         # by default we will use the global instance of the
         # plugin_manager.
@@ -39,6 +39,8 @@ class DeltaBot:
 
         # process dc events and turn them into deltabot ones
         self._eventhandler = IncomingEventHandler(self)
+
+        plugin_manager.hook.deltabot_init.call_historic(kwargs=dict(bot=self, args=args))
 
         # set some useful bot defaults on the account
         self.account.update_config(dict(
