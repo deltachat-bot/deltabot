@@ -28,6 +28,11 @@ class TestSettings:
         mycmd.run_ok(["db_list"], """
             global/hello: world
         """)
+        mycmd.run_ok(["db_del", "global/hello"], """
+            *delete*
+        """)
+        out = mycmd.run_ok(["db_list"])
+        assert "hello" not in out
 
 
 class TestInit:
