@@ -67,9 +67,15 @@ class DeltaBot:
         key = scope + "/" + name
         self.plugins._pm.hook.deltabot_store_setting(key=key, value=value)
 
+    def delete(self, name, scope="global"):
+        """ Delete a bot setting with the given scope. """
+        assert "/" not in scope
+        key = scope + "/" + name
+        self.plugins._pm.hook.deltabot_store_setting(key=key, value=None)
+
     def get(self, name, default=None, scope="global"):
         """ Get a bot setting from the given scope. """
-        assert "/" not in scope and "/" not in name
+        assert "/" not in scope
         key = scope + "/" + name
         res = self.plugins._pm.hook.deltabot_get_setting(key=key)
         return res if res is not None else default
