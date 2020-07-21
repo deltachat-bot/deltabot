@@ -26,17 +26,22 @@ class DeltaBot:
         if plugin_manager is None:
             plugin_manager = get_global_plugin_manager()
 
+        #: Account object for creating contacts/groups etc.
+        #: see :class:`deltachat.account.Account`
         self.account = account
 
         self.logger = logger
 
         #: plugin subsystem for adding/removing plugins and calling plugin hooks
+        #: see :class:`deltabot.plugins.Plugins`
         self.plugins = Plugins(logger=logger, plugin_manager=plugin_manager)
 
-        #: commands subsystem for registering/executing '/*' commands in incoming messages
+        #: commands subsystem for registering/executing commands in incoming messages
+        #: see :class:`deltabot.commands.Commands`
         self.commands = Commands(self)
 
         #: filter subsystem for registering/performing filters on incoming messages
+        #: see :class:`deltabot.filters.Filters`
         self.filters = Filters(self)
 
         # process dc events and turn them into deltabot ones
@@ -128,12 +133,9 @@ class DeltaBot:
             except ValueError:
                 return None
 
-    def create_group(self, name, members=[]):
+    def create_group(self, name, contacts=[]):
         """ Create a new group chat. """
-        group = self.account.create_group_chat(name)
-        for member in map(self.get_contact, members):
-            group.add_contact(member)
-        return group
+        return self.account.create_group_chat(name, contacts)
 
     #
     # configuration related API
