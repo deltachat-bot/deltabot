@@ -36,7 +36,6 @@ Here is a complete "calculator" chat bot for performing additions::
 
     # contents of example/mycalc.py
 
-
 Test the "mycalc bot"::
 
     $ deltabot test example/mycalc.py

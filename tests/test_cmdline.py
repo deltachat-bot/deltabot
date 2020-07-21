@@ -69,3 +69,15 @@ class TestPluginManagement:
         mycmd.run_ok(["list-plugins"], """
             *deltabot.builtin.*
         """)
+
+    def test_add_del_list_module(self, mycmd, examples):
+        path = examples.join("mycalc.py").strpath
+        mycmd.run_ok(["add-module", path], "*{}*".format(path))
+        mycmd.run_ok(["list-plugins"], """
+            *mycalc.py*
+        """)
+        mycmd.run_ok(["del-module", path], """
+            *removed*1*
+        """)
+        out = mycmd.run_ok(["list-plugins"])
+        assert "mycalc.py" not in out
