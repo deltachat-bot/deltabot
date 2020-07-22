@@ -6,11 +6,20 @@ Deltabot allows to implement and run chat bots for `Delta Chat`_.
 Install
 -------
 
-To install it run the following command (preferably in a ``virtualenv``):
+To install deltabot run the following command (preferably in a ``virtualenv``):
 
 .. code-block:: bash
 
    $ pip3 install deltabot
+
+Try typing "deltabot --version" to verify it worked.
+
+.. note::
+
+    Deltabot requires Delta Chat's Python bindings.  On Linux bindings
+    have pre-built binary wheels and thus the above deltabot install should just work.
+    On other platforms you need to install the bindings from source, see
+    `deltachat Python bindings readme <https://github.com/deltachat/deltachat-core-rust/tree/master/python>`_.
 
 
 Initialize the bot
