@@ -48,7 +48,7 @@ class DeltaBotSpecs:
     def deltabot_incoming_message(self, message, bot, replies):
         """ process an incoming fresh message.
 
-        :param message: The original system message that reports the addition.
+        :param message: The incoming message.
         :param replies: call replies.add() to schedule a reply.
         """
 
@@ -60,7 +60,7 @@ class DeltaBotSpecs:
         :param contact: Contact that was added.
         :param actor: Who added the contact (None if it was our self-addr)
         :param message: The original system message that reports the addition.
-        :param replies: Can be used to register replies without directly trying to send out.
+        :param replies: call replies.add() to schedule a reply.
         """
 
     @deltabot_hookspec(firstresult=True)
@@ -74,7 +74,7 @@ class DeltaBotSpecs:
         :param contact: Contact that was removed.
         :param actor: Who removed the contact (None if it was our self-addr)
         :param message: The original system message that reports the removal.
-        :param replies: Can be used to register replies without directly trying to send out.
+        :param replies: call replies.add() to schedule a reply.
         """
 
     @deltabot_hookspec(firstresult=True)
