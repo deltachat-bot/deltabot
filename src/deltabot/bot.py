@@ -149,7 +149,6 @@ class DeltaBot:
         """ perform initial email/password bot account configuration.  """
         # XXX support reconfiguration (changed password at least)
         assert not self.is_configured()
-        assert not self.account.is_started()
         tracker = ConfigureTracker(self.account)
         with self.account.temp_plugin(tracker) as configtracker:
             self.account.update_config(dict(addr=email, mail_pw=password))
@@ -173,8 +172,7 @@ class DeltaBot:
         addr = self.account.get_config("addr")
         self.logger.info("bot listening at: {}".format(addr))
         self._eventhandler.start()
-        if not self.account.is_started():
-            self.account.start_io()
+        self.account.start_io()
 
     def wait_shutdown(self):
         """ Wait and block until bot account is shutdown. """
