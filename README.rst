@@ -83,7 +83,7 @@ Plugins
 
 For many more examples and Deltabot plugins see:
 
-https://github.com/SimpleBot-Inc/simplebot_plugins
+https://github.com/simplebot-org/simplebot
 
 
 .. _Delta Chat: https://delta.chat
